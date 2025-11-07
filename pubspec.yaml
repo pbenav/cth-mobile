@@ -1,0 +1,50 @@
+name: cth_mobile
+description: "CTH - Sistema de Control de Tiempo y Horarios"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # HTTP requests para API
+  http: ^1.1.0
+  
+  # NFC functionality
+  nfc_manager: ^3.3.0
+  
+  # WebView para vistas complejas
+  webview_flutter: ^4.4.2
+  
+  # State management
+  provider: ^6.1.1
+  
+  # Local storage
+  shared_preferences: ^2.2.2
+  
+  # JSON serialization
+  json_annotation: ^4.8.1
+  
+  # UI helpers
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  
+  # JSON code generation
+  json_serializable: ^6.7.1
+  build_runner: ^2.4.7
+
+flutter:
+  uses-material-design: true
+  
+  # Assets (logos, iconos, etc.)
+  assets:
+    - assets/images/
+    - assets/icons/
