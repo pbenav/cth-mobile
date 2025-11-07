@@ -10,25 +10,37 @@ class ConfigService {
   static const String _serverConfigKey = 'server_config';
 
   /// Configura el servidor automáticamente usando una URL
-  static Future<bool> configureServer(String serverUrl) async {
+  static Future<bool> configureServer(String serverUrl, {Function(String)? onLog}) async {
+    final log = onLog ?? (String message) => print(message);
+    
+    log('🔄 Iniciando configuración del servidor...');
+    log('📝 URL original introducida: $serverUrl');
+    
     try {
       // Normalizar la URL para asegurar que tenga protocolo
       final normalizedUrl = _normalizeUrl(serverUrl);
+      log('🔧 URL normalizada: $normalizedUrl');
       
       // Hacer una petición al endpoint de configuración
       final configUrl = '$normalizedUrl/api/server';
+      log('🌐 Intentando conectar a: $configUrl');
+      
       final response = await http.get(
         Uri.parse(configUrl),
         headers: {'Accept': 'application/json'},
       ).timeout(const Duration(seconds: 10));
 
+      log('📡 Respuesta del servidor - Código: ${response.statusCode}');
+
       if (response.statusCode == 200) {
+        log('✅ Respuesta exitosa, procesando configuración...');
         final configData = json.decode(response.body);
         final serverConfig = ServerConfig.fromJson(configData);
 
         // Validar que los endpoints requeridos estén disponibles
         if (serverConfig.endpoints.nfc.workCenters.isEmpty ||
             serverConfig.endpoints.nfc.verifyTag.isEmpty) {
+          log('❌ Configuración del servidor incompleta');
           throw const ConfigException('Configuración del servidor incompleta');
         }
 
@@ -36,31 +48,36 @@ class ConfigService {
         await StorageService.saveConfig(_serverUrlKey, normalizedUrl);
         await StorageService.saveConfig(_serverConfigKey, configData);
 
-        print('Servidor configurado correctamente: $normalizedUrl');
-        print('Configuración: ${serverConfig.serverInfo.name}');
+        log('💾 Configuración guardada correctamente');
+        log('🏢 Servidor configurado: ${serverConfig.serverInfo.name}');
+        log('✅ Configuración completada exitosamente');
 
         return true;
       } else if (response.statusCode == 404) {
-        throw const APIException(
-          'Servidor encontrado pero endpoint no disponible. Verifica que sea un servidor CTH válido.',
+        log('❌ Error 404: Endpoint no encontrado en $configUrl');
+        throw APIException(
+          'Servidor encontrado pero endpoint no disponible.\nURL intentada: $configUrl\nVerifica que sea un servidor CTH válido.',
           statusCode: 404,
         );
       } else if (response.statusCode == 500) {
-        throw const APIException(
-          'Error interno del servidor. Contacta al administrador.',
+        log('❌ Error 500: Error interno del servidor en $configUrl');
+        throw APIException(
+          'Error interno del servidor en $configUrl.\nContacta al administrador.',
           statusCode: 500,
         );
       } else {
+        log('❌ Error HTTP ${response.statusCode}: ${response.reasonPhrase}');
         throw APIException(
-          'Error del servidor: ${response.statusCode} - ${response.reasonPhrase ?? "Sin detalles"}',
+          'Error del servidor (${response.statusCode}) en $configUrl\n${response.reasonPhrase ?? "Sin detalles"}',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
+      log('💥 Error durante la configuración: $e');
       if (e is ConfigException || e is APIException) {
         rethrow;
       }
-      throw ConfigException('Error configurando servidor: $e');
+      throw ConfigException('Error de conexión: $e');
     }
   }
 
