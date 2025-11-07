@@ -12,12 +12,15 @@ class ConfigService {
   /// Configura el servidor automáticamente usando una URL
   static Future<bool> configureServer(String serverUrl) async {
     try {
+      // Normalizar la URL para asegurar que tenga protocolo
+      final normalizedUrl = _normalizeUrl(serverUrl);
+      
       // Hacer una petición al endpoint de configuración
-      final configUrl = '$serverUrl/api/v1/config';
+      final configUrl = '$normalizedUrl/api/server';
       final response = await http.get(
         Uri.parse(configUrl),
         headers: {'Accept': 'application/json'},
-      );
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final configData = json.decode(response.body);
@@ -29,17 +32,27 @@ class ConfigService {
           throw const ConfigException('Configuración del servidor incompleta');
         }
 
-        // Guardar configuración
-        await StorageService.saveConfig(_serverUrlKey, serverUrl);
+        // Guardar configuración (guardar la URL normalizada)
+        await StorageService.saveConfig(_serverUrlKey, normalizedUrl);
         await StorageService.saveConfig(_serverConfigKey, configData);
 
-        print('Servidor configurado correctamente: $serverUrl');
+        print('Servidor configurado correctamente: $normalizedUrl');
         print('Configuración: ${serverConfig.serverInfo.name}');
 
         return true;
+      } else if (response.statusCode == 404) {
+        throw const APIException(
+          'Servidor encontrado pero endpoint no disponible. Verifica que sea un servidor CTH válido.',
+          statusCode: 404,
+        );
+      } else if (response.statusCode == 500) {
+        throw const APIException(
+          'Error interno del servidor. Contacta al administrador.',
+          statusCode: 500,
+        );
       } else {
         throw APIException(
-          'Error del servidor: ${response.statusCode}',
+          'Error del servidor: ${response.statusCode} - ${response.reasonPhrase ?? "Sin detalles"}',
           statusCode: response.statusCode,
         );
       }
@@ -161,5 +174,23 @@ class ConfigService {
     } catch (e) {
       return false;
     }
+  }
+
+  /// Normaliza una URL para asegurar que tenga el protocolo correcto
+  static String _normalizeUrl(String url) {
+    // Eliminar espacios en blanco
+    url = url.trim();
+    
+    // Si no tiene protocolo, agregar https por defecto
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://$url';
+    }
+    
+    // Eliminar barra final si existe
+    if (url.endsWith('/')) {
+      url = url.substring(0, url.length - 1);
+    }
+    
+    return url;
   }
 }

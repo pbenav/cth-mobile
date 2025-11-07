@@ -59,6 +59,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               controller: _urlController,
               decoration: InputDecoration(
                 labelText: 'URL del servidor',
+                hintText: 'Ej: https://mi-servidor.com o mi-servidor.com',
+                helperText: 'Introduce la URL completa de tu servidor CTH',
                 errorText: _error,
               ),
               keyboardType: TextInputType.url,
