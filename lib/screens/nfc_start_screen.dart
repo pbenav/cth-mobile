@@ -16,7 +16,9 @@ class NFCStartScreen extends StatefulWidget {
 class _NFCStartScreenState extends State<NFCStartScreen> {
   bool isScanning = false;
   bool isConfiguring = false;
+  bool debugMode = false;
   String statusMessage = 'Acerca tu dispositivo a la etiqueta NFC';
+  String? lastNFCContent;
 
   @override
   void initState() {
@@ -67,6 +69,60 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
     }
   }
 
+  void _showNFCDebugDialog(String content, Map<String, dynamic>? data) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('🔍 Contenido NFC Leído'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Contenido crudo:', style: TextStyle(fontWeight: FontWeight.bold)),
+                Container(
+                  padding: EdgeInsets.all(8),
+                  margin: EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    content,
+                    style: TextStyle(fontFamily: 'monospace', fontSize: 12),
+                  ),
+                ),
+                if (data != null) ...[
+                  SizedBox(height: 16),
+                  Text('Datos parseados:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    margin: EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue[50],
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      data.toString(),
+                      style: TextStyle(fontFamily: 'monospace', fontSize: 12),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cerrar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _startNFCScan() async {
     if (isScanning || isConfiguring) return;
 
@@ -76,7 +132,9 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
     });
 
     try {
-      final workCenter = await NFCService.scanWorkCenter();
+      final workCenter = await NFCService.scanWorkCenter(
+        onNFCDebug: debugMode ? _showNFCDebugDialog : null,
+      );
 
       if (!mounted) return;
 
@@ -123,9 +181,10 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
       } else if (e is NFCException) {
         errorMessage = 'Error NFC: ${e.message}';
       } else {
-        errorMessage = e.toString();
+        errorMessage = 'Error: ${e.toString()}';
       }
       
+      print('💥 NFC Scan Error: $errorMessage');
       setState(() {
         statusMessage = errorMessage;
         isScanning = false;
@@ -323,6 +382,35 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
                       color: Colors.white.withOpacity(0.9),
                       fontSize: 16,
                       decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: AppConstants.spacing),
+
+                // Debug mode toggle
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      debugMode = !debugMode;
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          debugMode 
+                            ? 'Modo debug NFC activado - Se mostrará el contenido de las etiquetas'
+                            : 'Modo debug NFC desactivado'
+                        ),
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    debugMode ? '🔍 Debug NFC: ON' : '🔍 Debug NFC: OFF',
+                    style: TextStyle(
+                      color: debugMode ? Colors.yellow : Colors.white.withOpacity(0.7),
+                      fontSize: 14,
+                      fontWeight: debugMode ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
                 ),

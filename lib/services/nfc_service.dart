@@ -24,7 +24,7 @@ class NFCPayload {
 
 class NFCService {
   /// Escanea una etiqueta NFC y detecta automáticamente el tipo de payload
-  static Future<WorkCenter?> scanWorkCenter() async {
+  static Future<WorkCenter?> scanWorkCenter({Function(String, Map<String, dynamic>?)? onNFCDebug}) async {
     if (!await NfcManager.instance.isAvailable()) {
       throw const NFCNotAvailableException('NFC no está disponible en este dispositivo');
     }
@@ -36,7 +36,7 @@ class NFCService {
         pollingOptions: {NfcPollingOption.iso14443, NfcPollingOption.iso18092, NfcPollingOption.iso15693},
         onDiscovered: (NfcTag tag) async {
           try {
-            final payload = await _readNFCPayload(tag);
+            final payload = await _readNFCPayload(tag, onDebug: onNFCDebug);
             if (payload != null) {
               WorkCenter? workCenter;
               switch (payload.type) {
@@ -73,31 +73,52 @@ class NFCService {
   }
 
   /// Lee el payload de una etiqueta NFC y determina su tipo
-  static Future<NFCPayload?> _readNFCPayload(NfcTag tag) async {
+  static Future<NFCPayload?> _readNFCPayload(NfcTag tag, {Function(String, Map<String, dynamic>?)? onDebug}) async {
     final ndef = Ndef.from(tag);
     if (ndef != null && ndef.cachedMessage != null && ndef.cachedMessage!.records.isNotEmpty) {
       final record = ndef.cachedMessage!.records.first;
       final payload = record.payload;
       final text = utf8.decode(payload.skip(3).toList());
+
+      print('🔍 NFC Content Read: "$text"');
+      print('📏 Content Length: ${text.length} characters');
+
+      // Notificar al callback de debug si existe
+      onDebug?.call(text, null);
+
       if (text.trim().startsWith('{') && text.trim().endsWith('}')) {
         try {
           final data = json.decode(text);
+          print('📋 Parsed JSON Data: $data');
+
+          // Verificar que tenga los campos requeridos
+          final hasUrl = data.containsKey('url') || data.containsKey('server_url');
+          final hasId = data.containsKey('id') || data.containsKey('nfc_tag_id');
+
+          print('✅ JSON valid - Has URL: $hasUrl, Has ID: $hasId');
+
+          // Notificar datos parseados
+          onDebug?.call(text, data);
+
           return NFCPayload(
             type: NFCPayloadType.autoConfig,
             content: text,
             data: data,
           );
         } catch (e) {
-          print('Error parseando JSON: $e');
+          print('❌ Error parsing JSON: $e');
         }
       }
       if (text.startsWith('CTH:')) {
+        print('🏷️ Detected simple CTH format');
         return NFCPayload(
           type: NFCPayloadType.simple,
           content: text,
         );
       }
     }
+
+    print('❓ No valid NFC payload found');
     // Intentar leer ID del tag como fallback
     // Si necesitas soporte para otras tecnologías, consulta la documentación oficial
     return null;
@@ -106,35 +127,52 @@ class NFCService {
   /// Maneja payloads de auto-configuración
   static Future<WorkCenter?> _handleAutoConfigPayload(
       NFCPayload payload) async {
-    if (payload.data == null) return null;
+    if (payload.data == null) {
+      print('❌ Auto-config payload has no data');
+      return null;
+    }
+
+    print('🔧 Processing auto-config payload');
+    print('📦 Payload data keys: ${payload.data!.keys.toList()}');
 
     try {
       final url = payload.data!['url'] as String?;
       final workCenterId = payload.data!['id'] as String?;
 
+      print('🌐 Extracted URL: $url');
+      print('🆔 Extracted WorkCenter ID: $workCenterId');
+
       if (url == null || workCenterId == null) {
+        print('❌ Missing required fields in payload');
         throw const NFCVerificationException('Payload JSON incompleto');
       }
 
       // Configurar servidor automáticamente
+      print('⚙️ Starting server configuration...');
       final configResult = await ConfigService.configureServer(url);
 
       if (!configResult) {
+        print('❌ Server configuration failed');
         throw const ConfigException(
             'No se pudo configurar el servidor automáticamente');
       }
 
+      print('✅ Server configured successfully');
+
       // Verificar la etiqueta NFC con el servidor
+      print('🔍 Verifying NFC tag with server...');
       final workCenter = await ConfigService.verifyNFCTag(workCenterId);
 
       if (workCenter == null) {
+        print('❌ Work center not found on server');
         throw const NFCVerificationException(
             'Centro de trabajo no encontrado en el servidor');
       }
 
+      print('✅ Work center verified: ${workCenter.name}');
       return workCenter;
     } catch (e) {
-      print('Error en auto-configuración: $e');
+      print('💥 Error in auto-config: $e');
       rethrow;
     }
   }

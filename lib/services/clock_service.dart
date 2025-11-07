@@ -11,7 +11,15 @@ class ClockService {
   static Future<String> _getBaseUrl() async {
     final configuredUrl = await ConfigService.getCurrentServerUrl();
     final baseUrl = configuredUrl ?? AppConstants.apiBaseUrl;
-    return '$baseUrl/api/v1/mobile';
+
+    // Normalizar la URL para evitar duplicados
+    if (baseUrl.endsWith('/api/v1/mobile')) {
+      return baseUrl;
+    } else if (baseUrl.endsWith('/api/v1')) {
+      return '$baseUrl/mobile';
+    } else {
+      return '$baseUrl/api/v1/mobile';
+    }
   }
 
   // Realizar fichaje

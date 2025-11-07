@@ -89,8 +89,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               controller: _urlController,
               decoration: InputDecoration(
                 labelText: 'URL del servidor',
-                hintText: 'Ej: https://mi-servidor.com o mi-servidor.com',
-                helperText: 'Introduce la URL completa de tu servidor CTH',
+                hintText: 'Ej: https://mi-servidor.com o https://mi-servidor.com/api/v1',
+                helperText: 'Introduce solo el dominio base o hasta /api/v1. La app añadirá automáticamente /mobile para las operaciones.',
                 errorText: _error,
               ),
               keyboardType: TextInputType.url,
