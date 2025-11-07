@@ -80,6 +80,33 @@ class _ClockScreenState extends State<ClockScreen> {
     }
   }
 
+  Future<void> _performClockWithAction(String action) async {
+    if (isPerformingClock) return;
+
+    setState(() => isPerformingClock = true);
+    try {
+      final response = await ClockService.performClock(
+        workCenterCode: widget.workCenter.code,
+        userCode: widget.user.code,
+        action: action,
+      );
+
+      if (mounted) {
+        String actionText = action == 'pause' ? 'PAUSA' : 'SALIDA';
+        _showSuccess('$actionText registrada correctamente');
+        await _loadStatus(); // Recargar estado
+      }
+    } catch (e) {
+      if (mounted) {
+        _showError('Error en fichaje: ${e.toString()}');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => isPerformingClock = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -318,56 +345,140 @@ class _ClockScreenState extends State<ClockScreen> {
 
                   const SizedBox(height: AppConstants.spacing * 2),
 
-                  // Clock Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: AppConstants.buttonHeight * 1.2,
-                    child: ElevatedButton(
-                      onPressed: (isPerformingClock || !clockStatus!.canClock)
-                          ? null
-                          : _performClock,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: clockStatus!.nextAction == 'entrada'
-                            ? const Color(AppConstants.successColorValue)
-                            : const Color(AppConstants.errorColorValue),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 6,
-                      ),
-                      child: isPerformingClock
-                          ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
+                  // Clock Button(s)
+                  if (clockStatus!.todayStats.currentStatus == 'trabajando') ...[
+                    // When working, show options for pause or clock out
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: isPerformingClock ? null : () => _performClockWithAction('pause'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(AppConstants.warningColorValue),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                            )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  clockStatus!.nextAction == 'entrada'
-                                      ? Icons.login
-                                      : Icons.logout,
-                                  size: 24,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  clockStatus!.nextAction == 'entrada'
-                                      ? 'FICHAR ENTRADA'
-                                      : 'FICHAR SALIDA',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
+                              elevation: 6,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
                             ),
+                            child: isPerformingClock
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.pause, size: 20),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        'PAUSA',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: isPerformingClock ? null : () => _performClockWithAction('clock_out'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(AppConstants.errorColorValue),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 6,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                            child: isPerformingClock
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.logout, size: 20),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        'SALIDA',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
+                  ] else ...[
+                    // Single button for other states
+                    SizedBox(
+                      width: double.infinity,
+                      height: AppConstants.buttonHeight * 1.2,
+                      child: ElevatedButton(
+                        onPressed: (isPerformingClock || !clockStatus!.canClock)
+                            ? null
+                            : _performClock,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: clockStatus!.nextAction == 'entrada'
+                              ? const Color(AppConstants.successColorValue)
+                              : const Color(AppConstants.errorColorValue),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 6,
+                        ),
+                        child: isPerformingClock
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    clockStatus!.nextAction == 'entrada'
+                                        ? Icons.login
+                                        : Icons.logout,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    clockStatus!.nextAction == 'entrada'
+                                        ? 'FICHAR ENTRADA'
+                                        : 'FICHAR SALIDA',
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ),
+                  ],
                 ],
 
                 const Spacer(),

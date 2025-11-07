@@ -18,6 +18,7 @@ class ClockService {
   static Future<ApiResponse<ClockResponse>> performClock({
     required String workCenterCode,
     required String userCode,
+    String? action, // 'pause' or 'clock_out' when working
   }) async {
     try {
       final baseUrl = await _getBaseUrl();
@@ -31,6 +32,7 @@ class ClockService {
             body: jsonEncode({
               'work_center_code': workCenterCode,
               'user_secret_code': userCode,
+              if (action != null) 'action': action,
             }),
           )
           .timeout(const Duration(seconds: 30));
