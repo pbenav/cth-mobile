@@ -19,7 +19,7 @@ void main() async {
   
   // Configurar barra de estado
   SystemChrome.setSystemUIOverlayStyle(
-    SystemUiOverlayStyle(
+    const SystemUiOverlayStyle(
       statusBarColor: Color(AppConstants.primaryColorValue),
       statusBarIconBrightness: Brightness.light,
       systemNavigationBarColor: Colors.white,
@@ -31,6 +31,8 @@ void main() async {
 }
 
 class CTHMobileApp extends StatelessWidget {
+  const CTHMobileApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -40,19 +42,19 @@ class CTHMobileApp extends StatelessWidget {
         primarySwatch: MaterialColor(
           AppConstants.primaryColorValue,
           <int, Color>{
-            50: Color(AppConstants.primaryColorValue).withOpacity(0.1),
-            100: Color(AppConstants.primaryColorValue).withOpacity(0.2),
-            200: Color(AppConstants.primaryColorValue).withOpacity(0.3),
-            300: Color(AppConstants.primaryColorValue).withOpacity(0.4),
-            400: Color(AppConstants.primaryColorValue).withOpacity(0.5),
-            500: Color(AppConstants.primaryColorValue),
-            600: Color(AppConstants.primaryColorValue).withOpacity(0.7),
-            700: Color(AppConstants.primaryColorValue).withOpacity(0.8),
-            800: Color(AppConstants.primaryColorValue).withOpacity(0.9),
-            900: Color(AppConstants.primaryColorValue),
+            50: const Color(AppConstants.primaryColorValue).withOpacity(0.1),
+            100: const Color(AppConstants.primaryColorValue).withOpacity(0.2),
+            200: const Color(AppConstants.primaryColorValue).withOpacity(0.3),
+            300: const Color(AppConstants.primaryColorValue).withOpacity(0.4),
+            400: const Color(AppConstants.primaryColorValue).withOpacity(0.5),
+            500: const Color(AppConstants.primaryColorValue),
+            600: const Color(AppConstants.primaryColorValue).withOpacity(0.7),
+            700: const Color(AppConstants.primaryColorValue).withOpacity(0.8),
+            800: const Color(AppConstants.primaryColorValue).withOpacity(0.9),
+            900: const Color(AppConstants.primaryColorValue),
           },
         ),
-        primaryColor: Color(AppConstants.primaryColorValue),
+        primaryColor: const Color(AppConstants.primaryColorValue),
         useMaterial3: true,
       ),
       initialRoute: AppConstants.routeStart,
@@ -71,6 +73,8 @@ class CTHMobileApp extends StatelessWidget {
 }
 
 class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
   @override
   _SplashScreenState createState() => _SplashScreenState();
 }
@@ -126,8 +130,8 @@ class _SplashScreenState extends State<SplashScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(AppConstants.primaryColorValue),
-              Color(AppConstants.primaryColorValue).withOpacity(0.8),
+              const Color(AppConstants.primaryColorValue),
+              const Color(AppConstants.primaryColorValue).withOpacity(0.8),
             ],
           ),
         ),
@@ -150,16 +154,16 @@ class _SplashScreenState extends State<SplashScreen> {
                       ),
                     ],
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.access_time,
                     size: 60,
                     color: Color(AppConstants.primaryColorValue),
                   ),
                 ),
                 const SizedBox(height: 32),
-                Text(
+                const Text(
                   AppConstants.appName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -175,11 +179,11 @@ class _SplashScreenState extends State<SplashScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 48),
-                SizedBox(
+                const SizedBox(
                   width: 40,
                   height: 40,
                   child: CircularProgressIndicator(
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     strokeWidth: 3,
                   ),
                 ),

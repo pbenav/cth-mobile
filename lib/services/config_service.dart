@@ -13,7 +13,7 @@ class ConfigService {
   static Future<bool> configureServer(String serverUrl) async {
     try {
       // Hacer una petición al endpoint de configuración
-      final configUrl = '$serverUrl/api/config';
+      final configUrl = '$serverUrl/api/v1/config';
       final response = await http.get(
         Uri.parse(configUrl),
         headers: {'Accept': 'application/json'},
@@ -26,7 +26,7 @@ class ConfigService {
         // Validar que los endpoints requeridos estén disponibles
         if (serverConfig.endpoints.nfc.workCenters.isEmpty ||
             serverConfig.endpoints.nfc.verifyTag.isEmpty) {
-          throw ConfigException('Configuración del servidor incompleta');
+          throw const ConfigException('Configuración del servidor incompleta');
         }
 
         // Guardar configuración
@@ -34,7 +34,7 @@ class ConfigService {
         await StorageService.saveConfig(_serverConfigKey, configData);
 
         print('Servidor configurado correctamente: $serverUrl');
-        print('Configuración: ${serverConfig.serverInfo?.name}');
+        print('Configuración: ${serverConfig.serverInfo.name}');
 
         return true;
       } else {
@@ -56,10 +56,10 @@ class ConfigService {
     try {
       final serverUrl = await getCurrentServerUrl();
       if (serverUrl == null) {
-        throw ConfigException('No hay servidor configurado');
+        throw const ConfigException('No hay servidor configurado');
       }
 
-      final verifyUrl = '$serverUrl/api/nfc/verify';
+      final verifyUrl = '$serverUrl/api/v1/nfc/verify';
       final response = await http.post(
         Uri.parse(verifyUrl),
         headers: {
@@ -153,9 +153,9 @@ class ConfigService {
       if (serverUrl == null) return false;
 
       final response = await http.get(
-        Uri.parse('$serverUrl/api/health'),
+        Uri.parse('$serverUrl/api/v1/config/ping'),
         headers: {'Accept': 'application/json'},
-      ).timeout(Duration(seconds: 5));
+      ).timeout(const Duration(seconds: 5));
 
       return response.statusCode == 200;
     } catch (e) {

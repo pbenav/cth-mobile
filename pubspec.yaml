@@ -15,7 +15,9 @@ dependencies:
   http: ^1.1.0
   
   # NFC functionality
-  nfc_manager: ^3.3.0
+  nfc_manager: ^4.1.1
+  nfc_manager_ndef: any
+  ndef: ^0.4.0
   
   # WebView para vistas complejas
   webview_flutter: ^4.4.2

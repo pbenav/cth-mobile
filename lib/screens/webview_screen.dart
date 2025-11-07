@@ -11,12 +11,12 @@ class CTHWebView extends StatefulWidget {
   final User user;
 
   const CTHWebView({
-    Key? key,
+    super.key,
     required this.url,
     required this.title,
     required this.workCenter,
     required this.user,
-  }) : super(key: key);
+  });
 
   @override
   _CTHWebViewState createState() => _CTHWebViewState();
@@ -151,7 +151,7 @@ class _CTHWebViewState extends State<CTHWebView> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
-        backgroundColor: Color(AppConstants.primaryColorValue),
+        backgroundColor: const Color(AppConstants.primaryColorValue),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -178,7 +178,7 @@ class _CTHWebViewState extends State<CTHWebView> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    CircularProgressIndicator(
+                    const CircularProgressIndicator(
                       valueColor: AlwaysStoppedAnimation<Color>(
                         Color(AppConstants.primaryColorValue),
                       ),
@@ -207,7 +207,7 @@ class _CTHWebViewState extends State<CTHWebView> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.error_outline,
               size: 64,
               color: Color(AppConstants.errorColorValue),
@@ -244,7 +244,7 @@ class _CTHWebViewState extends State<CTHWebView> {
                   icon: const Icon(Icons.refresh),
                   label: const Text('Reintentar'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(AppConstants.primaryColorValue),
+                    backgroundColor: const Color(AppConstants.primaryColorValue),
                     foregroundColor: Colors.white,
                   ),
                 ),

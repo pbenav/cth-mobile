@@ -9,9 +9,9 @@ class UserLoginScreen extends StatefulWidget {
   final WorkCenter workCenter;
 
   const UserLoginScreen({
-    Key? key,
+    super.key,
     required this.workCenter,
-  }) : super(key: key);
+  });
 
   @override
   _UserLoginScreenState createState() => _UserLoginScreenState();
@@ -65,7 +65,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error guardando datos: ${e.toString()}'),
-          backgroundColor: Color(AppConstants.errorColorValue),
+          backgroundColor: const Color(AppConstants.errorColorValue),
         ),
       );
     } finally {
@@ -80,7 +80,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Identificación'),
-        backgroundColor: Color(AppConstants.primaryColorValue),
+        backgroundColor: const Color(AppConstants.primaryColorValue),
         foregroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
@@ -94,8 +94,8 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(AppConstants.primaryColorValue),
-              Color(AppConstants.primaryColorValue).withOpacity(0.1),
+              const Color(AppConstants.primaryColorValue),
+              const Color(AppConstants.primaryColorValue).withOpacity(0.1),
             ],
           ),
         ),
@@ -127,11 +127,11 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Color(AppConstants.primaryColorValue)
+                          color: const Color(AppConstants.primaryColorValue)
                               .withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.business,
                           color: Color(AppConstants.primaryColorValue),
                           size: 24,
@@ -160,7 +160,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
                           ],
                         ),
                       ),
-                      Icon(
+                      const Icon(
                         Icons.check_circle,
                         color: Color(AppConstants.successColorValue),
                         size: 20,
@@ -197,7 +197,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
                               // Header
                               Row(
                                 children: [
-                                  Icon(
+                                  const Icon(
                                     Icons.person,
                                     color:
                                         Color(AppConstants.primaryColorValue),
@@ -252,7 +252,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
+                                    borderSide: const BorderSide(
                                       color:
                                           Color(AppConstants.primaryColorValue),
                                     ),
@@ -295,7 +295,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
+                                    borderSide: const BorderSide(
                                       color:
                                           Color(AppConstants.primaryColorValue),
                                     ),
@@ -314,7 +314,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
                                   onPressed: isLoading ? null : _submitLogin,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor:
-                                        Color(AppConstants.primaryColorValue),
+                                        const Color(AppConstants.primaryColorValue),
                                     foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),

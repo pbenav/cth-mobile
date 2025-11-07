@@ -4,6 +4,8 @@ import '../utils/constants.dart';
 import 'user_login_screen.dart';
 
 class ManualEntryScreen extends StatefulWidget {
+  const ManualEntryScreen({super.key});
+
   @override
   _ManualEntryScreenState createState() => _ManualEntryScreenState();
 }
@@ -51,7 +53,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: ${e.toString()}'),
-          backgroundColor: Color(AppConstants.errorColorValue),
+          backgroundColor: const Color(AppConstants.errorColorValue),
         ),
       );
     } finally {
@@ -66,7 +68,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Entrada Manual'),
-        backgroundColor: Color(AppConstants.primaryColorValue),
+        backgroundColor: const Color(AppConstants.primaryColorValue),
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -76,8 +78,8 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(AppConstants.primaryColorValue),
-              Color(AppConstants.primaryColorValue).withOpacity(0.1),
+              const Color(AppConstants.primaryColorValue),
+              const Color(AppConstants.primaryColorValue).withOpacity(0.1),
             ],
           ),
         ),
@@ -114,7 +116,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                               // Header
                               Row(
                                 children: [
-                                  Icon(
+                                  const Icon(
                                     Icons.business,
                                     color:
                                         Color(AppConstants.primaryColorValue),
@@ -169,7 +171,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
+                                    borderSide: const BorderSide(
                                       color:
                                           Color(AppConstants.primaryColorValue),
                                     ),
@@ -211,7 +213,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
+                                    borderSide: const BorderSide(
                                       color:
                                           Color(AppConstants.primaryColorValue),
                                     ),
@@ -230,7 +232,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                                   onPressed: isLoading ? null : _submitForm,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor:
-                                        Color(AppConstants.primaryColorValue),
+                                        const Color(AppConstants.primaryColorValue),
                                     foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),

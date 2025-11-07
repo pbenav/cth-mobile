@@ -1,12 +1,14 @@
-import '../models/work_center.dart';
 import 'package:flutter/material.dart';
 import '../services/nfc_service.dart';
 import '../utils/constants.dart';
 import '../utils/exceptions.dart';
 import 'user_login_screen.dart';
 import 'manual_entry_screen.dart';
+import 'settings_screen.dart';
 
 class NFCStartScreen extends StatefulWidget {
+  const NFCStartScreen({super.key});
+
   @override
   _NFCStartScreenState createState() => _NFCStartScreenState();
 }
@@ -104,7 +106,7 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
         });
         
         // Mostrar progreso de configuración
-        await Future.delayed(Duration(seconds: 1));
+        await Future.delayed(const Duration(seconds: 1));
         
         if (mounted) {
           setState(() {
@@ -133,13 +135,13 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
 
   Widget _buildStatusIcon() {
     if (isConfiguring) {
-      return Icon(
+      return const Icon(
         Icons.settings,
         size: 48,
         color: Colors.orange,
       );
     } else if (isScanning) {
-      return Icon(
+      return const Icon(
         Icons.nfc,
         size: 48,
         color: Color(AppConstants.primaryColorValue),
@@ -172,8 +174,8 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(AppConstants.primaryColorValue),
-              Color(AppConstants.primaryColorValue).withOpacity(0.8),
+              const Color(AppConstants.primaryColorValue),
+              const Color(AppConstants.primaryColorValue).withOpacity(0.8),
             ],
           ),
         ),
@@ -184,7 +186,7 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Logo
-                Icon(
+                const Icon(
                   Icons.nfc,
                   size: 100,
                   color: Colors.white,
@@ -192,9 +194,9 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
 
                 const SizedBox(height: AppConstants.spacing * 1.5),
 
-                Text(
+                const Text(
                   AppConstants.appName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -250,7 +252,7 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
                           onPressed: (isScanning || isConfiguring) ? null : _startNFCScan,
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
-                                Color(AppConstants.primaryColorValue),
+                                const Color(AppConstants.primaryColorValue),
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -267,7 +269,7 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
                                 )
                               : Text(
                                   _getButtonText(),
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -302,7 +304,30 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
 
                 const SizedBox(height: AppConstants.spacing),
 
-                // Configuration status
+                // Configuration button
+                TextButton(
+                  onPressed: () async {
+                    final result = await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const SettingsScreen(),
+                      ),
+                    );
+                    if (result == true && mounted) {
+                      // Recargar configuración
+                      setState(() {});
+                    }
+                  },
+                  child: Text(
+                    'Configurar servidor',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 16,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: AppConstants.spacing),
                 FutureBuilder<String?>(
                   future: NFCService.getCurrentServerUrl(),
                   builder: (context, snapshot) {
@@ -325,7 +350,7 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
                         ),
                       );
                     }
-                    return SizedBox.shrink();
+                    return const SizedBox.shrink();
                   },
                 ),
               ],

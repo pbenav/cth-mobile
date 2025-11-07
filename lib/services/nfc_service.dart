@@ -1,6 +1,9 @@
+import 'package:ndef_record/ndef_record.dart';
 import 'dart:async';
+import 'dart:typed_data';
 import 'dart:convert';
 import 'package:nfc_manager/nfc_manager.dart';
+import 'package:nfc_manager_ndef/nfc_manager_ndef.dart';
 import '../models/work_center.dart';
 import '../utils/exceptions.dart';
 import 'config_service.dart';
@@ -23,21 +26,19 @@ class NFCService {
   /// Escanea una etiqueta NFC y detecta automáticamente el tipo de payload
   static Future<WorkCenter?> scanWorkCenter() async {
     if (!await NfcManager.instance.isAvailable()) {
-      throw const NFCNotAvailableException(
-          'NFC no está disponible en este dispositivo');
+      throw const NFCNotAvailableException('NFC no está disponible en este dispositivo');
     }
 
     Completer<WorkCenter?> completer = Completer();
 
     try {
       await NfcManager.instance.startSession(
+        pollingOptions: {NfcPollingOption.iso14443, NfcPollingOption.iso18092, NfcPollingOption.iso15693},
         onDiscovered: (NfcTag tag) async {
           try {
             final payload = await _readNFCPayload(tag);
-
             if (payload != null) {
               WorkCenter? workCenter;
-
               switch (payload.type) {
                 case NFCPayloadType.autoConfig:
                   workCenter = await _handleAutoConfigPayload(payload);
@@ -46,7 +47,6 @@ class NFCService {
                   workCenter = await _handleSimplePayload(payload);
                   break;
               }
-
               if (!completer.isCompleted) {
                 completer.complete(workCenter);
               }
@@ -57,8 +57,7 @@ class NFCService {
             }
           } catch (e) {
             if (!completer.isCompleted) {
-              completer.completeError(
-                  NFCReadException('Error leyendo etiqueta NFC: $e'));
+              completer.completeError(NFCReadException('Error leyendo etiqueta NFC: $e'));
             }
           } finally {
             await NfcManager.instance.stopSession();
@@ -67,23 +66,19 @@ class NFCService {
       );
     } catch (e) {
       if (!completer.isCompleted) {
-        completer
-            .completeError(const NFCException('Error iniciando sesión NFC'));
+        completer.completeError(const NFCException('Error iniciando sesión NFC'));
       }
     }
-
     return completer.future;
   }
 
   /// Lee el payload de una etiqueta NFC y determina su tipo
   static Future<NFCPayload?> _readNFCPayload(NfcTag tag) async {
     final ndef = Ndef.from(tag);
-
-    if (ndef?.cachedMessage?.records.isNotEmpty == true) {
-      final record = ndef!.cachedMessage!.records.first;
-      final text = utf8.decode(record.payload.skip(3).toList());
-
-      // Verificar si es un payload JSON (auto-configuración)
+    if (ndef != null && ndef.cachedMessage != null && ndef.cachedMessage!.records.isNotEmpty) {
+      final record = ndef.cachedMessage!.records.first;
+      final payload = record.payload;
+      final text = utf8.decode(payload.skip(3).toList());
       if (text.trim().startsWith('{') && text.trim().endsWith('}')) {
         try {
           final data = json.decode(text);
@@ -96,8 +91,6 @@ class NFCService {
           print('Error parseando JSON: $e');
         }
       }
-
-      // Verificar si es formato simple CTH:
       if (text.startsWith('CTH:')) {
         return NFCPayload(
           type: NFCPayloadType.simple,
@@ -105,24 +98,8 @@ class NFCService {
         );
       }
     }
-
     // Intentar leer ID del tag como fallback
-    final id = tag.data['nfca']?['identifier'] ??
-        tag.data['nfcb']?['identifier'] ??
-        tag.data['nfcf']?['identifier'] ??
-        tag.data['nfcv']?['identifier'];
-
-    if (id != null) {
-      final idHex =
-          id.map((e) => e.toRadixString(16).padLeft(2, '0')).join(':');
-      print('Tag ID detectado: $idHex');
-
-      return NFCPayload(
-        type: NFCPayloadType.simple,
-        content: idHex,
-      );
-    }
-
+    // Si necesitas soporte para otras tecnologías, consulta la documentación oficial
     return null;
   }
 
@@ -231,6 +208,7 @@ class NFCService {
 
     try {
       await NfcManager.instance.startSession(
+        pollingOptions: {NfcPollingOption.iso14443, NfcPollingOption.iso18092, NfcPollingOption.iso15693},
         onDiscovered: (NfcTag tag) async {
           try {
             final ndef = Ndef.from(tag);
@@ -238,26 +216,31 @@ class NFCService {
               completer.complete(false);
               return;
             }
-
-            final message = NdefMessage([
-              NdefRecord.createText(content),
-            ]);
-
-            await ndef.write(message);
+            // Crear registro NFC tipo texto manualmente (formato NFC Forum Well Known Type)
+            // Crear registro NFC tipo texto usando NdefRecord y NdefMessage de nfc_manager_ndef
+            final languageCode = 'en';
+            final textBytes = utf8.encode(content);
+            final langBytes = utf8.encode(languageCode);
+            final payload = Uint8List.fromList([langBytes.length] + langBytes + textBytes);
+            final record = NdefRecord(
+              typeNameFormat: TypeNameFormat.wellKnown,
+              type: Uint8List.fromList(utf8.encode('T')),
+              identifier: Uint8List(0),
+              payload: payload,
+            );
+            final message = NdefMessage(records: [record]);
+            await ndef.write(message: message);
             completer.complete(true);
           } catch (e) {
-            completer.completeError(
-                NFCWriteException('Error escribiendo etiqueta: $e'));
+            completer.completeError(NFCWriteException('Error escribiendo etiqueta: $e'));
           } finally {
             await NfcManager.instance.stopSession();
           }
         },
       );
     } catch (e) {
-      completer.completeError(
-          const NFCException('Error iniciando sesión de escritura'));
+      completer.completeError(const NFCException('Error iniciando sesión de escritura'));
     }
-
     return completer.future;
   }
 

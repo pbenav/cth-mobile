@@ -4,6 +4,7 @@ import '../models/user.dart';
 import '../models/clock_status.dart';
 import '../services/clock_service.dart';
 import '../services/webview_service.dart';
+import 'settings_screen.dart';
 import '../utils/constants.dart';
 
 class ClockScreen extends StatefulWidget {
@@ -11,10 +12,10 @@ class ClockScreen extends StatefulWidget {
   final User user;
 
   const ClockScreen({
-    Key? key,
+    super.key,
     required this.workCenter,
     required this.user,
-  }) : super(key: key);
+  });
 
   @override
   _ClockScreenState createState() => _ClockScreenState();
@@ -84,13 +85,27 @@ class _ClockScreenState extends State<ClockScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('CTH Fichaje'),
-        backgroundColor: Color(AppConstants.primaryColorValue),
+        backgroundColor: const Color(AppConstants.primaryColorValue),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: isLoading ? null : _loadStatus,
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () async {
+              final result = await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const SettingsScreen(),
+                ),
+              );
+              if (result == true) {
+                // Si se guardó la URL, recargar estado
+                await _loadStatus();
+              }
+            },
           ),
           IconButton(
             icon: const Icon(Icons.logout),
@@ -104,7 +119,7 @@ class _ClockScreenState extends State<ClockScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(AppConstants.primaryColorValue).withOpacity(0.1),
+              const Color(AppConstants.primaryColorValue).withOpacity(0.1),
               Colors.white,
             ],
           ),
@@ -128,11 +143,11 @@ class _ClockScreenState extends State<ClockScreen> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Color(AppConstants.primaryColorValue)
+                            color: const Color(AppConstants.primaryColorValue)
                                 .withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Icons.business,
                             color: Color(AppConstants.primaryColorValue),
                             size: 24,
@@ -181,11 +196,11 @@ class _ClockScreenState extends State<ClockScreen> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Color(AppConstants.successColorValue)
+                            color: const Color(AppConstants.successColorValue)
                                 .withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Icons.person,
                             color: Color(AppConstants.successColorValue),
                             size: 24,
@@ -256,9 +271,9 @@ class _ClockScreenState extends State<ClockScreen> {
                             decoration: BoxDecoration(
                               color: clockStatus!.todayStats.currentStatus ==
                                       'trabajando'
-                                  ? Color(AppConstants.successColorValue)
+                                  ? const Color(AppConstants.successColorValue)
                                       .withOpacity(0.1)
-                                  : Color(AppConstants.warningColorValue)
+                                  : const Color(AppConstants.warningColorValue)
                                       .withOpacity(0.1),
                               borderRadius: BorderRadius.circular(20),
                             ),
@@ -270,8 +285,8 @@ class _ClockScreenState extends State<ClockScreen> {
                                 fontWeight: FontWeight.bold,
                                 color: clockStatus!.todayStats.currentStatus ==
                                         'trabajando'
-                                    ? Color(AppConstants.successColorValue)
-                                    : Color(AppConstants.warningColorValue),
+                                    ? const Color(AppConstants.successColorValue)
+                                    : const Color(AppConstants.warningColorValue),
                               ),
                             ),
                           ),
@@ -313,8 +328,8 @@ class _ClockScreenState extends State<ClockScreen> {
                           : _performClock,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: clockStatus!.nextAction == 'entrada'
-                            ? Color(AppConstants.successColorValue)
-                            : Color(AppConstants.errorColorValue),
+                            ? const Color(AppConstants.successColorValue)
+                            : const Color(AppConstants.errorColorValue),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -419,7 +434,7 @@ class _ClockScreenState extends State<ClockScreen> {
       children: [
         Icon(
           icon,
-          color: Color(AppConstants.primaryColorValue),
+          color: const Color(AppConstants.primaryColorValue),
           size: 20,
         ),
         const SizedBox(height: 4),
@@ -458,7 +473,7 @@ class _ClockScreenState extends State<ClockScreen> {
           icon: Icon(icon, size: 28),
           style: IconButton.styleFrom(
             backgroundColor:
-                Color(AppConstants.primaryColorValue).withOpacity(0.1),
+                const Color(AppConstants.primaryColorValue).withOpacity(0.1),
             padding: const EdgeInsets.all(12),
           ),
         ),
@@ -478,7 +493,7 @@ class _ClockScreenState extends State<ClockScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Color(AppConstants.errorColorValue),
+        backgroundColor: const Color(AppConstants.errorColorValue),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -488,7 +503,7 @@ class _ClockScreenState extends State<ClockScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Color(AppConstants.successColorValue),
+        backgroundColor: const Color(AppConstants.successColorValue),
         behavior: SnackBarBehavior.floating,
       ),
     );

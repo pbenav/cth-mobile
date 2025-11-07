@@ -4,9 +4,15 @@ import '../models/api_response.dart';
 import '../models/clock_status.dart';
 import '../utils/exceptions.dart';
 import '../utils/constants.dart';
+import 'config_service.dart';
 
 class ClockService {
-  static const String baseUrl = AppConstants.apiBaseUrl;
+  // Obtener URL base dinámicamente
+  static Future<String> _getBaseUrl() async {
+    final configuredUrl = await ConfigService.getCurrentServerUrl();
+    final baseUrl = configuredUrl ?? AppConstants.apiBaseUrl;
+    return '$baseUrl/api/v1/mobile';
+  }
 
   // Realizar fichaje
   static Future<ApiResponse<ClockResponse>> performClock({
@@ -14,6 +20,7 @@ class ClockService {
     required String userCode,
   }) async {
     try {
+      final baseUrl = await _getBaseUrl();
       final response = await http
           .post(
             Uri.parse('$baseUrl/clock'),
@@ -23,7 +30,7 @@ class ClockService {
             },
             body: jsonEncode({
               'work_center_code': workCenterCode,
-              'user_code': userCode,
+              'user_secret_code': userCode,
             }),
           )
           .timeout(const Duration(seconds: 30));
@@ -53,10 +60,11 @@ class ClockService {
     required String userCode,
   }) async {
     try {
+      final baseUrl = await _getBaseUrl();
       final response = await http.get(
         Uri.parse('$baseUrl/status').replace(queryParameters: {
           'work_center_code': workCenterCode,
-          'user_code': userCode,
+          'user_secret_code': userCode,
         }),
         headers: {
           'Accept': 'application/json',
@@ -89,6 +97,7 @@ class ClockService {
     required List<OfflineClockEvent> events,
   }) async {
     try {
+      final baseUrl = await _getBaseUrl();
       final response = await http
           .post(
             Uri.parse('$baseUrl/sync'),
@@ -126,6 +135,7 @@ class ClockService {
   // Validar conectividad con el servidor
   static Future<bool> checkConnectivity() async {
     try {
+      final baseUrl = await _getBaseUrl();
       final response = await http.get(
         Uri.parse('$baseUrl/status').replace(queryParameters: {
           'work_center_code': 'test',
@@ -143,8 +153,10 @@ class ClockService {
   // Obtener configuración del servidor
   static Future<Map<String, dynamic>?> getServerConfig() async {
     try {
+      final configuredUrl = await ConfigService.getCurrentServerUrl();
+      final baseUrl = configuredUrl ?? AppConstants.apiBaseUrl;
       final response = await http.get(
-        Uri.parse('$baseUrl/config'),
+        Uri.parse('$baseUrl/api/v1/config/server'),
         headers: {'Accept': 'application/json'},
       ).timeout(const Duration(seconds: 10));
 

@@ -2,17 +2,17 @@ class AppConstants {
   // URLs de API (configurables via dart-define)
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://localhost:8000/api/v1/mobile',
+    defaultValue: 'https://cth.sientia.com',
   );
 
   static const String webBaseUrl = String.fromEnvironment(
     'WEB_BASE_URL',
-    defaultValue: 'http://localhost:8000/mobile',
+    defaultValue: 'https://cth.sientia.com/mobile',
   );
 
   // Configuración de la app
   static const String appName = 'CTH Mobile';
-  static const String appVersion = '1.0.0';
+  static const String appVersion = '0.0.1';
   static const bool isProduction = bool.fromEnvironment('PRODUCTION');
 
   // Configuración NFC
