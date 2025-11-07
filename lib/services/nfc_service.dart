@@ -87,26 +87,80 @@ class NFCService {
       onDebug?.call(text, null);
 
       if (text.trim().startsWith('{') && text.trim().endsWith('}')) {
+        print('🔍 Attempting to parse JSON payload');
+        print('📄 Raw text to parse: "$text"');
+        
+        // Mostrar caracteres individuales para debug
+        print('🔤 Character codes: ${text.codeUnits}');
+        
         try {
           final data = json.decode(text);
-          print('📋 Parsed JSON Data: $data');
+          print('📋 Successfully parsed JSON: $data');
+          print('🔍 JSON type: ${data.runtimeType}');
+          
+          if (data is Map<String, dynamic>) {
+            print('✅ JSON is valid Map with keys: ${data.keys.toList()}');
+            
+            // Verificar que tenga los campos requeridos
+            final hasUrl = data.containsKey('url') || data.containsKey('server_url');
+            final hasId = data.containsKey('id') || data.containsKey('nfc_tag_id');
 
-          // Verificar que tenga los campos requeridos
-          final hasUrl = data.containsKey('url') || data.containsKey('server_url');
-          final hasId = data.containsKey('id') || data.containsKey('nfc_tag_id');
+            print('✅ JSON valid - Has URL: $hasUrl, Has ID: $hasId');
 
-          print('✅ JSON valid - Has URL: $hasUrl, Has ID: $hasId');
+            // Notificar datos parseados
+            onDebug?.call(text, data);
 
-          // Notificar datos parseados
-          onDebug?.call(text, data);
-
-          return NFCPayload(
-            type: NFCPayloadType.autoConfig,
-            content: text,
-            data: data,
-          );
+            return NFCPayload(
+              type: NFCPayloadType.autoConfig,
+              content: text,
+              data: data,
+            );
+          } else {
+            print('❌ JSON parsed but not a Map: $data');
+            return NFCPayload(
+              type: NFCPayloadType.simple,
+              content: text,
+            );
+          }
         } catch (e) {
-          print('❌ Error parsing JSON: $e');
+          print('❌ JSON parsing failed: $e');
+          print('❌ Error details: ${e.toString()}');
+          
+          // Intentar diagnosticar el problema
+          if (e is FormatException) {
+            print('🔍 FormatException details:');
+            print('  - Message: ${e.message}');
+            print('  - Offset: ${e.offset}');
+            if (e.offset != null && e.offset! < text.length) {
+              final errorPos = e.offset!;
+              final start = errorPos - 10 < 0 ? 0 : errorPos - 10;
+              final end = errorPos + 10 > text.length ? text.length : errorPos + 10;
+              print('  - Context: "...${text.substring(start, end)}..."');
+              print('  - Char at error: "${text[errorPos]}" (code: ${text.codeUnitAt(errorPos)})');
+            }
+          }
+          
+          // Intentar reparar JSON si parece que faltan comillas
+          print('🔧 Attempting to repair malformed JSON...');
+          final repairedJson = _attemptJsonRepair(text);
+          if (repairedJson != null) {
+            print('✅ JSON repair successful, trying to parse again...');
+            try {
+              final data = json.decode(repairedJson);
+              print('📋 Repaired JSON parsed successfully: $data');
+              
+              // Notificar datos parseados
+              onDebug?.call(text, data);
+              
+              return NFCPayload(
+                type: NFCPayloadType.autoConfig,
+                content: text,
+                data: data,
+              );
+            } catch (repairError) {
+              print('❌ Even repaired JSON failed: $repairError');
+            }
+          }
         }
       }
       if (text.startsWith('CTH:')) {
@@ -290,5 +344,72 @@ class NFCService {
   /// Carga configuración guardada si existe
   static Future<bool> loadSavedConfiguration() async {
     return await ConfigService.loadSavedConfiguration();
+  }
+
+  /// Intenta reparar JSON malformado (útil para contenido NFC corrupto)
+  static String? _attemptJsonRepair(String text) {
+    try {
+      // Si parece que faltan comillas alrededor de valores, intentar agregarlas
+      // Ejemplo: {url:http://example.com,id:123} -> {"url":"http://example.com","id":"123"}
+      
+      final cleaned = text.trim();
+      if (!cleaned.startsWith('{') || !cleaned.endsWith('}')) {
+        return null;
+      }
+      
+      // Extraer contenido interno
+      final inner = cleaned.substring(1, cleaned.length - 1);
+      
+      // Dividir por comas
+      final pairs = inner.split(',');
+      final repairedPairs = <String>[];
+      
+      for (final pair in pairs) {
+        final trimmedPair = pair.trim();
+        if (trimmedPair.isEmpty) continue;
+        
+        final colonIndex = trimmedPair.indexOf(':');
+        if (colonIndex == -1) continue;
+        
+        final key = trimmedPair.substring(0, colonIndex).trim();
+        final value = trimmedPair.substring(colonIndex + 1).trim();
+        
+        // Agregar comillas si no las tiene
+        final quotedKey = key.startsWith('"') ? key : '"$key"';
+        final quotedValue = _quoteValue(value);
+        
+        repairedPairs.add('$quotedKey:$quotedValue');
+      }
+      
+      return '{${repairedPairs.join(',')}}';
+    } catch (e) {
+      print('❌ JSON repair failed: $e');
+      return null;
+    }
+  }
+  
+  /// Agrega comillas a un valor si es necesario
+  static String _quoteValue(String value) {
+    if (value.startsWith('"') && value.endsWith('"')) {
+      return value; // Ya tiene comillas
+    }
+    
+    // Si parece un número, no agregar comillas
+    if (int.tryParse(value) != null || double.tryParse(value) != null) {
+      return value;
+    }
+    
+    // Si parece un booleano
+    if (value == 'true' || value == 'false') {
+      return value;
+    }
+    
+    // Si parece null
+    if (value == 'null') {
+      return value;
+    }
+    
+    // Agregar comillas para strings
+    return '"$value"';
   }
 }

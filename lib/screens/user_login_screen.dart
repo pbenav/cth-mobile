@@ -31,21 +31,42 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
   }
 
   Future<void> _submitLogin() async {
-    if (!_formKey.currentState!.validate()) return;
+    print('DEBUG: _submitLogin called');
+    print('DEBUG: _codeController.text: "${_codeController.text}"');
+    print('DEBUG: _nameController.text: "${_nameController.text}"');
 
+    if (!_formKey.currentState!.validate()) {
+      print('DEBUG: Form validation failed');
+      return;
+    }
+
+    print('DEBUG: Form validation passed');
     setState(() => isLoading = true);
 
     try {
+      final userCode = _codeController.text.trim();
+      final userName = _nameController.text.trim().isNotEmpty
+          ? _nameController.text.trim()
+          : userCode;
+
+      print('DEBUG: Guardando usuario - Code: $userCode, Name: $userName');
+      print('DEBUG: WorkCenter: ${widget.workCenter.code} - ${widget.workCenter.name}');
+
       final user = User(
-        code: _codeController.text.trim(),
-        name: _nameController.text.trim().isNotEmpty
-            ? _nameController.text.trim()
-            : _codeController.text.trim(),
+        code: userCode,
+        name: userName,
       );
 
       // Guardar datos en almacenamiento local
       await StorageService.saveWorkCenter(widget.workCenter);
       await StorageService.saveUser(user);
+
+      // Verificar que se guardó correctamente
+      final savedWorkCenter = await StorageService.getWorkCenter();
+      final savedUser = await StorageService.getUser();
+      final hasSession = await StorageService.hasValidSession();
+
+      print('DEBUG: Datos guardados - WorkCenter: ${savedWorkCenter?.code}, User: ${savedUser?.code}, HasSession: $hasSession');
 
       if (!mounted) return;
 
@@ -60,6 +81,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
         ),
       );
     } catch (e) {
+      print('DEBUG: Error guardando datos: $e');
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(

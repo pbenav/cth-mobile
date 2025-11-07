@@ -29,10 +29,9 @@ class StorageService {
   static Future<void> saveWorkCenter(WorkCenter workCenter) async {
     try {
       final prefs = await _preferences;
-      await prefs.setString(
-        AppConstants.keyWorkCenter,
-        jsonEncode(workCenter.toJson()),
-      );
+      final jsonData = jsonEncode(workCenter.toJson());
+      await prefs.setString(AppConstants.keyWorkCenter, jsonData);
+      print('DEBUG: WorkCenter guardado - Key: ${AppConstants.keyWorkCenter}, Data: $jsonData');
     } catch (e) {
       throw StorageException('Error guardando centro de trabajo: $e');
     }
@@ -42,11 +41,16 @@ class StorageService {
     try {
       final prefs = await _preferences;
       final data = prefs.getString(AppConstants.keyWorkCenter);
+      print('DEBUG: getWorkCenter - Key: ${AppConstants.keyWorkCenter}, Data: $data');
       if (data != null) {
-        return WorkCenter.fromJson(jsonDecode(data) as Map<String, dynamic>);
+        final workCenter = WorkCenter.fromJson(jsonDecode(data) as Map<String, dynamic>);
+        print('DEBUG: WorkCenter cargado - Code: ${workCenter.code}, Name: ${workCenter.name}');
+        return workCenter;
       }
+      print('DEBUG: No se encontró WorkCenter en SharedPreferences');
       return null;
     } catch (e) {
+      print('DEBUG: Error cargando WorkCenter: $e');
       throw StorageException('Error cargando centro de trabajo: $e');
     }
   }
@@ -64,10 +68,9 @@ class StorageService {
   static Future<void> saveUser(User user) async {
     try {
       final prefs = await _preferences;
-      await prefs.setString(
-        AppConstants.keyUser,
-        jsonEncode(user.toJson()),
-      );
+      final jsonData = jsonEncode(user.toJson());
+      await prefs.setString(AppConstants.keyUser, jsonData);
+      print('DEBUG: User guardado - Key: ${AppConstants.keyUser}, Data: $jsonData');
     } catch (e) {
       throw StorageException('Error guardando usuario: $e');
     }
@@ -77,11 +80,16 @@ class StorageService {
     try {
       final prefs = await _preferences;
       final data = prefs.getString(AppConstants.keyUser);
+      print('DEBUG: getUser - Key: ${AppConstants.keyUser}, Data: $data');
       if (data != null) {
-        return User.fromJson(jsonDecode(data) as Map<String, dynamic>);
+        final user = User.fromJson(jsonDecode(data) as Map<String, dynamic>);
+        print('DEBUG: User cargado - Code: ${user.code}, Name: ${user.name}');
+        return user;
       }
+      print('DEBUG: No se encontró User en SharedPreferences');
       return null;
     } catch (e) {
+      print('DEBUG: Error cargando User: $e');
       throw StorageException('Error cargando usuario: $e');
     }
   }
@@ -188,7 +196,9 @@ class StorageService {
   static Future<bool> hasValidSession() async {
     final workCenter = await getWorkCenter();
     final user = await getUser();
-    return workCenter != null && user != null;
+    final result = workCenter != null && user != null;
+    print('DEBUG: hasValidSession - WorkCenter: ${workCenter?.code}, User: ${user?.code}, Result: $result');
+    return result;
   }
 
   static Future<Map<String, dynamic>?> getSessionData() async {
