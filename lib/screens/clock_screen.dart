@@ -1,3 +1,4 @@
+import '../services/storage_service.dart';
 import 'package:flutter/material.dart';
 import '../models/work_center.dart';
 import '../models/user.dart';
@@ -632,7 +633,8 @@ class _ClockScreenState extends State<ClockScreen> {
             child: const Text('Cancelar'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
+              await StorageService.clearSession();
               Navigator.pop(context);
               Navigator.pushNamedAndRemoveUntil(
                 context,

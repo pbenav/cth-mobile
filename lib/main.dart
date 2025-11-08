@@ -96,7 +96,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
       if (!mounted) return;
 
-      if (hasSession) {
+      if (hasSession == true) {
         final workCenter = await StorageService.getWorkCenter();
         final user = await StorageService.getUser();
 

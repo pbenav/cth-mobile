@@ -1,3 +1,4 @@
+import '../services/storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../models/work_center.dart';
@@ -30,6 +31,27 @@ class _CTHWebViewState extends State<CTHWebView> {
   @override
   void initState() {
     super.initState();
+    _initializeWebViewWithCookie();
+  }
+
+  Future<String> getLaravelSessionValue() async {
+  // Recupera la cookie laravel_session guardada tras el login
+  return await StorageService.getLaravelSessionCookie() ?? '';
+  }
+
+  void _initializeWebViewWithCookie() async {
+  final cookieManager = WebViewCookieManager();
+    final laravelSessionValue = await getLaravelSessionValue();
+    if (laravelSessionValue.isNotEmpty) {
+      await cookieManager.setCookie(
+        WebViewCookie(
+          name: 'laravel_session',
+          value: laravelSessionValue,
+          domain: '.sientia.com',
+          path: '/',
+        ),
+      );
+    }
     _initializeWebView();
   }
 

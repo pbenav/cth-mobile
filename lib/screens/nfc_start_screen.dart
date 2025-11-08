@@ -133,13 +133,70 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
 
     try {
       final workCenter = await NFCService.scanWorkCenter(
-        onNFCDebug: debugMode ? _showNFCDebugDialog : null,
+        onNFCDebug: debugMode
+            ? (content, data) async {
+                await showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text('🔍 Contenido NFC Leído'),
+                      content: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Contenido crudo:', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Container(
+                              padding: EdgeInsets.all(8),
+                              margin: EdgeInsets.symmetric(vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[100],
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                content,
+                                style: TextStyle(fontFamily: 'monospace', fontSize: 12),
+                              ),
+                            ),
+                            if (data != null) ...[
+                              SizedBox(height: 16),
+                              Text('Datos parseados:', style: TextStyle(fontWeight: FontWeight.bold)),
+                              Container(
+                                padding: EdgeInsets.all(8),
+                                margin: EdgeInsets.symmetric(vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue[50],
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  data.toString(),
+                                  style: TextStyle(fontFamily: 'monospace', fontSize: 12),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('Cerrar'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              }
+            : null,
       );
 
       if (!mounted) return;
 
       if (workCenter != null) {
-        // Navegar a pantalla de login con código de centro
+        // Si debugMode está activo, esperar a que el usuario cierre el panel antes de navegar
+        if (debugMode) {
+          await Future.delayed(const Duration(milliseconds: 300));
+        }
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(

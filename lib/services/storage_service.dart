@@ -7,6 +7,17 @@ import '../utils/constants.dart';
 import '../utils/exceptions.dart';
 
 class StorageService {
+  // Guardar cookie de sesión
+  static Future<void> saveLaravelSessionCookie(String value) async {
+    final prefs = await _preferences;
+    await prefs.setString('laravel_session', value);
+  }
+
+  // Obtener cookie de sesión
+  static Future<String?> getLaravelSessionCookie() async {
+    final prefs = await _preferences;
+    return prefs.getString('laravel_session');
+  }
   static SharedPreferences? _prefs;
 
   // Inicializar SharedPreferences
