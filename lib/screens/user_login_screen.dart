@@ -7,10 +7,12 @@ import 'clock_screen.dart';
 
 class UserLoginScreen extends StatefulWidget {
   final WorkCenter workCenter;
+  final bool autoClockAfterLogin;
 
   const UserLoginScreen({
     super.key,
     required this.workCenter,
+    this.autoClockAfterLogin = false,
   });
 
   @override
@@ -53,6 +55,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
       print('DEBUG: WorkCenter: ${widget.workCenter.code} - ${widget.workCenter.name}');
 
       final user = User(
+        id: 0, // ID temporal, se asignará desde el servidor
         code: userCode,
         name: userName,
       );
@@ -77,6 +80,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
           builder: (context) => ClockScreen(
             workCenter: widget.workCenter,
             user: user,
+            autoClockOnNFC: widget.autoClockAfterLogin,
           ),
         ),
       );

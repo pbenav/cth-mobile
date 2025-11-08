@@ -30,6 +30,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
 
     try {
       final workCenter = WorkCenter(
+        id: 0, // ID temporal
         code: _codeController.text.trim(),
         name: _nameController.text.trim().isNotEmpty
             ? _nameController.text.trim()

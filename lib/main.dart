@@ -4,6 +4,10 @@ import 'services/storage_service.dart';
 import 'screens/nfc_start_screen.dart';
 import 'screens/clock_screen.dart';
 import 'screens/manual_entry_screen.dart';
+import 'screens/profile_screen.dart';
+import 'screens/settings_screen.dart';
+import 'models/work_center.dart';
+import 'models/user.dart';
 import 'utils/constants.dart';
 
 void main() async {
@@ -61,7 +65,44 @@ class CTHMobileApp extends StatelessWidget {
       routes: {
         AppConstants.routeStart: (context) => SplashScreen(),
         AppConstants.routeLogin: (context) => NFCStartScreen(),
+        AppConstants.routeClock: (context) {
+          // Esta ruta debería usarse solo cuando ya hay sesión válida
+          // En caso contrario, redirigir al inicio
+          return FutureBuilder<bool>(
+            future: StorageService.hasValidSession(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(body: Center(child: CircularProgressIndicator()));
+              }
+              if (snapshot.data == true) {
+                return FutureBuilder(
+                  future: Future.wait([
+                    StorageService.getWorkCenter(),
+                    StorageService.getUser(),
+                  ]),
+                  builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+                    }
+                    final workCenter = snapshot.data?[0] as WorkCenter?;
+                    final user = snapshot.data?[1] as User?;
+                    if (workCenter != null && user != null) {
+                      return ClockScreen(
+                        workCenter: workCenter,
+                        user: user,
+                      );
+                    }
+                    return NFCStartScreen();
+                  },
+                );
+              }
+              return NFCStartScreen();
+            },
+          );
+        },
         AppConstants.routeManualEntry: (context) => ManualEntryScreen(),
+        AppConstants.routeProfile: (context) => const ProfileScreen(),
+        AppConstants.routeSettings: (context) => const SettingsScreen(),
       },
       onUnknownRoute: (settings) {
         return MaterialPageRoute(

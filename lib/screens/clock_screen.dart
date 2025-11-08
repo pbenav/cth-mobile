@@ -6,16 +6,19 @@ import '../models/clock_status.dart';
 import '../services/clock_service.dart';
 import '../services/webview_service.dart';
 import 'settings_screen.dart';
+import 'profile_screen.dart';
 import '../utils/constants.dart';
 
 class ClockScreen extends StatefulWidget {
   final WorkCenter workCenter;
   final User user;
+  final bool autoClockOnNFC; // Nuevo parámetro para fichaje automático desde NFC
 
   const ClockScreen({
     super.key,
     required this.workCenter,
     required this.user,
+    this.autoClockOnNFC = false,
   });
 
   @override
@@ -43,6 +46,16 @@ class _ClockScreenState extends State<ClockScreen> {
 
       if (mounted) {
         setState(() => clockStatus = response.data);
+
+        // Si viene desde NFC y está habilitado el auto-fichaje, hacer fichaje automático
+        if (widget.autoClockOnNFC && clockStatus != null && clockStatus!.canClock) {
+          // Pequeño delay para que el usuario vea la pantalla antes del fichaje
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) {
+              _performClock();
+            }
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -67,7 +80,7 @@ class _ClockScreenState extends State<ClockScreen> {
 
       if (mounted) {
         _showSuccess(
-            '${response.data!.action.toUpperCase()} registrada correctamente');
+            '${response.data?.action?.toUpperCase() ?? 'ACCIÓN'} registrada correctamente');
         await _loadStatus(); // Recargar estado
       }
     } catch (e) {
@@ -120,6 +133,20 @@ class _ClockScreenState extends State<ClockScreen> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: isLoading ? null : _loadStatus,
+          ),
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () async {
+              final result = await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const ProfileScreen(),
+                ),
+              );
+              if (result == true) {
+                // Si se guardó el perfil, recargar estado
+                await _loadStatus();
+              }
+            },
           ),
           IconButton(
             icon: const Icon(Icons.settings),
@@ -306,13 +333,12 @@ class _ClockScreenState extends State<ClockScreen> {
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              clockStatus!.todayStats.currentStatus
+                              (clockStatus!.todayStats.currentStatus ?? 'DESCONOCIDO')
                                   .toUpperCase(),
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
-                                color: clockStatus!.todayStats.currentStatus ==
-                                        'trabajando'
+                                color: clockStatus!.todayStats.currentStatus == 'trabajando'
                                     ? const Color(AppConstants.successColorValue)
                                     : const Color(AppConstants.warningColorValue),
                               ),
@@ -324,12 +350,12 @@ class _ClockScreenState extends State<ClockScreen> {
                             children: [
                               _buildStatItem(
                                 'Entradas',
-                                clockStatus!.todayStats.entriesCount.toString(),
+                                clockStatus!.todayStats.totalEntries.toString(),
                                 Icons.login,
                               ),
                               _buildStatItem(
                                 'Salidas',
-                                clockStatus!.todayStats.exitsCount.toString(),
+                                clockStatus!.todayStats.totalExits.toString(),
                                 Icons.logout,
                               ),
                               _buildStatItem(
@@ -437,8 +463,9 @@ class _ClockScreenState extends State<ClockScreen> {
                         onPressed: (isPerformingClock || !clockStatus!.canClock)
                             ? null
                             : _performClock,
+                            : _performClock,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: clockStatus!.nextAction == 'entrada'
+                          backgroundColor: clockStatus!.action == 'clock_in'
                               ? const Color(AppConstants.successColorValue)
                               : const Color(AppConstants.errorColorValue),
                           foregroundColor: Colors.white,
@@ -460,14 +487,14 @@ class _ClockScreenState extends State<ClockScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
-                                    clockStatus!.nextAction == 'entrada'
+                                    clockStatus!.action == 'clock_in'
                                         ? Icons.login
                                         : Icons.logout,
                                     size: 24,
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    clockStatus!.nextAction == 'entrada'
+                                    clockStatus!.action == 'clock_in'
                                         ? 'FICHAR ENTRADA'
                                         : 'FICHAR SALIDA',
                                     style: const TextStyle(

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../services/nfc_service.dart';
+import '../services/storage_service.dart';
 import '../utils/constants.dart';
 import '../utils/exceptions.dart';
 import 'user_login_screen.dart';
 import 'manual_entry_screen.dart';
 import 'settings_screen.dart';
+import 'clock_screen.dart';
 
 class NFCStartScreen extends StatefulWidget {
   const NFCStartScreen({super.key});
@@ -197,12 +199,35 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
         if (debugMode) {
           await Future.delayed(const Duration(milliseconds: 300));
         }
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => UserLoginScreen(workCenter: workCenter),
-          ),
-        );
+
+        // Verificar si ya hay un usuario guardado
+        final savedUser = await StorageService.getUser();
+        final hasValidSession = await StorageService.hasValidSession();
+
+        if (savedUser != null && hasValidSession == true) {
+          // Usuario ya autenticado, ir directamente a clock con auto-fichaje
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ClockScreen(
+                workCenter: workCenter,
+                user: savedUser,
+                autoClockOnNFC: true,
+              ),
+            ),
+          );
+        } else {
+          // No hay usuario guardado, ir a login pero indicando que viene desde NFC
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => UserLoginScreen(
+                workCenter: workCenter,
+                autoClockAfterLogin: true, // Nuevo parámetro
+              ),
+            ),
+          );
+        }
       } else {
         setState(() {
           statusMessage = 'Etiqueta NFC no válida. Inténtalo de nuevo.';

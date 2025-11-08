@@ -240,6 +240,7 @@ class NFCService {
       final parts = content.split(':');
       if (parts.length >= 2) {
         return WorkCenter(
+          id: 0, // ID temporal para NFC
           code: parts[1],
           name: parts.length > 2 ? parts[2] : parts[1],
         );
