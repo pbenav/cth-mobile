@@ -39,7 +39,7 @@ class ClockService {
             },
             body: jsonEncode({
               'work_center_code': workCenterCode,
-              'user_secret_code': userCode,
+              'user_code': userCode,
               if (action != null) 'action': action,
             }),
           )
@@ -74,7 +74,7 @@ class ClockService {
       final response = await http.get(
         Uri.parse('$baseUrl/status').replace(queryParameters: {
           'work_center_code': workCenterCode,
-          'user_secret_code': userCode,
+          'user_code': userCode,
         }),
         headers: {
           'Accept': 'application/json',
