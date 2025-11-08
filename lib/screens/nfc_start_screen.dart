@@ -7,6 +7,7 @@ import 'user_login_screen.dart';
 import 'manual_entry_screen.dart';
 import 'settings_screen.dart';
 import 'clock_screen.dart';
+import 'profile_screen.dart';
 
 class NFCStartScreen extends StatefulWidget {
   const NFCStartScreen({super.key});
@@ -445,6 +446,28 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
 
                 const SizedBox(height: AppConstants.spacing),
 
+                // Profile button
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ProfileScreen(),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    '⚙️ Preferencias',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 16,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: AppConstants.spacing),
+
                 // Configuration button
                 TextButton(
                   onPressed: () async {
@@ -522,6 +545,17 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
                     }
                     return const SizedBox.shrink();
                   },
+                ),
+
+                const SizedBox(height: AppConstants.spacing),
+
+                // Build date
+                Text(
+                  'Compilado: ${AppConstants.buildDate}',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.6),
+                    fontSize: 10,
+                  ),
                 ),
               ],
             ),

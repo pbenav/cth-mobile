@@ -463,7 +463,6 @@ class _ClockScreenState extends State<ClockScreen> {
                         onPressed: (isPerformingClock || !clockStatus!.canClock)
                             ? null
                             : _performClock,
-                            : _performClock,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: clockStatus!.action == 'clock_in'
                               ? const Color(AppConstants.successColorValue)
@@ -568,7 +567,7 @@ class _ClockScreenState extends State<ClockScreen> {
     );
   }
 
-  Widget _buildStatItem(String label, String value, IconData icon) {
+  Widget _buildStatItem(String label, String? value, IconData icon) {
     return Column(
       children: [
         Icon(
@@ -578,7 +577,7 @@ class _ClockScreenState extends State<ClockScreen> {
         ),
         const SizedBox(height: 4),
         Text(
-          value,
+          value ?? '0',
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
