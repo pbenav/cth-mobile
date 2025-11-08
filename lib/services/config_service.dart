@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../models/server_config.dart';
 import '../models/work_center.dart';
 import '../utils/exceptions.dart';
+import '../services/setup_service.dart';
 import 'storage_service.dart';
 
 class ConfigService {
@@ -209,6 +210,13 @@ class ConfigService {
   /// Obtiene la URL del servidor actual
   static Future<String?> getCurrentServerUrl() async {
     try {
+      // Primero intentar obtener la URL configurada en el setup
+      final setupUrl = await SetupService.getConfiguredServerUrl();
+      if (setupUrl != null) {
+        return setupUrl;
+      }
+
+      // Si no hay URL del setup, usar la configuración anterior
       return await StorageService.getConfig<String>(_serverUrlKey);
     } catch (e) {
       print('Error obteniendo URL del servidor: $e');

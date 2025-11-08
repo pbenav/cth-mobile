@@ -348,7 +348,7 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
                 const SizedBox(height: 8),
 
                 Text(
-                  'Sistema de Control de Tiempo y Horarios',
+                  'Listo para fichar',
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.white.withOpacity(0.9),
@@ -458,31 +458,6 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
                   },
                   child: Text(
                     '⚙️ Preferencias',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 16,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: AppConstants.spacing),
-
-                // Configuration button
-                TextButton(
-                  onPressed: () async {
-                    final result = await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const SettingsScreen(),
-                      ),
-                    );
-                    if (result == true && mounted) {
-                      // Recargar configuración
-                      setState(() {});
-                    }
-                  },
-                  child: Text(
-                    'Configurar servidor',
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.9),
                       fontSize: 16,

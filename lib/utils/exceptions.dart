@@ -64,6 +64,10 @@ class ConfigException extends CTHException {
   const ConfigException(super.message);
 }
 
+class SetupException extends CTHException {
+  const SetupException(super.message);
+}
+
 class NFCVerificationException extends NFCException {
   const NFCVerificationException(super.message);
 }

@@ -6,6 +6,9 @@ import 'screens/clock_screen.dart';
 import 'screens/manual_entry_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/setup_server_screen.dart';
+import 'screens/setup_worker_screen.dart';
+import 'services/setup_service.dart';
 import 'models/work_center.dart';
 import 'models/user.dart';
 import 'utils/constants.dart';
@@ -103,6 +106,9 @@ class CTHMobileApp extends StatelessWidget {
         AppConstants.routeManualEntry: (context) => ManualEntryScreen(),
         AppConstants.routeProfile: (context) => const ProfileScreen(),
         AppConstants.routeSettings: (context) => const SettingsScreen(),
+        // Nuevas rutas para el asistente de configuración
+        'setup_server': (context) => const SetupServerScreen(),
+        'setup_worker': (context) => const SetupWorkerScreen(),
       },
       onUnknownRoute: (settings) {
         return MaterialPageRoute(
@@ -131,7 +137,23 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(const Duration(seconds: 2));
 
     try {
-      print('DEBUG: Verificando sesión...');
+      print('DEBUG: Verificando configuración inicial...');
+      final isSetupCompleted = await SetupService.isSetupCompleted();
+
+      if (!isSetupCompleted) {
+        print('DEBUG: Configuración no completada, iniciando asistente...');
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const SetupServerScreen(),
+            ),
+          );
+        }
+        return;
+      }
+
+      print('DEBUG: Configuración completada, verificando sesión...');
       final hasSession = await StorageService.hasValidSession();
       print('DEBUG: HasValidSession: $hasSession');
 

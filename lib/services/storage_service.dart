@@ -36,6 +36,32 @@ class StorageService {
     return await _preferences;
   }
 
+  // Métodos genéricos para almacenamiento
+  static Future<void> setString(String key, String value) async {
+    final prefs = await _preferences;
+    await prefs.setString(key, value);
+  }
+
+  static Future<String?> getString(String key) async {
+    final prefs = await _preferences;
+    return prefs.getString(key);
+  }
+
+  static Future<void> setBool(String key, bool value) async {
+    final prefs = await _preferences;
+    await prefs.setBool(key, value);
+  }
+
+  static Future<bool?> getBool(String key) async {
+    final prefs = await _preferences;
+    return prefs.getBool(key);
+  }
+
+  static Future<void> remove(String key) async {
+    final prefs = await _preferences;
+    await prefs.remove(key);
+  }
+
   // WorkCenter operations
   static Future<void> saveWorkCenter(WorkCenter workCenter) async {
     try {

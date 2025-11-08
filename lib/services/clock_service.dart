@@ -2,17 +2,29 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/api_response.dart';
 import '../models/clock_status.dart';
-import '../utils/exceptions.dart';
+import '../services/setup_service.dart';
+import '../services/config_service.dart';
 import '../utils/constants.dart';
-import 'config_service.dart';
+import '../utils/exceptions.dart';
 
 class ClockService {
   // Obtener URL base dinámicamente
   static Future<String> _getBaseUrl() async {
+    // Primero intentar obtener la URL configurada en el setup
+    final setupUrl = await SetupService.getConfiguredServerUrl();
+    if (setupUrl != null) {
+      return _normalizeUrl(setupUrl);
+    }
+
+    // Si no hay URL del setup, usar la configuración anterior
     final configuredUrl = await ConfigService.getCurrentServerUrl();
     final baseUrl = configuredUrl ?? AppConstants.apiBaseUrl;
 
-    // Normalizar la URL para evitar duplicados
+    return _normalizeUrl(baseUrl);
+  }
+
+  // Normalizar la URL para evitar duplicados
+  static String _normalizeUrl(String baseUrl) {
     if (baseUrl.endsWith('/api/v1/mobile')) {
       return baseUrl;
     } else if (baseUrl.endsWith('/api/v1')) {

@@ -5,8 +5,9 @@ import 'dart:convert';
 import 'package:nfc_manager/nfc_manager.dart';
 import 'package:nfc_manager_ndef/nfc_manager_ndef.dart';
 import '../models/work_center.dart';
+import '../services/setup_service.dart';
+import '../services/config_service.dart';
 import '../utils/exceptions.dart';
-import 'config_service.dart';
 
 enum NFCPayloadType { simple, autoConfig }
 
@@ -339,11 +340,25 @@ class NFCService {
 
   /// Obtiene información del servidor configurado
   static Future<String?> getCurrentServerUrl() async {
+    // Primero intentar obtener la URL configurada en el setup
+    final setupUrl = await SetupService.getConfiguredServerUrl();
+    if (setupUrl != null) {
+      return setupUrl;
+    }
+
+    // Si no hay URL del setup, usar la configuración anterior
     return await ConfigService.getCurrentServerUrl();
   }
 
   /// Carga configuración guardada si existe
   static Future<bool> loadSavedConfiguration() async {
+    // Primero verificar si el setup está completo
+    final isSetupCompleted = await SetupService.isSetupCompleted();
+    if (isSetupCompleted) {
+      return true;
+    }
+
+    // Si no hay setup, usar la configuración anterior
     return await ConfigService.loadSavedConfiguration();
   }
 
