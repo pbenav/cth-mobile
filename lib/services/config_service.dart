@@ -35,7 +35,7 @@ class ConfigService {
       if (response.statusCode == 200) {
         log('✅ Respuesta exitosa, procesando configuración...');
         final configData = json.decode(response.body);
-        final serverConfig = ServerConfig.fromJson(configData);
+         final serverConfig = ServerConfig.fromJson(configData['data']);
 
         // Validar que los endpoints requeridos estén disponibles
         if (serverConfig.endpoints.nfc.workCenters.isEmpty ||
