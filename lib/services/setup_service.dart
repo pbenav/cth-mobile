@@ -118,6 +118,11 @@ class SetupService {
         }
 
         log('📦 Payload a procesar: keys=${payload.keys.toList()}');
+        try {
+          log('📦 Payload completo: ${json.encode(payload)}');
+        } catch (e) {
+          log('📦 Payload completo (no serializable): $e');
+        }
 
         final workerData = WorkerData.fromJson(payload);
         log('✅ Datos del trabajador procesados exitosamente');
