@@ -38,6 +38,9 @@ class _ClockScreenState extends State<ClockScreen> {
     _loadStatus();
   }
 
+  // Control para alternar vista web (mobile/desktop)
+  bool _webMobileMode = true;
+
   Future<void> _loadStatus() async {
     setState(() => isLoading = true);
     try {
@@ -188,6 +191,16 @@ class _ClockScreenState extends State<ClockScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          // Toggle mobile/desktop web view
+          IconButton(
+            tooltip: 'Alternar vista web (móvil/escritorio)',
+            icon: Icon(_webMobileMode ? Icons.smartphone : Icons.desktop_windows),
+            onPressed: () {
+              setState(() {
+                _webMobileMode = !_webMobileMode;
+              });
+            },
+          ),
           IconButton(
             tooltip: 'Abrir versión web',
             icon: const Icon(Icons.open_in_browser),
@@ -197,6 +210,7 @@ class _ClockScreenState extends State<ClockScreen> {
                 workCenter: widget.workCenter,
                 user: widget.user,
                 path: AppConstants.webViewHome,
+                mobile: _webMobileMode,
               );
             },
           ),
@@ -603,6 +617,31 @@ class _ClockScreenState extends State<ClockScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
+                                      // Toggle mobile/desktop for webview access
+                                      Column(
+                                        children: [
+                                          const Text('Vista web'),
+                                          const SizedBox(height: 6),
+                                          ToggleButtons(
+                                            isSelected: [_webMobileMode, !_webMobileMode],
+                                            onPressed: (index) {
+                                              setState(() {
+                                                _webMobileMode = index == 0;
+                                              });
+                                            },
+                                            children: const [
+                                              Padding(
+                                                padding: EdgeInsets.symmetric(horizontal: 8),
+                                                child: Text('Móvil'),
+                                              ),
+                                              Padding(
+                                                padding: EdgeInsets.symmetric(horizontal: 8),
+                                                child: Text('Escritorio'),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
                             _buildWebViewButton(
                               icon: Icons.history,
                               label: 'Historial',
@@ -680,6 +719,7 @@ class _ClockScreenState extends State<ClockScreen> {
                 workCenter: null,
                 user: widget.user,
                 path: path,
+                mobile: _webMobileMode,
               );
             } else {
               WebViewService.openAuthenticatedWebView(
@@ -687,6 +727,7 @@ class _ClockScreenState extends State<ClockScreen> {
                 workCenter: widget.workCenter,
                 user: widget.user,
                 path: path,
+                mobile: _webMobileMode,
               );
             }
           },

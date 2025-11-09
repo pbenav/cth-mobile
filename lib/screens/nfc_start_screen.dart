@@ -22,6 +22,7 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
   bool debugMode = false;
   String statusMessage = I18n.of('nfc.ready');
   String? lastNFCContent;
+  final TextEditingController _pasteController = TextEditingController();
 
   @override
   void initState() {
@@ -32,6 +33,7 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
   @override
   void dispose() {
     NFCService.stopNFCSession();
+    _pasteController.dispose();
     super.dispose();
   }
 
@@ -52,6 +54,19 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
     }
 
     await _checkNFCAvailability();
+    // Iniciar escaneo automáticamente al entrar en la pantalla para que
+    // el mero gesto de pasar la tarjeta por el lector dispare la acción
+    // sin que el usuario tenga que pulsar el botón.
+    // Esto cumple el comportamiento solicitado: tocar la etiqueta -> fichar.
+    try {
+      // Pequeño delay para que la UI termine de renderizar
+      await Future.delayed(const Duration(milliseconds: 200));
+      if (mounted) {
+        _startNFCScan();
+      }
+    } catch (e) {
+      print('Error iniciando escaneo NFC automático: $e');
+    }
   }
 
   Future<void> _checkNFCAvailability() async {
@@ -285,6 +300,81 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
     }
   }
 
+  Future<void> _processPastedPayload() async {
+    if (isScanning || isConfiguring) return;
+
+    final text = _pasteController.text.trim();
+    if (text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Pegue primero el payload en el campo')),
+      );
+      return;
+    }
+
+    setState(() {
+      isScanning = true;
+      statusMessage = 'Procesando payload...';
+    });
+
+    try {
+      final workCenter = await NFCService.processPayloadString(
+        text,
+        onDebug: debugMode ? (content, data) => _showNFCDebugDialog(content, data) : null,
+      );
+
+      if (!mounted) return;
+
+      if (workCenter != null) {
+        final savedUser = await StorageService.getUser();
+        final savedWorkCenter = await StorageService.getWorkCenter();
+
+        if (savedUser != null) {
+          if (savedWorkCenter == null) {
+            try {
+              await StorageService.saveWorkCenter(workCenter);
+            } catch (e) {
+              print('DEBUG: No se pudo guardar WorkCenter desde payload pegado: $e');
+            }
+          }
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ClockScreen(
+                workCenter: workCenter,
+                user: savedUser,
+                autoClockOnNFC: true,
+              ),
+            ),
+          );
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => UserLoginScreen(
+                workCenter: workCenter,
+                autoClockAfterLogin: true,
+              ),
+            ),
+          );
+        }
+      } else {
+        setState(() {
+          statusMessage = 'Payload no válido o no reconocido';
+          isScanning = false;
+        });
+      }
+    } catch (e) {
+      String errorMessage = 'Error procesando payload: ${e.toString()}';
+      print('💥 _processPastedPayload Error: $errorMessage');
+      if (!mounted) return;
+      setState(() {
+        statusMessage = errorMessage;
+        isScanning = false;
+      });
+    }
+  }
+
   Widget _buildStatusIcon() {
     if (isConfiguring) {
       return const Icon(
@@ -450,6 +540,69 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
                   },
                   child: Text(
                     '⚙️ Preferencias',
+                          // --- Fallback manual: pegar payload NFC (temporal) ---
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.06),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Text(
+                                  'Pegar payload NFC (para pruebas)',
+                                  style: TextStyle(color: Colors.white.withOpacity(0.9)),
+                                ),
+                                const SizedBox(height: 8),
+                                TextField(
+                                  controller: _pasteController,
+                                  maxLines: 3,
+                                  style: TextStyle(color: Colors.white),
+                                  decoration: InputDecoration(
+                                    hintText: 'Pegue aquí el contenido NDEF o CTH:OC-001:Oficina',
+                                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.6)),
+                                    filled: true,
+                                    fillColor: Colors.black.withOpacity(0.12),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    suffixIcon: IconButton(
+                                      icon: const Icon(Icons.paste, color: Colors.white70),
+                                      onPressed: () async {
+                                        final clip = await Clipboard.getData('text/plain');
+                                        if (clip != null && clip.text != null) {
+                                          setState(() {
+                                            _pasteController.text = clip.text!;
+                                          });
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                SizedBox(
+                                  height: AppConstants.buttonHeight,
+                                  child: ElevatedButton(
+                                    onPressed: (isScanning || isConfiguring)
+                                        ? null
+                                        : _processPastedPayload,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.white,
+                                      foregroundColor: Colors.black87,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    child: Text('Procesar payload'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: AppConstants.spacing),
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.9),
                       fontSize: 16,

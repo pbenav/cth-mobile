@@ -11,13 +11,14 @@ class WebViewService {
     WorkCenter? workCenter,
     required User user,
     required String path, // '/history', '/schedule', '/reports', etc.
+    bool mobile = true,
   }) async {
     // For history pages we allow opening with only the user_code (backend supports it)
     final params = <String, String>{
       'user_code': user.code,
       'user_name': user.name,
       'auto_auth': 'true',
-      'mobile': 'true',
+      'mobile': mobile ? 'true' : 'false',
     };
 
     if (workCenter != null) {
@@ -37,6 +38,7 @@ class WebViewService {
           title: _getPageTitle(path),
           workCenter: workCenter,
           user: user,
+          mobile: mobile,
         ),
       ),
     );
@@ -47,6 +49,7 @@ class WebViewService {
     required WorkCenter workCenter,
     required User user,
     required String path,
+    bool mobile = true,
   }) {
     return Uri.parse('${AppConstants.webBaseUrl}$path').replace(
       queryParameters: {
@@ -55,7 +58,7 @@ class WebViewService {
         'user_code': user.code,
         'user_name': user.name,
         'auto_auth': 'true',
-        'mobile': 'true',
+        'mobile': mobile ? 'true' : 'false',
       },
     ).toString();
   }

@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../models/api_response.dart';
 import '../models/clock_status.dart';
 import '../services/setup_service.dart';
+import '../services/storage_service.dart';
 import '../services/config_service.dart';
 import '../utils/constants.dart';
 import '../utils/exceptions.dart';
@@ -52,21 +53,35 @@ class ClockService {
       } catch (_) {
         // Silenciar: no queremos que un fallo en el refresh impida el fichaje
       }
+      // Obtener cookie de sesión si existe para enviarla en la petición
+      final laravelSession = await StorageService.getLaravelSessionCookie();
       final baseUrl = await _getBaseUrl();
-      final response = await http
-          .post(
-            Uri.parse('$baseUrl/clock'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: jsonEncode({
-              'work_center_code': workCenterCode,
-              'user_code': userCode,
-              if (action != null) 'action': action,
-            }),
-          )
-          .timeout(const Duration(seconds: 30));
+      final url = Uri.parse('$baseUrl/clock');
+      final headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
+      if (laravelSession != null && laravelSession.isNotEmpty) {
+        // No imprimir valor real de la cookie por seguridad
+        print('ClockService: laravel_session cookie detected, adding to headers');
+        headers['Cookie'] = 'laravel_session=$laravelSession';
+      } else {
+        print('ClockService: no laravel_session cookie present');
+      }
+
+      final bodyMap = {
+        'work_center_code': workCenterCode,
+        'user_code': userCode,
+        if (action != null) 'action': action,
+      };
+
+      print('ClockService: POST $url');
+      print('ClockService: headers keys=${headers.keys.toList()}');
+      print('ClockService: body=${jsonEncode(bodyMap)}');
+
+      final response = await http.post(url, headers: headers, body: jsonEncode(bodyMap)).timeout(const Duration(seconds: 30));
+
+      print('ClockService: response status=${response.statusCode} body_len=${response.body.length}');
 
       final jsonData = jsonDecode(response.body);
 
@@ -97,16 +112,28 @@ class ClockService {
       try {
         await SetupService.refreshSavedWorkerData(blocking: true, timeout: const Duration(seconds: 3));
       } catch (_) {}
+      final laravelSession = await StorageService.getLaravelSessionCookie();
       final baseUrl = await _getBaseUrl();
-      final response = await http.get(
-        Uri.parse('$baseUrl/status').replace(queryParameters: {
-          'work_center_code': workCenterCode,
-          'user_code': userCode,
-        }),
-        headers: {
-          'Accept': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 15));
+      final url = Uri.parse('$baseUrl/status').replace(queryParameters: {
+        'work_center_code': workCenterCode,
+        'user_code': userCode,
+      });
+
+      final headers = {
+        'Accept': 'application/json',
+      };
+      if (laravelSession != null && laravelSession.isNotEmpty) {
+        headers['Cookie'] = 'laravel_session=$laravelSession';
+        print('ClockService.getStatus: including laravel_session cookie');
+      } else {
+        print('ClockService.getStatus: no laravel_session cookie present');
+      }
+
+      print('ClockService: GET $url');
+      print('ClockService: headers keys=${headers.keys.toList()}');
+
+      final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 15));
+      print('ClockService: response status=${response.statusCode} body_len=${response.body.length}');
 
       final jsonData = jsonDecode(response.body);
 

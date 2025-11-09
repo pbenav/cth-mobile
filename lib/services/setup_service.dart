@@ -87,14 +87,40 @@ class SetupService {
       log('👤 Código del trabajador: $workerCode');
       log('📝 URL del servidor: $serverUrl');
 
-      final normalizedUrl = _normalizeUrl(serverUrl);
-      final url = Uri.parse('$normalizedUrl/api/mobile/worker/$workerCode');
+  final normalizedUrl = _normalizeUrl(serverUrl);
+  // Unified mobile worker endpoint under /api/v1/mobile/worker
+  final url = Uri.parse('$normalizedUrl/api/v1/mobile/worker/$workerCode');
       log('🌐 URL completa: $url');
 
       log('📡 Enviando petición GET...');
       final response = await http.get(url).timeout(const Duration(seconds: 30));
 
       log('📡 Respuesta del servidor - Código: ${response.statusCode}');
+
+      // Intentar extraer la cookie de sesión (laravel_session) si el
+      // servidor la ha enviado en el header 'set-cookie'. Esto permite
+      // reutilizar la sesión en llamadas posteriores (/status, /clock).
+      try {
+        final cookieHeader = response.headers['set-cookie'];
+        if (cookieHeader != null && cookieHeader.contains('laravel_session=')) {
+          final match = RegExp(r'laravel_session=([^;]+)').firstMatch(cookieHeader);
+          if (match != null) {
+            final laravelSession = match.group(1);
+            if (laravelSession != null && laravelSession.isNotEmpty) {
+              try {
+                await StorageService.saveLaravelSessionCookie(laravelSession);
+                log('🔐 laravel_session guardada localmente');
+              } catch (e) {
+                log('⚠️ Error guardando laravel_session: $e');
+              }
+            }
+          }
+        } else {
+          log('ℹ️ No se detectó laravel_session en set-cookie');
+        }
+      } catch (e) {
+        log('⚠️ Error parseando set-cookie: $e');
+      }
 
         if (response.statusCode == 200) {
         log('✅ Respuesta exitosa, procesando datos...');

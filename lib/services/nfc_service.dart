@@ -350,6 +350,54 @@ class NFCService {
     return await ConfigService.getCurrentServerUrl();
   }
 
+  /// Procesa un payload NDEF dado como texto (útil para pruebas y pegado manual)
+  /// Reutiliza la lógica de parseo y manejo interno de la clase.
+  static Future<WorkCenter?> processPayloadString(String text, {Function(String, Map<String, dynamic>?)? onDebug}) async {
+    final trimmed = text.trim();
+
+    // Notificar al callback de debug si existe
+    onDebug?.call(text, null);
+
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+      try {
+        final data = json.decode(trimmed);
+        if (data is Map<String, dynamic>) {
+          onDebug?.call(text, data);
+          final payload = NFCPayload(type: NFCPayloadType.autoConfig, content: text, data: data);
+          return await _handleAutoConfigPayload(payload);
+        } else {
+          final payload = NFCPayload(type: NFCPayloadType.simple, content: text);
+          return await _handleSimplePayload(payload);
+        }
+      } catch (e) {
+        // Intentar reparación igual que en lectura real
+        final repaired = _attemptJsonRepair(text);
+        if (repaired != null) {
+          try {
+            final data = json.decode(repaired);
+            if (data is Map<String, dynamic>) {
+              onDebug?.call(text, data);
+              final payload = NFCPayload(type: NFCPayloadType.autoConfig, content: text, data: data);
+              return await _handleAutoConfigPayload(payload);
+            }
+          } catch (e2) {
+            print('❌ Repaired JSON still invalid: $e2');
+          }
+        }
+        print('❌ processPayloadString: JSON parsing failed for: $text');
+        return null;
+      }
+    }
+
+    if (text.startsWith('CTH:')) {
+      final payload = NFCPayload(type: NFCPayloadType.simple, content: text);
+      return await _handleSimplePayload(payload);
+    }
+
+    print('❓ processPayloadString: No reconocido: $text');
+    return null;
+  }
+
   /// Carga configuración guardada si existe
   static Future<bool> loadSavedConfiguration() async {
     // Primero verificar si el setup está completo

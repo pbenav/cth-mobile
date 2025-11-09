@@ -10,6 +10,7 @@ class CTHWebView extends StatefulWidget {
   final String title;
   final WorkCenter? workCenter;
   final User user;
+  final bool mobile;
 
   const CTHWebView({
     super.key,
@@ -17,6 +18,7 @@ class CTHWebView extends StatefulWidget {
     required this.title,
     required this.workCenter,
     required this.user,
+    this.mobile = true,
   });
 
   @override
@@ -47,7 +49,8 @@ class _CTHWebViewState extends State<CTHWebView> {
         WebViewCookie(
           name: 'laravel_session',
           value: laravelSessionValue,
-          domain: '.sientia.com',
+          // Use the configured webBaseUrl host as domain (with leading dot)
+          domain: '.${Uri.parse(AppConstants.webBaseUrl).host}',
           path: '/',
         ),
       );
@@ -126,13 +129,13 @@ class _CTHWebViewState extends State<CTHWebView> {
       final wcCode = widget.workCenter?.code ?? '';
       final wcName = widget.workCenter?.name ?? '';
 
-      await controller.runJavaScript('''
+    await controller.runJavaScript('''
           // Guardar datos en localStorage
           ${wcCode.isNotEmpty ? "localStorage.setItem('cth_work_center_code', '$wcCode');" : ''}
           ${wcName.isNotEmpty ? "localStorage.setItem('cth_work_center_name', '$wcName');" : ''}
           localStorage.setItem('cth_user_code', '${widget.user.code}');
           localStorage.setItem('cth_user_name', '${widget.user.name}');
-          localStorage.setItem('cth_mobile_app', 'true');
+      localStorage.setItem('cth_mobile_app', '${widget.mobile ? 'true' : 'false'}');
 
           // Llamar función de autenticación si existe
           if (typeof window.setWorkCenter === 'function' && '${wcCode.isNotEmpty}' == 'true') {
