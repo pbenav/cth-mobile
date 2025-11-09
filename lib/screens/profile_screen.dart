@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import '../models/user.dart';
 import '../models/work_center.dart';
 import '../services/storage_service.dart';
+import '../services/setup_service.dart';
+import '../models/worker_data.dart';
 import '../services/refresh_service.dart';
 import '../utils/constants.dart';
 
@@ -23,6 +26,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   User? _currentUser;
   WorkCenter? _currentWorkCenter;
+  WorkerData? _currentWorkerData;
+  List<WorkCenter> _availableWorkCenters = [];
+  List<ScheduleEntry> _schedules = [];
+  List<Holiday> _holidays = [];
   bool _isLoading = true;
   bool _isSaving = false;
   DateTime? _lastUpdate;
@@ -49,9 +56,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _isLoading = true);
 
     try {
-      _currentUser = await StorageService.getUser();
-      _currentWorkCenter = await StorageService.getWorkCenter();
+      // Prefer loading the full saved worker data if available
+      _currentWorkerData = await SetupService.getSavedWorkerData();
       _lastUpdate = await StorageService.getWorkerLastUpdate();
+
+      if (_currentWorkerData != null) {
+        _currentUser = _currentWorkerData!.user;
+        _schedules = _currentWorkerData!.schedule;
+        _holidays = _currentWorkerData!.holidays;
+        // If API returned multiple work_centers, use them for selection
+        try {
+          // We attempted to parse a single workCenter in WorkerData; however
+          // the original payload may include multiple centers. Try to extract
+          // them from storage key 'worker_data' to offer selection.
+          final raw = await StorageService.getString('worker_data');
+          if (raw != null) {
+            final decoded = jsonDecode(raw);
+            if (decoded is Map<String, dynamic>) {
+              final wcRaw = decoded['work_centers'];
+              if (wcRaw is List<dynamic>) {
+                _availableWorkCenters = wcRaw.map((e) => WorkCenter.fromJson(e as Map<String, dynamic>)).toList();
+              }
+            }
+          }
+        } catch (_) {
+          _availableWorkCenters = [];
+        }
+        // set current work center
+        _currentWorkCenter = _currentWorkerData!.workCenter;
+      } else {
+        _currentUser = await StorageService.getUser();
+        _currentWorkCenter = await StorageService.getWorkCenter();
+      }
 
       if (_currentUser != null) {
         _nameController.text = _currentUser!.name;
@@ -141,6 +177,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(success ? 'Actualización completada' : 'No se actualizaron los datos')),
         );
+          // Reload the profile data to reflect any changes from the refresh
+          await _loadProfileData();
       }
     } catch (e) {
       if (mounted) {
@@ -306,6 +344,98 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   return null;
                 },
               ),
+
+              const SizedBox(height: 32),
+
+              // Selección de Centro de Trabajo (si hay varios disponibles)
+              if (_availableWorkCenters.isNotEmpty) ...[
+                const Text(
+                  'Centros disponibles',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<WorkCenter>(
+                  value: _currentWorkCenter,
+                  items: _availableWorkCenters.map((wc) => DropdownMenuItem(
+                    value: wc,
+                    child: Text('${wc.name} (${wc.code})'),
+                  )).toList(),
+                  onChanged: (val) {
+                    setState(() {
+                      _currentWorkCenter = val;
+                      if (val != null) {
+                        _workCenterCodeController.text = val.code;
+                        _workCenterNameController.text = val.name;
+                      }
+                    });
+                  },
+                  decoration: const InputDecoration(border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // Horarios (read-only)
+              const Text(
+                'Horarios recibidos',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(AppConstants.primaryColorValue),
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (_schedules.isEmpty)
+                const Text('No hay horarios guardados')
+              else
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _schedules.length,
+                  itemBuilder: (context, index) {
+                    final s = _schedules[index];
+                    return Card(
+                      child: ListTile(
+                        leading: const Icon(Icons.schedule),
+                        title: Text('${s.startTime} - ${s.endTime}'),
+                        subtitle: Text(s.dayOfWeek.isNotEmpty ? s.dayOfWeek : s.dayName),
+                      ),
+                    );
+                  },
+                ),
+
+              const SizedBox(height: 24),
+
+              // Festivos (read-only)
+              const Text(
+                'Festivos recibidos',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(AppConstants.primaryColorValue),
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (_holidays.isEmpty)
+                const Text('No hay festivos guardados')
+              else
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _holidays.length,
+                  itemBuilder: (context, index) {
+                    final h = _holidays[index];
+                    return Card(
+                      child: ListTile(
+                        leading: const Icon(Icons.calendar_today),
+                        title: Text(h.name.isNotEmpty ? h.name : h.date),
+                        subtitle: Text(h.date),
+                      ),
+                    );
+                  },
+                ),
 
               const SizedBox(height: 32),
 

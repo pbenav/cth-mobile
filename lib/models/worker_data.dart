@@ -27,13 +27,39 @@ class WorkerData {
     // the key 'work_centers'. If it's a list, take the first element.
     Map<String, dynamic> workCenterCandidate = _ensureMap(json['work_center'] ?? json['workcenter'] ?? json['workCenter'] ?? json['centro']);
     if (workCenterCandidate.isEmpty) {
-      if (json['work_centers'] is List<dynamic>) {
-        final list = json['work_centers'] as List<dynamic>;
-        if (list.isNotEmpty && list.first is Map<String, dynamic>) {
-          workCenterCandidate = list.first as Map<String, dynamic>;
+      final wc = json['work_centers'];
+      if (wc is List<dynamic>) {
+        // prefer first element that looks like a work center map
+        for (final item in wc) {
+          if (item is Map<String, dynamic>) {
+            // sometimes item may be wrapped under 'data' or 'work_center'
+            if (item.containsKey('id') || item.containsKey('code') || item.containsKey('name')) {
+              workCenterCandidate = item;
+              break;
+            } else if (item.containsKey('work_center') && item['work_center'] is Map<String, dynamic>) {
+              workCenterCandidate = item['work_center'] as Map<String, dynamic>;
+              break;
+            } else if (item.containsKey('data') && item['data'] is Map<String, dynamic>) {
+              final inner = item['data'] as Map<String, dynamic>;
+              if (inner.containsKey('id') || inner.containsKey('code')) {
+                workCenterCandidate = inner;
+                break;
+              }
+            }
+          }
         }
-      } else if (json['work_centers'] is Map<String, dynamic>) {
-        workCenterCandidate = _ensureMap(json['work_centers']);
+      } else if (wc is Map<String, dynamic>) {
+        // handle wrapper objects like { data: { ... } } or { data: [ ... ] }
+        if (wc.containsKey('data')) {
+          final d = wc['data'];
+          if (d is Map<String, dynamic>) {
+            workCenterCandidate = d;
+          } else if (d is List<dynamic> && d.isNotEmpty && d.first is Map<String, dynamic>) {
+            workCenterCandidate = d.first as Map<String, dynamic>;
+          }
+        } else {
+          workCenterCandidate = wc;
+        }
       }
     }
     final Map<String, dynamic> workCenterMap = _ensureMap(workCenterCandidate);
@@ -50,7 +76,10 @@ class WorkerData {
   } else if (json['work_schedule'] is Map<String, dynamic>) {
     // Some backends wrap schedule under an object, try common keys
     final ws = json['work_schedule'] as Map<String, dynamic>;
-    if (ws['entries'] is List<dynamic>) {
+    // normalize nested 'data' wrappers too
+    if (ws['data'] is List<dynamic>) {
+      scheduleList = ws['data'] as List<dynamic>;
+    } else if (ws['entries'] is List<dynamic>) {
       scheduleList = ws['entries'] as List<dynamic>;
     } else if (ws['items'] is List<dynamic>) {
       scheduleList = ws['items'] as List<dynamic>;
@@ -68,6 +97,20 @@ class WorkerData {
   final List<dynamic>? holidaysList = (json['holidays'] is List<dynamic>)
     ? json['holidays'] as List<dynamic>
     : (json['festivos'] is List<dynamic> ? json['festivos'] as List<dynamic> : null);
+
+  // Additional possible shape: schedules wrapped under 'data' at root
+  if (scheduleList == null) {
+    if (json['data'] is Map<String, dynamic>) {
+      final rootData = json['data'] as Map<String, dynamic>;
+      if (rootData['work_schedule'] is List<dynamic>) scheduleList = rootData['work_schedule'] as List<dynamic>;
+      else if (rootData['schedule'] is List<dynamic>) scheduleList = rootData['schedule'] as List<dynamic>;
+      else if (rootData['schedules'] is List<dynamic>) scheduleList = rootData['schedules'] as List<dynamic>;
+      else if (rootData['work_schedule'] is Map<String, dynamic>) {
+        final ws = rootData['work_schedule'] as Map<String, dynamic>;
+        if (ws['data'] is List<dynamic>) scheduleList = ws['data'] as List<dynamic>;
+      }
+    }
+  }
 
     return WorkerData(
       user: User.fromJson(userMap),
@@ -103,12 +146,44 @@ class ScheduleEntry {
   });
 
   factory ScheduleEntry.fromJson(Map<String, dynamic> json) {
+    String extractDay(Map<String, dynamic> j) {
+      if (j['day_of_week'] != null) return j['day_of_week'];
+      if (j['day'] != null) return j['day'];
+      if (j['weekday'] != null) return j['weekday'];
+      if (j['dia'] != null) return j['dia'];
+      if (j['dia_semana'] != null) return j['dia_semana'];
+      // Some APIs return an array of days under 'days' (e.g. ["L","M","X"]).
+      if (j['days'] is List<dynamic>) {
+        try {
+          return (j['days'] as List<dynamic>).map((e) => e.toString()).join(',');
+        } catch (_) {
+          return '';
+        }
+      }
+      return '';
+    }
+
+    String extractStart(Map<String, dynamic> j) {
+      return j['start_time'] ?? j['start'] ?? j['hora_inicio'] ?? j['inicio'] ?? '';
+    }
+
+    String extractEnd(Map<String, dynamic> j) {
+      return j['end_time'] ?? j['end'] ?? j['hora_fin'] ?? j['fin'] ?? '';
+    }
+
+    bool extractActive(Map<String, dynamic> j) {
+      if (j.containsKey('is_active')) return j['is_active'] == true;
+      if (j.containsKey('active')) return j['active'] == true;
+      if (j.containsKey('activo')) return j['activo'] == true;
+      return true;
+    }
+
     return ScheduleEntry(
-      id: json['id'] ?? 0,
-      dayOfWeek: json['day_of_week'] ?? '',
-      startTime: json['start_time'] ?? '',
-      endTime: json['end_time'] ?? '',
-      isActive: json['is_active'] ?? true,
+      id: json['id'] ?? json['schedule_id'] ?? 0,
+      dayOfWeek: extractDay(json),
+      startTime: extractStart(json),
+      endTime: extractEnd(json),
+      isActive: extractActive(json),
     );
   }
 
