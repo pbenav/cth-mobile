@@ -8,11 +8,15 @@ import 'clock_screen.dart';
 class UserLoginScreen extends StatefulWidget {
   final WorkCenter workCenter;
   final bool autoClockAfterLogin;
+  final String? initialUserCode;
+  final String? initialUserName;
 
   const UserLoginScreen({
     super.key,
     required this.workCenter,
     this.autoClockAfterLogin = false,
+    this.initialUserCode,
+    this.initialUserName,
   });
 
   @override
@@ -30,6 +34,40 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
     _codeController.dispose();
     _nameController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _prefillFromWidgetOrStorage();
+  }
+
+  Future<void> _prefillFromWidgetOrStorage() async {
+    // If initial values were provided by the caller (e.g. NFC flow), use them
+    if (widget.initialUserCode != null && widget.initialUserCode!.isNotEmpty) {
+      _codeController.text = widget.initialUserCode!;
+    }
+    if (widget.initialUserName != null && widget.initialUserName!.isNotEmpty) {
+      _nameController.text = widget.initialUserName!;
+    }
+
+    // If still empty, try to load saved user from preferences
+    if ((_codeController.text.trim().isEmpty) || (_nameController.text.trim().isEmpty)) {
+      try {
+        final savedUser = await StorageService.getUser();
+        if (savedUser != null) {
+          if (_codeController.text.trim().isEmpty) {
+            _codeController.text = savedUser.code;
+          }
+          if (_nameController.text.trim().isEmpty) {
+            _nameController.text = savedUser.name;
+          }
+          setState(() {});
+        }
+      } catch (e) {
+        // ignore storage errors here
+      }
+    }
   }
 
   Future<void> _submitLogin() async {
