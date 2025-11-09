@@ -22,11 +22,11 @@ class User {
       };
 
   factory User.fromJson(Map<String, dynamic> json) => User(
-        id: json['id'] as int? ?? 0,
-        code: json['code'] as String,
-        name: json['name'] as String,
-        familyName1: json['family_name1'] as String?,
-        familyName2: json['family_name2'] as String?,
+    id: json['id'] as int? ?? 0,
+    code: (json['code'] != null) ? json['code'].toString() : '',
+    name: (json['name'] != null) ? json['name'].toString() : '',
+    familyName1: json['family_name1'] != null ? json['family_name1'].toString() : '',
+    familyName2: json['family_name2'] != null ? json['family_name2'].toString() : '',
       );
 
   @override

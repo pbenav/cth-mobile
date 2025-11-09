@@ -15,15 +15,23 @@ class WorkerData {
   });
 
   factory WorkerData.fromJson(Map<String, dynamic> json) {
+    // Defensive extraction: ensure nested objects are maps/lists before passing
+    final Map<String, dynamic> userMap = (json['user'] is Map<String, dynamic>)
+        ? json['user'] as Map<String, dynamic>
+        : <String, dynamic>{};
+
+    final Map<String, dynamic> workCenterMap = (json['work_center'] is Map<String, dynamic>)
+        ? json['work_center'] as Map<String, dynamic>
+        : <String, dynamic>{};
+
+    final List<dynamic>? scheduleList = (json['schedule'] is List<dynamic>) ? json['schedule'] as List<dynamic> : null;
+    final List<dynamic>? holidaysList = (json['holidays'] is List<dynamic>) ? json['holidays'] as List<dynamic> : null;
+
     return WorkerData(
-      user: User.fromJson(json['user']),
-      workCenter: WorkCenter.fromJson(json['work_center']),
-      schedule: (json['schedule'] as List<dynamic>?)
-          ?.map((e) => ScheduleEntry.fromJson(e))
-          .toList() ?? [],
-      holidays: (json['holidays'] as List<dynamic>?)
-          ?.map((e) => Holiday.fromJson(e))
-          .toList() ?? [],
+      user: User.fromJson(userMap),
+      workCenter: WorkCenter.fromJson(workCenterMap),
+      schedule: scheduleList?.map((e) => ScheduleEntry.fromJson(e is Map<String, dynamic> ? e : <String, dynamic>{})).toList() ?? [],
+      holidays: holidaysList?.map((e) => Holiday.fromJson(e is Map<String, dynamic> ? e : <String, dynamic>{})).toList() ?? [],
     );
   }
 
