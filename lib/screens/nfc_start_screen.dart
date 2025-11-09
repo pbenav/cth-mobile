@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../i18n/i18n_service.dart';
 import '../services/nfc_service.dart';
 import '../services/storage_service.dart';
@@ -150,115 +151,50 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
     });
 
     try {
-      final workCenter = await NFCService.scanWorkCenter(
-        onNFCDebug: debugMode
-            ? (content, data) async {
-                await showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: const Text('🔍 Contenido NFC Leído'),
-                      content: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text('Contenido crudo:', style: TextStyle(fontWeight: FontWeight.bold)),
-                            Container(
-                              padding: EdgeInsets.all(8),
-                              margin: EdgeInsets.symmetric(vertical: 8),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                content,
-                                style: TextStyle(fontFamily: 'monospace', fontSize: 12),
-                              ),
-                            ),
-                            if (data != null) ...[
-                              SizedBox(height: 16),
-                              Text('Datos parseados:', style: TextStyle(fontWeight: FontWeight.bold)),
-                              Container(
-                                padding: EdgeInsets.all(8),
-                                margin: EdgeInsets.symmetric(vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: Colors.blue[50],
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  data.toString(),
-                                  style: TextStyle(fontFamily: 'monospace', fontSize: 12),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: Text(I18n.of('actions.close')),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              }
-            : null,
+      // Use scanAndPerformClock to immediately call the clock endpoint when possible
+      final result = await NFCService.scanAndPerformClock(
+        onDebug: debugMode ? (content, data) => _showNFCDebugDialog(content, data) : null,
       );
 
       if (!mounted) return;
 
-      if (workCenter != null) {
-        // Si debugMode está activo, esperar a que el usuario cierre el panel antes de navegar
-        if (debugMode) {
-          await Future.delayed(const Duration(milliseconds: 300));
-        }
-
-        // Verificar si ya hay un usuario guardado
-        final savedUser = await StorageService.getUser();
-        final savedWorkCenter = await StorageService.getWorkCenter();
-
-        if (savedUser != null) {
-          // Si existe usuario guardado, podemos ir a ClockScreen usando el
-          // centro leído por NFC aunque no haya un centro guardado en prefs.
-          // Guardar el centro leído si aún no hay uno en preferencias.
-          if (savedWorkCenter == null) {
-            try {
-              await StorageService.saveWorkCenter(workCenter);
-            } catch (e) {
-              print('DEBUG: No se pudo guardar WorkCenter desde NFC: $e');
-            }
-          }
-
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ClockScreen(
-                workCenter: workCenter,
-                user: savedUser,
-                autoClockOnNFC: true,
-              ),
-            ),
+      if (result != null && result.containsKey('response')) {
+        final resp = result['response'];
+        // resp is ApiResponse<ClockResponse>
+        if (resp != null && resp.success == true) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(resp.message ?? 'Fichaje realizado correctamente')),
           );
-        } else {
-          // No hay usuario guardado, ir a login indicando que viene desde NFC
+        } else if (resp != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Fichaje fallido: ${resp.message}')),
+          );
+        }
+        // Recargar estado si estamos en pantalla de Clock (no navegamos aquí)
+        setState(() {
+          isScanning = false;
+          statusMessage = 'Fichaje procesado';
+        });
+      } else {
+        // Si no hay usuario guardado, intentar redirigir al login mediante el workCenter
+        // Para ello, debemos obtener el workCenter por separado
+        final wc = await NFCService.scanWorkCenter(onNFCDebug: debugMode ? (c, d) => _showNFCDebugDialog(c, d) : null);
+        if (wc != null) {
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => UserLoginScreen(
-                workCenter: workCenter,
-                autoClockAfterLogin: true, // Nuevo parámetro
+                workCenter: wc,
+                autoClockAfterLogin: true,
               ),
             ),
           );
+        } else {
+          setState(() {
+            statusMessage = 'Etiqueta NFC no válida. Inténtalo de nuevo.';
+            isScanning = false;
+          });
         }
-      } else {
-        setState(() {
-          statusMessage = 'Etiqueta NFC no válida. Inténtalo de nuevo.';
-          isScanning = false;
-        });
       }
     } catch (e) {
       if (!mounted) return;
@@ -540,69 +476,6 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
                   },
                   child: Text(
                     '⚙️ Preferencias',
-                          // --- Fallback manual: pegar payload NFC (temporal) ---
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.06),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Text(
-                                  'Pegar payload NFC (para pruebas)',
-                                  style: TextStyle(color: Colors.white.withOpacity(0.9)),
-                                ),
-                                const SizedBox(height: 8),
-                                TextField(
-                                  controller: _pasteController,
-                                  maxLines: 3,
-                                  style: TextStyle(color: Colors.white),
-                                  decoration: InputDecoration(
-                                    hintText: 'Pegue aquí el contenido NDEF o CTH:OC-001:Oficina',
-                                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.6)),
-                                    filled: true,
-                                    fillColor: Colors.black.withOpacity(0.12),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    suffixIcon: IconButton(
-                                      icon: const Icon(Icons.paste, color: Colors.white70),
-                                      onPressed: () async {
-                                        final clip = await Clipboard.getData('text/plain');
-                                        if (clip != null && clip.text != null) {
-                                          setState(() {
-                                            _pasteController.text = clip.text!;
-                                          });
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                SizedBox(
-                                  height: AppConstants.buttonHeight,
-                                  child: ElevatedButton(
-                                    onPressed: (isScanning || isConfiguring)
-                                        ? null
-                                        : _processPastedPayload,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.white,
-                                      foregroundColor: Colors.black87,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                    child: Text('Procesar payload'),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: AppConstants.spacing),
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.9),
                       fontSize: 16,
@@ -612,6 +485,68 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
                 ),
 
                 const SizedBox(height: AppConstants.spacing),
+
+                // --- Fallback manual: pegar payload NFC (temporal) ---
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.06),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Pegar payload NFC (para pruebas)',
+                        style: TextStyle(color: Colors.white.withOpacity(0.9)),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _pasteController,
+                        maxLines: 3,
+                        style: TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: 'Pegue aquí el contenido NDEF o CTH:OC-001:Oficina',
+                          hintStyle: TextStyle(color: Colors.white.withOpacity(0.6)),
+                          filled: true,
+                          fillColor: Colors.black.withOpacity(0.12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.paste, color: Colors.white70),
+                            onPressed: () async {
+                              final clip = await Clipboard.getData('text/plain');
+                              if (clip != null && clip.text != null) {
+                                setState(() {
+                                  _pasteController.text = clip.text!;
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        height: AppConstants.buttonHeight,
+                        child: ElevatedButton(
+                          onPressed: (isScanning || isConfiguring)
+                              ? null
+                              : _processPastedPayload,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.black87,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Text('Procesar payload'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
                 // Debug mode toggle
                 TextButton(

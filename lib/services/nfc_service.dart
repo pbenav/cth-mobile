@@ -8,6 +8,8 @@ import '../models/work_center.dart';
 import '../services/setup_service.dart';
 import '../services/config_service.dart';
 import '../utils/exceptions.dart';
+import '../services/clock_service.dart';
+import '../services/storage_service.dart';
 
 enum NFCPayloadType { simple, autoConfig }
 
@@ -71,6 +73,42 @@ class NFCService {
       }
     }
     return completer.future;
+  }
+
+  /// Escanea una etiqueta NFC y, si hay usuario guardado, realiza el fichaje
+  /// llamando a `ClockService.performClock` con los códigos apropiados.
+  /// Devuelve un Map con keys: 'workCenter' y 'response' (respuesta de ClockService)
+  static Future<Map<String, dynamic>?> scanAndPerformClock({Function(String, Map<String, dynamic>?)? onDebug}) async {
+    try {
+      final workCenter = await scanWorkCenter(onNFCDebug: onDebug);
+      if (workCenter == null) {
+        print('NFC: No se obtuvo workCenter del scan');
+        return null;
+      }
+
+      final user = await StorageService.getUser();
+      if (user == null) {
+        print('NFC: No hay usuario guardado para realizar fichaje');
+        throw const NFCException('Usuario no autenticado');
+      }
+
+      print('NFC: Realizando llamada a ClockService.performClock para user=${user.code} workCenter=${workCenter.code}');
+
+      final response = await ClockService.performClock(
+        workCenterCode: workCenter.code,
+        userCode: user.code,
+      );
+
+      print('NFC: performClock returned ApiResponse success=${response.success} message=${response.message}');
+
+      return {
+        'workCenter': workCenter,
+        'response': response,
+      };
+    } catch (e) {
+      print('NFC scanAndPerformClock error: $e');
+      rethrow;
+    }
   }
 
   /// Lee el payload de una etiqueta NFC y determina su tipo
