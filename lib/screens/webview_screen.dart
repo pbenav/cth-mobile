@@ -8,7 +8,7 @@ import '../utils/constants.dart';
 class CTHWebView extends StatefulWidget {
   final String url;
   final String title;
-  final WorkCenter workCenter;
+  final WorkCenter? workCenter;
   final User user;
 
   const CTHWebView({
@@ -123,42 +123,45 @@ class _CTHWebViewState extends State<CTHWebView> {
 
   Future<void> _injectAuthenticationData() async {
     try {
+      final wcCode = widget.workCenter?.code ?? '';
+      final wcName = widget.workCenter?.name ?? '';
+
       await controller.runJavaScript('''
-        // Guardar datos en localStorage
-        localStorage.setItem('cth_work_center_code', '${widget.workCenter.code}');
-        localStorage.setItem('cth_work_center_name', '${widget.workCenter.name}');
-        localStorage.setItem('cth_user_code', '${widget.user.code}');
-        localStorage.setItem('cth_user_name', '${widget.user.name}');
-        localStorage.setItem('cth_mobile_app', 'true');
-        
-        // Llamar función de autenticación si existe
-        if (typeof window.setWorkCenter === 'function') {
-          window.setWorkCenter('${widget.workCenter.code}', '${widget.workCenter.name}');
-        }
-        
-        if (typeof window.setUser === 'function') {
-          window.setUser('${widget.user.code}', '${widget.user.name}');
-        }
-        
-        // Notificar que los datos están listos
-        if (typeof window.onCTHDataReady === 'function') {
-          window.onCTHDataReady();
-        }
-        
-        // Disparar evento personalizado
-        window.dispatchEvent(new CustomEvent('cthDataReady', {
-          detail: {
-            workCenter: {
-              code: '${widget.workCenter.code}',
-              name: '${widget.workCenter.name}'
-            },
-            user: {
-              code: '${widget.user.code}',
-              name: '${widget.user.name}'
-            }
+          // Guardar datos en localStorage
+          ${wcCode.isNotEmpty ? "localStorage.setItem('cth_work_center_code', '$wcCode');" : ''}
+          ${wcName.isNotEmpty ? "localStorage.setItem('cth_work_center_name', '$wcName');" : ''}
+          localStorage.setItem('cth_user_code', '${widget.user.code}');
+          localStorage.setItem('cth_user_name', '${widget.user.name}');
+          localStorage.setItem('cth_mobile_app', 'true');
+
+          // Llamar función de autenticación si existe
+          if (typeof window.setWorkCenter === 'function' && '${wcCode.isNotEmpty}' == 'true') {
+            window.setWorkCenter('$wcCode', '$wcName');
           }
-        }));
-      ''');
+
+          if (typeof window.setUser === 'function') {
+            window.setUser('${widget.user.code}', '${widget.user.name}');
+          }
+
+          // Notificar que los datos están listos
+          if (typeof window.onCTHDataReady === 'function') {
+            window.onCTHDataReady();
+          }
+
+          // Disparar evento personalizado
+          window.dispatchEvent(new CustomEvent('cthDataReady', {
+            detail: {
+              workCenter: {
+                code: '$wcCode',
+                name: '$wcName'
+              },
+              user: {
+                code: '${widget.user.code}',
+                name: '${widget.user.name}'
+              }
+            }
+          }));
+        ''');
     } catch (e) {
       print('Error inyectando datos de autenticación: $e');
     }
