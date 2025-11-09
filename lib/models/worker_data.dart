@@ -26,23 +26,44 @@ class WorkerData {
     // The backend may return work_center as a single map or as a list under
     // the key 'work_centers'. If it's a list, take the first element.
     Map<String, dynamic> workCenterCandidate = _ensureMap(json['work_center'] ?? json['workcenter'] ?? json['workCenter'] ?? json['centro']);
-    if (workCenterCandidate.isEmpty && json['work_centers'] is List<dynamic>) {
-      final list = json['work_centers'] as List<dynamic>;
-      if (list.isNotEmpty && list.first is Map<String, dynamic>) {
-        workCenterCandidate = list.first as Map<String, dynamic>;
+    if (workCenterCandidate.isEmpty) {
+      if (json['work_centers'] is List<dynamic>) {
+        final list = json['work_centers'] as List<dynamic>;
+        if (list.isNotEmpty && list.first is Map<String, dynamic>) {
+          workCenterCandidate = list.first as Map<String, dynamic>;
+        }
+      } else if (json['work_centers'] is Map<String, dynamic>) {
+        workCenterCandidate = _ensureMap(json['work_centers']);
       }
     }
     final Map<String, dynamic> workCenterMap = _ensureMap(workCenterCandidate);
 
   // Accept various keys for schedules used by backend: 'schedule',
-  // 'schedules', or 'work_schedule'.
-  final List<dynamic>? scheduleList = (json['schedule'] is List<dynamic>)
-    ? json['schedule'] as List<dynamic>
-    : (json['schedules'] is List<dynamic>
-      ? json['schedules'] as List<dynamic>
-      : (json['work_schedule'] is List<dynamic]
-        ? json['work_schedule'] as List<dynamic>
-        : null));
+  // 'schedules', or 'work_schedule'. Prefer the first one that exists.
+  List<dynamic>? scheduleList;
+  if (json['schedule'] is List<dynamic>) {
+    scheduleList = json['schedule'] as List<dynamic>;
+  } else if (json['schedules'] is List<dynamic>) {
+    scheduleList = json['schedules'] as List<dynamic>;
+  } else if (json['work_schedule'] is List<dynamic>) {
+    scheduleList = json['work_schedule'] as List<dynamic>;
+  } else if (json['work_schedule'] is Map<String, dynamic>) {
+    // Some backends wrap schedule under an object, try common keys
+    final ws = json['work_schedule'] as Map<String, dynamic>;
+    if (ws['entries'] is List<dynamic>) {
+      scheduleList = ws['entries'] as List<dynamic>;
+    } else if (ws['items'] is List<dynamic>) {
+      scheduleList = ws['items'] as List<dynamic>;
+    } else if (ws['tramos'] is List<dynamic>) {
+      scheduleList = ws['tramos'] as List<dynamic>;
+    } else if (ws['schedule'] is List<dynamic>) {
+      scheduleList = ws['schedule'] as List<dynamic>;
+    } else {
+      scheduleList = null;
+    }
+  } else {
+    scheduleList = null;
+  }
 
   final List<dynamic>? holidaysList = (json['holidays'] is List<dynamic>)
     ? json['holidays'] as List<dynamic>
