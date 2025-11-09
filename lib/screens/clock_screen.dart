@@ -50,7 +50,7 @@ class _ClockScreenState extends State<ClockScreen> {
           : (await StorageService.getWorkCenter())?.code ?? '';
 
       if (effectiveUserCode.isEmpty) {
-        if (mounted) _showError('Código de usuario no disponible. Por favor, identifícate.');
+        if (mounted) _showError(I18n.of('clock.no_user'));
         return;
       }
 
@@ -88,7 +88,7 @@ class _ClockScreenState extends State<ClockScreen> {
       }
     } catch (e) {
       if (mounted) {
-        _showError('Error cargando estado: ${e.toString()}');
+        _showError(I18n.of('clock.loading_error', {'error': e.toString()}));
       }
     } finally {
       if (mounted) {

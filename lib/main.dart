@@ -12,12 +12,15 @@ import 'services/setup_service.dart';
 import 'models/work_center.dart';
 import 'models/user.dart';
 import 'utils/constants.dart';
+import 'i18n/i18n_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Inicializar servicios
   await StorageService.init();
+  // Inicializar i18n (por defecto 'es')
+  await I18n.init('es');
   
   // Configurar orientación de pantalla
   await SystemChrome.setPreferredOrientations([

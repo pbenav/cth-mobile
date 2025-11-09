@@ -20,7 +20,7 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
   bool isScanning = false;
   bool isConfiguring = false;
   bool debugMode = false;
-  String statusMessage = 'Acerca tu dispositivo a la etiqueta NFC';
+  String statusMessage = I18n.of('nfc.ready');
   String? lastNFCContent;
 
   @override
@@ -43,8 +43,8 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
         final serverUrl = await NFCService.getCurrentServerUrl();
         if (mounted) {
           setState(() {
-            statusMessage = 'Servidor configurado: ${serverUrl ?? "URL desconocida"}';
-          });
+              statusMessage = I18n.of('nfc.server_configured', {'server': serverUrl ?? 'URL desconocida'});
+            });
         }
       }
     } catch (e) {
@@ -61,13 +61,13 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
 
       if (!isAvailable) {
         setState(() {
-          statusMessage = 'NFC no disponible en este dispositivo';
+          statusMessage = I18n.of('nfc.not_available');
         });
       }
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        statusMessage = 'Error verificando NFC: $e';
+        statusMessage = I18n.of('nfc.error_checking', {'error': e.toString()});
       });
     }
   }
@@ -77,13 +77,13 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('🔍 Contenido NFC Leído'),
+          title: Text(I18n.of('nfc.debug.title')),
           content: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Contenido crudo:', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(I18n.of('nfc.debug.title'), style: TextStyle(fontWeight: FontWeight.bold)),
                 Container(
                   padding: EdgeInsets.all(8),
                   margin: EdgeInsets.symmetric(vertical: 8),
@@ -183,7 +183,7 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('Cerrar'),
+                          child: Text(I18n.of('actions.close')),
                         ),
                       ],
                     );
@@ -253,7 +253,7 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
       if (e is ConfigException) {
         setState(() {
           isConfiguring = true;
-          statusMessage = 'Configurando servidor automáticamente...';
+          statusMessage = I18n.of('nfc.configuring');
         });
         
         // Mostrar progreso de configuración
@@ -262,7 +262,7 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
         if (mounted) {
           setState(() {
             isConfiguring = false;
-            statusMessage = 'Error de configuración: ${e.message}';
+            statusMessage = I18n.of('nfc.error_checking', {'error': e.message});
             isScanning = false;
           });
         }
@@ -368,14 +368,14 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
 
                 const SizedBox(height: AppConstants.spacing * 3),
 
-                // NFC Status Card
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(AppConstants.spacing * 1.5),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius:
-                        BorderRadius.circular(AppConstants.cardBorderRadius),
+                  Text(
+                    I18n.of('app.slogan'),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.1),
