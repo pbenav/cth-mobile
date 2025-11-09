@@ -229,6 +229,29 @@ class StorageService {
     }
   }
 
+  // Worker last update timestamp
+  static Future<void> saveWorkerLastUpdate(DateTime updatedAt) async {
+    try {
+      final prefs = await _preferences;
+      await prefs.setString(AppConstants.keyWorkerLastUpdate, updatedAt.toIso8601String());
+    } catch (e) {
+      throw StorageException('Error guardando última actualización del worker: $e');
+    }
+  }
+
+  static Future<DateTime?> getWorkerLastUpdate() async {
+    try {
+      final prefs = await _preferences;
+      final data = prefs.getString(AppConstants.keyWorkerLastUpdate);
+      if (data != null) {
+        return DateTime.parse(data);
+      }
+      return null;
+    } catch (e) {
+      throw StorageException('Error cargando última actualización del worker: $e');
+    }
+  }
+
   // Session operations
   static Future<bool> hasValidSession() async {
     final workCenter = await getWorkCenter();

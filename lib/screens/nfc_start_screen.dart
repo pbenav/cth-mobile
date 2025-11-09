@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import '../i18n/i18n_service.dart';
 import '../services/nfc_service.dart';
 import '../services/storage_service.dart';
 import '../utils/constants.dart';
 import '../utils/exceptions.dart';
 import 'user_login_screen.dart';
-import 'manual_entry_screen.dart';
 import 'settings_screen.dart';
 import 'clock_screen.dart';
 import 'profile_screen.dart';
@@ -358,7 +358,7 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
                 const SizedBox(height: 8),
 
                 Text(
-                  'Listo para fichar',
+                  I18n.of('app.slogan'),
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.white.withOpacity(0.9),
@@ -368,14 +368,14 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
 
                 const SizedBox(height: AppConstants.spacing * 3),
 
-                  Text(
-                    I18n.of('app.slogan'),
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white.withOpacity(0.9),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
+                // NFC Status Card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(AppConstants.spacing * 1.5),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius:
+                        BorderRadius.circular(AppConstants.cardBorderRadius),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.1),
@@ -434,25 +434,7 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
 
                 const SizedBox(height: AppConstants.spacing * 2),
 
-                // Manual entry option
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ManualEntryScreen(),
-                      ),
-                    );
-                  },
-                  child: Text(
-                    'Introducir código manualmente',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 16,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ),
+                // Opción de entrada manual eliminada por decisión de producto
 
                 const SizedBox(height: AppConstants.spacing),
 

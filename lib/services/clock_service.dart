@@ -41,6 +41,17 @@ class ClockService {
     String? action, // 'pause' or 'clock_out' when working
   }) async {
     try {
+      // Intentar refrescar datos del trabajador guardado antes de cualquier
+      // acción que haga una conexión. Esto asegura que la app tenga los
+      // datos más recientes del trabajador y evita errores por user not found.
+      try {
+        // Hacemos un refresh bloqueante pero con timeout corto para evitar
+        // latencias largas: si la API responde rápido, tendremos datos
+        // actualizados; si no, procedemos con los datos en caché.
+        await SetupService.refreshSavedWorkerData(blocking: true, timeout: const Duration(seconds: 3));
+      } catch (_) {
+        // Silenciar: no queremos que un fallo en el refresh impida el fichaje
+      }
       final baseUrl = await _getBaseUrl();
       final response = await http
           .post(
@@ -82,6 +93,10 @@ class ClockService {
     required String userCode,
   }) async {
     try {
+      // Refrescar datos del trabajador antes de consultar estado
+      try {
+        await SetupService.refreshSavedWorkerData(blocking: true, timeout: const Duration(seconds: 3));
+      } catch (_) {}
       final baseUrl = await _getBaseUrl();
       final response = await http.get(
         Uri.parse('$baseUrl/status').replace(queryParameters: {
@@ -119,6 +134,10 @@ class ClockService {
     required List<OfflineClockEvent> events,
   }) async {
     try {
+      // Refrescar datos guardados antes de sincronizar
+      try {
+        await SetupService.refreshSavedWorkerData(blocking: true, timeout: const Duration(seconds: 3));
+      } catch (_) {}
       final baseUrl = await _getBaseUrl();
       final response = await http
           .post(

@@ -30,6 +30,7 @@ class AppConstants {
   static const String keyUser = 'user';
   static const String keyOfflineEvents = 'offline_events';
   static const String keyLastSync = 'last_sync';
+  static const String keyWorkerLastUpdate = 'worker_last_update';
 
   // Configuración UI
   static const double cardBorderRadius = 16.0;

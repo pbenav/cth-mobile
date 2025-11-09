@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../models/work_center.dart';
 import '../services/storage_service.dart';
+import '../services/refresh_service.dart';
 import '../utils/constants.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -24,6 +25,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   WorkCenter? _currentWorkCenter;
   bool _isLoading = true;
   bool _isSaving = false;
+  DateTime? _lastUpdate;
+  bool _isRefreshing = false;
 
   @override
   void initState() {
@@ -48,6 +51,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       _currentUser = await StorageService.getUser();
       _currentWorkCenter = await StorageService.getWorkCenter();
+      _lastUpdate = await StorageService.getWorkerLastUpdate();
 
       if (_currentUser != null) {
         _nameController.text = _currentUser!.name;
@@ -118,6 +122,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) {
         setState(() => _isSaving = false);
       }
+    }
+  }
+
+  String _formatDateTime(DateTime? dt) {
+    if (dt == null) return 'Nunca';
+    final local = dt.toLocal();
+    return '${local.year}-${local.month.toString().padLeft(2,'0')}-${local.day.toString().padLeft(2,'0')} ${local.hour.toString().padLeft(2,'0')}:${local.minute.toString().padLeft(2,'0')}';
+  }
+
+  Future<void> _forceRefresh() async {
+    setState(() => _isRefreshing = true);
+    try {
+      final success = await RefreshService.forceRefresh(timeout: const Duration(seconds: 5));
+      _lastUpdate = await StorageService.getWorkerLastUpdate();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(success ? 'Actualización completada' : 'No se actualizaron los datos')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al forzar actualización: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isRefreshing = false);
     }
   }
 
@@ -207,6 +239,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   }
                   return null;
                 },
+              ),
+
+              const SizedBox(height: 32),
+
+              // Última actualización y forzar refresh
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Última actualización', style: TextStyle(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 4),
+                      Text(_formatDateTime(_lastUpdate)),
+                    ],
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: _isRefreshing ? null : _forceRefresh,
+                    icon: _isRefreshing ? const SizedBox(width:16,height:16,child:CircularProgressIndicator(color:Colors.white,strokeWidth:2)) : const Icon(Icons.refresh),
+                    label: Text(_isRefreshing ? 'Actualizando...' : 'Forzar actualización'),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 32),

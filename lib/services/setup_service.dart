@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/worker_data.dart';
@@ -252,6 +253,93 @@ class SetupService {
     await StorageService.remove(_workerDataKey);
     await StorageService.remove('server_url');
     await StorageService.remove(_tempServerUrlKey);
+  }
+
+  /// Actualiza (sobrescribe) los datos del trabajador guardados sin tocar
+  /// la URL del servidor ni el estado de setup. Útil para refrescar datos
+  /// cuando se detecta conectividad.
+  static Future<void> updateSavedWorkerData(WorkerData workerData) async {
+    try {
+      final workerDataJson = json.encode(workerData.toJson());
+      await StorageService.setString(_workerDataKey, workerDataJson);
+
+      // Guardar datos individuales para compatibilidad con el código existente
+      await StorageService.saveUser(workerData.user);
+      await StorageService.saveWorkCenter(workerData.workCenter);
+
+      // Guardar horario y festivos
+      await _saveSchedule(workerData.schedule);
+      await _saveHolidays(workerData.holidays);
+
+      // Registrar timestamp de la actualización para la UI
+      try {
+        await StorageService.saveWorkerLastUpdate(DateTime.now());
+      } catch (e) {
+        // No bloquear si el guardado del timestamp falla
+        print('SetupService: warning saving worker last update: $e');
+      }
+
+      print('SetupService: updateSavedWorkerData -> datos actualizados localmente');
+    } catch (e) {
+      print('SetupService: Error updateSavedWorkerData: $e');
+      throw SetupException('Error al actualizar datos del trabajador: ${e.toString()}');
+    }
+  }
+
+  /// Refresca los datos del trabajador guardado, si existe un usuario en
+  /// almacenamiento local. Hace una llamada a la API y actualiza los datos
+  /// locales si se reciben correctamente.
+  /// Refresca los datos del trabajador guardado.
+  ///
+  /// Parámetros:
+  /// - [onLog]: callback para logging.
+  /// - [blocking]: si true, la función esperará a que termine el refresh
+  ///   (hasta [timeout]) y se podrá usar para asegurar que los datos están
+  ///   actualizados antes de proceder. Si false (por defecto), el refresh se
+  ///   lanza en background y no bloqueará al llamador.
+  /// - [timeout]: duración máxima a esperar cuando [blocking] es true.
+  static Future<void> refreshSavedWorkerData({Function(String)? onLog, bool blocking = false, Duration timeout = const Duration(seconds: 3)}) async {
+    final log = onLog ?? (String m) => print('SetupService: $m');
+
+    try {
+      final savedUser = await StorageService.getUser();
+      if (savedUser == null) {
+        log('No hay usuario guardado para refrescar');
+        return;
+      }
+
+      log('Refrescando datos para usuario: ${savedUser.code} (blocking=$blocking)');
+
+      Future<void> doRefresh() async {
+        try {
+          final workerData = await loadWorkerData(savedUser.code, onLog: onLog);
+          if (workerData != null) {
+            await updateSavedWorkerData(workerData);
+            log('Datos del trabajador refrescados y guardados localmente');
+          } else {
+            log('La API no devolvió datos para el trabajador durante el refresh');
+          }
+        } catch (e) {
+          log('Error durante loadWorkerData en refresh: ${e.toString()}');
+        }
+      }
+
+      if (blocking) {
+        try {
+          await doRefresh().timeout(timeout);
+        } on TimeoutException catch (_) {
+          log('Timeout al refrescar datos del trabajador (timeout=${timeout.inSeconds}s)');
+        } catch (e) {
+          log('Error al refrescar datos del trabajador: ${e.toString()}');
+        }
+      } else {
+        // Ejecutar en background sin esperar
+        unawaited(doRefresh());
+      }
+    } catch (e) {
+      log('Error refrescando datos del trabajador: ${e.toString()}');
+      // No rethrow: no queremos bloquear la operación principal por el refresh
+    }
   }
 
   // Métodos privados auxiliares

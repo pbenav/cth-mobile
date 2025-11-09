@@ -3,12 +3,12 @@ import 'package:flutter/services.dart';
 import 'services/storage_service.dart';
 import 'screens/nfc_start_screen.dart';
 import 'screens/clock_screen.dart';
-import 'screens/manual_entry_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/setup_server_screen.dart';
 import 'screens/setup_worker_screen.dart';
 import 'services/setup_service.dart';
+import 'services/refresh_service.dart';
 import 'models/work_center.dart';
 import 'models/user.dart';
 import 'utils/constants.dart';
@@ -38,6 +38,8 @@ void main() async {
   );
   
   runApp(CTHMobileApp());
+  // Iniciar refresco periódico en background (foreground while app runs)
+  RefreshService.startPeriodicRefresh();
 }
 
 class CTHMobileApp extends StatelessWidget {
@@ -106,7 +108,6 @@ class CTHMobileApp extends StatelessWidget {
             },
           );
         },
-        AppConstants.routeManualEntry: (context) => ManualEntryScreen(),
         AppConstants.routeProfile: (context) => const ProfileScreen(),
         AppConstants.routeSettings: (context) => const SettingsScreen(),
         // Nuevas rutas para el asistente de configuración

@@ -12,7 +12,7 @@ class I18n {
   Future<void> load([String? localeCode]) async {
     if (localeCode != null) locale = localeCode;
     try {
-      final content = await rootBundle.loadString('lib/i18n/\$locale.json');
+      final content = await rootBundle.loadString('lib/i18n/$locale.json');
       final Map<String, dynamic> parsed = json.decode(content);
       _strings.clear();
       parsed.forEach((k, v) {
@@ -20,7 +20,7 @@ class I18n {
       });
     } catch (e) {
       // fallback empty
-      print('I18n load error for locale "'\$locale'" : $e');
+      print('I18n load error for locale "${locale}" : $e');
     }
   }
 
