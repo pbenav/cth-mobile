@@ -134,7 +134,7 @@ class _ClockScreenState extends State<ClockScreen> {
             icon: const Icon(Icons.refresh),
             onPressed: isLoading ? null : _loadStatus,
           ),
-          IconButton(
+            IconButton(
             icon: const Icon(Icons.person),
             onPressed: () async {
               final result = await Navigator.of(context).push(
@@ -602,12 +602,24 @@ class _ClockScreenState extends State<ClockScreen> {
     return Column(
       children: [
         IconButton(
-          onPressed: () => WebViewService.openAuthenticatedWebView(
-            context: context,
-            workCenter: widget.workCenter,
-            user: widget.user,
-            path: path,
-          ),
+          onPressed: () {
+            // For history we only need user_code; backend accepts user-only auth
+            if (path == AppConstants.webViewHistory) {
+              WebViewService.openAuthenticatedWebView(
+                context: context,
+                workCenter: null,
+                user: widget.user,
+                path: path,
+              );
+            } else {
+              WebViewService.openAuthenticatedWebView(
+                context: context,
+                workCenter: widget.workCenter,
+                user: widget.user,
+                path: path,
+              );
+            }
+          },
           icon: Icon(icon, size: 28),
           style: IconButton.styleFrom(
             backgroundColor:

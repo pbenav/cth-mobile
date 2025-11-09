@@ -8,19 +8,25 @@ class WebViewService {
   // Abrir WebView con autenticación automática
   static Future<void> openAuthenticatedWebView({
     required BuildContext context,
-    required WorkCenter workCenter,
+    WorkCenter? workCenter,
     required User user,
     required String path, // '/history', '/schedule', '/reports', etc.
   }) async {
+    // For history pages we allow opening with only the user_code (backend supports it)
+    final params = <String, String>{
+      'user_code': user.code,
+      'user_name': user.name,
+      'auto_auth': 'true',
+      'mobile': 'true',
+    };
+
+    if (workCenter != null) {
+      params['work_center_code'] = workCenter.code;
+      params['work_center_name'] = workCenter.name;
+    }
+
     final url = Uri.parse('${AppConstants.webBaseUrl}$path').replace(
-      queryParameters: {
-        'work_center_code': workCenter.code,
-        'work_center_name': workCenter.name,
-        'user_code': user.code,
-        'user_name': user.name,
-        'auto_auth': 'true',
-        'mobile': 'true',
-      },
+      queryParameters: params,
     );
 
     await Navigator.push(
