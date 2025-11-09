@@ -15,17 +15,18 @@ class WorkerData {
   });
 
   factory WorkerData.fromJson(Map<String, dynamic> json) {
-    // Defensive extraction: ensure nested objects are maps/lists before passing
-    final Map<String, dynamic> userMap = (json['user'] is Map<String, dynamic>)
-        ? json['user'] as Map<String, dynamic>
-        : <String, dynamic>{};
+    // Defensive extraction: accept multiple possible key names used by the API
+    Map<String, dynamic> _ensureMap(dynamic v) {
+      if (v is Map<String, dynamic>) return v;
+      return <String, dynamic>{};
+    }
 
-    final Map<String, dynamic> workCenterMap = (json['work_center'] is Map<String, dynamic>)
-        ? json['work_center'] as Map<String, dynamic>
-        : <String, dynamic>{};
+    final Map<String, dynamic> userMap = _ensureMap(json['user'] ?? json['worker'] ?? json['employee'] ?? json['empleado']);
 
-    final List<dynamic>? scheduleList = (json['schedule'] is List<dynamic>) ? json['schedule'] as List<dynamic> : null;
-    final List<dynamic>? holidaysList = (json['holidays'] is List<dynamic>) ? json['holidays'] as List<dynamic> : null;
+    final Map<String, dynamic> workCenterMap = _ensureMap(json['work_center'] ?? json['workcenter'] ?? json['workCenter'] ?? json['centro']);
+
+    final List<dynamic>? scheduleList = (json['schedule'] is List<dynamic>) ? json['schedule'] as List<dynamic> : (json['schedules'] is List<dynamic> ? json['schedules'] as List<dynamic> : null);
+    final List<dynamic>? holidaysList = (json['holidays'] is List<dynamic>) ? json['holidays'] as List<dynamic> : (json['festivos'] is List<dynamic> ? json['festivos'] as List<dynamic> : null);
 
     return WorkerData(
       user: User.fromJson(userMap),

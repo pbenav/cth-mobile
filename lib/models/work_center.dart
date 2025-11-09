@@ -16,9 +16,13 @@ class WorkCenter {
       };
 
   factory WorkCenter.fromJson(Map<String, dynamic> json) => WorkCenter(
-    id: json['id'] as int? ?? 0,
-    code: (json['code'] != null) ? json['code'].toString() : '',
-    name: (json['name'] != null) ? json['name'].toString() : '',
+    id: (json['id'] ?? json['work_center_id'] ?? json['id_centro']) as int? ?? 0,
+    code: (json['code'] ?? json['work_center_code'] ?? json['codigo_centro']) != null
+        ? (json['code'] ?? json['work_center_code'] ?? json['codigo_centro']).toString()
+        : '',
+    name: (json['name'] ?? json['work_center_name'] ?? json['nombre_centro']) != null
+        ? (json['name'] ?? json['work_center_name'] ?? json['nombre_centro']).toString()
+        : '',
       );
 
   @override

@@ -22,11 +22,19 @@ class User {
       };
 
   factory User.fromJson(Map<String, dynamic> json) => User(
-    id: json['id'] as int? ?? 0,
-    code: (json['code'] != null) ? json['code'].toString() : '',
-    name: (json['name'] != null) ? json['name'].toString() : '',
-    familyName1: json['family_name1'] != null ? json['family_name1'].toString() : '',
-    familyName2: json['family_name2'] != null ? json['family_name2'].toString() : '',
+  id: (json['id'] ?? json['user_id'] ?? json['uid']) as int? ?? 0,
+  code: (json['code'] ?? json['user_code'] ?? json['codigo'] ?? json['codigo_usuario']) != null
+    ? (json['code'] ?? json['user_code'] ?? json['codigo'] ?? json['codigo_usuario']).toString()
+    : '',
+  name: (json['name'] ?? json['first_name'] ?? json['given_name'] ?? json['nombre']) != null
+    ? (json['name'] ?? json['first_name'] ?? json['given_name'] ?? json['nombre']).toString()
+    : '',
+  familyName1: (json['family_name1'] ?? json['family_name'] ?? json['last_name'] ?? json['surname'] ?? json['apellido1'] ?? json['apellido'] ) != null
+    ? (json['family_name1'] ?? json['family_name'] ?? json['last_name'] ?? json['surname'] ?? json['apellido1'] ?? json['apellido']).toString()
+    : null,
+  familyName2: (json['family_name2'] ?? json['second_surname'] ?? json['apellido2'] ?? json['apellido_2']) != null
+    ? (json['family_name2'] ?? json['second_surname'] ?? json['apellido2'] ?? json['apellido_2']).toString()
+    : null,
       );
 
   @override
