@@ -4,6 +4,7 @@ import '../models/work_center.dart';
 import '../models/user.dart';
 import '../models/clock_status.dart';
 import '../services/clock_service.dart';
+import '../services/setup_service.dart';
 import '../services/webview_service.dart';
 import 'settings_screen.dart';
 import 'profile_screen.dart';
@@ -39,9 +40,37 @@ class _ClockScreenState extends State<ClockScreen> {
   Future<void> _loadStatus() async {
     setState(() => isLoading = true);
     try {
+      // Comprobar precondiciones: user_code y, si es necesario, horario cargado
+      final effectiveUserCode = (widget.user.code.trim().isNotEmpty)
+          ? widget.user.code.trim()
+          : (await StorageService.getUser())?.code ?? '';
+
+      final effectiveWorkCenterCode = (widget.workCenter.code.trim().isNotEmpty)
+          ? widget.workCenter.code.trim()
+          : (await StorageService.getWorkCenter())?.code ?? '';
+
+      if (effectiveUserCode.isEmpty) {
+        if (mounted) _showError('Código de usuario no disponible. Por favor, identifícate.');
+        return;
+      }
+
+      // Asegurarnos de que hay horario; si no lo hay intentar obtenerlo del servidor
+      final savedSchedule = await SetupService.getSavedSchedule();
+      if (savedSchedule.isEmpty) {
+        try {
+          final fetched = await SetupService.loadWorkerData(effectiveUserCode);
+          if (fetched != null) {
+            await SetupService.saveWorkerData(fetched);
+          }
+        } catch (e) {
+          print('DEBUG: No se pudo obtener horario desde el servidor: $e');
+          // No bloqueamos el estado, pero avisamos
+        }
+      }
+
       final response = await ClockService.getStatus(
-        workCenterCode: widget.workCenter.code,
-        userCode: widget.user.code,
+        workCenterCode: effectiveWorkCenterCode,
+        userCode: effectiveUserCode,
       );
 
       if (mounted) {
@@ -73,9 +102,37 @@ class _ClockScreenState extends State<ClockScreen> {
 
     setState(() => isPerformingClock = true);
     try {
+      final effectiveUserCode = (widget.user.code.trim().isNotEmpty)
+          ? widget.user.code.trim()
+          : (await StorageService.getUser())?.code ?? '';
+
+      final effectiveWorkCenterCode = (widget.workCenter.code.trim().isNotEmpty)
+          ? widget.workCenter.code.trim()
+          : (await StorageService.getWorkCenter())?.code ?? '';
+
+      if (effectiveUserCode.isEmpty) {
+        if (mounted) _showError('Código de usuario no disponible. Por favor, identifícate.');
+        return;
+      }
+
+      // Comprobar horario antes de fichar
+      final savedSchedule = await SetupService.getSavedSchedule();
+      if (savedSchedule.isEmpty) {
+        // Intentar obtener horario del servidor (no obligatorio, sólo aviso)
+        try {
+          final fetched = await SetupService.loadWorkerData(effectiveUserCode);
+          if (fetched != null) {
+            await SetupService.saveWorkerData(fetched);
+          }
+        } catch (e) {
+          if (mounted) _showError('No hay horario cargado y no se pudo sincronizar. Comprueba conexión.');
+          return;
+        }
+      }
+
       final response = await ClockService.performClock(
-        workCenterCode: widget.workCenter.code,
-        userCode: widget.user.code,
+        workCenterCode: effectiveWorkCenterCode,
+        userCode: effectiveUserCode,
       );
 
       if (mounted) {
@@ -130,6 +187,18 @@ class _ClockScreenState extends State<ClockScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          IconButton(
+            tooltip: 'Abrir versión web',
+            icon: const Icon(Icons.open_in_browser),
+            onPressed: () async {
+              await WebViewService.openAuthenticatedWebView(
+                context: context,
+                workCenter: widget.workCenter,
+                user: widget.user,
+                path: AppConstants.webViewHome,
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: isLoading ? null : _loadStatus,

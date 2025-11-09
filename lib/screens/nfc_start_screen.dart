@@ -203,10 +203,20 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
 
         // Verificar si ya hay un usuario guardado
         final savedUser = await StorageService.getUser();
-        final hasValidSession = await StorageService.hasValidSession();
+        final savedWorkCenter = await StorageService.getWorkCenter();
 
-        if (savedUser != null && hasValidSession == true) {
-          // Usuario ya autenticado, ir directamente a clock con auto-fichaje
+        if (savedUser != null) {
+          // Si existe usuario guardado, podemos ir a ClockScreen usando el
+          // centro leído por NFC aunque no haya un centro guardado en prefs.
+          // Guardar el centro leído si aún no hay uno en preferencias.
+          if (savedWorkCenter == null) {
+            try {
+              await StorageService.saveWorkCenter(workCenter);
+            } catch (e) {
+              print('DEBUG: No se pudo guardar WorkCenter desde NFC: $e');
+            }
+          }
+
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -218,7 +228,7 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
             ),
           );
         } else {
-          // No hay usuario guardado, ir a login pero indicando que viene desde NFC
+          // No hay usuario guardado, ir a login indicando que viene desde NFC
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(

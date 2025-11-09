@@ -70,7 +70,13 @@ class SetupService {
     final log = onLog ?? (String message) => print('SetupService: $message');
 
     try {
-      final serverUrl = await getTempServerUrl();
+      // Preferir la URL temporal durante el asistente, pero si no existe
+      // usar la URL configurada permanentemente (caso de uso normal de la app).
+      String? serverUrl = await getTempServerUrl();
+      if (serverUrl == null) {
+        serverUrl = await getConfiguredServerUrl();
+      }
+
       if (serverUrl == null) {
         log('❌ No hay URL del servidor configurada');
         throw SetupException('URL del servidor no configurada');
