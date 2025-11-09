@@ -217,7 +217,7 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
             }
           }
 
-          Navigator.pushReplacement(
+          Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => ClockScreen(
@@ -229,7 +229,7 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
           );
         } else {
           // No hay usuario guardado, ir a login indicando que viene desde NFC
-          Navigator.pushReplacement(
+          Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => UserLoginScreen(
