@@ -89,12 +89,30 @@ class SetupService {
 
       log('📡 Respuesta del servidor - Código: ${response.statusCode}');
 
-      if (response.statusCode == 200) {
+        if (response.statusCode == 200) {
         log('✅ Respuesta exitosa, procesando datos...');
-        final jsonData = json.decode(response.body);
-        log('📦 Datos recibidos correctamente');
+        final decoded = json.decode(response.body);
+        log('📦 Datos recibidos (raw): ${decoded.runtimeType}');
 
-        final workerData = WorkerData.fromJson(jsonData);
+        // La API devuelve { success: true, data: { ... } }
+        // Asegurarnos de extraer el mapa correcto con los campos esperados
+        Map<String, dynamic>? payload;
+        if (decoded is Map<String, dynamic>) {
+          if (decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>) {
+            payload = decoded['data'] as Map<String, dynamic>;
+          } else {
+            payload = decoded as Map<String, dynamic>;
+          }
+        }
+
+        if (payload == null) {
+          log('❌ Respuesta inesperada: payload nulo');
+          throw SetupException('Respuesta inesperada del servidor');
+        }
+
+        log('📦 Payload a procesar: keys=${payload.keys.toList()}');
+
+        final workerData = WorkerData.fromJson(payload);
         log('✅ Datos del trabajador procesados exitosamente');
         log('👤 Nombre: ${workerData.user.name}');
         log('🏢 Centro: ${workerData.workCenter.name}');
@@ -158,8 +176,18 @@ class SetupService {
       final workerDataJson = await StorageService.getString(_workerDataKey);
       if (workerDataJson == null) return null;
 
-      final jsonData = json.decode(workerDataJson);
-      return WorkerData.fromJson(jsonData);
+      final decoded = json.decode(workerDataJson);
+      Map<String, dynamic>? payload;
+      if (decoded is Map<String, dynamic>) {
+        if (decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>) {
+          payload = decoded['data'] as Map<String, dynamic>;
+        } else {
+          payload = decoded as Map<String, dynamic>;
+        }
+      }
+
+      if (payload == null) return null;
+      return WorkerData.fromJson(payload);
     } catch (e) {
       print('Error getting saved worker data: $e');
       return null;
