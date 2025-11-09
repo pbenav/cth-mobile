@@ -16,16 +16,43 @@ class SetupService {
   }
 
   /// Prueba la conexión con el servidor
-  static Future<bool> testServerConnection(String serverUrl) async {
+  static Future<bool> testServerConnection(String serverUrl, {Function(String)? onLog}) async {
+    final log = onLog ?? (String message) => print('SetupService: $message');
+
     try {
-      final url = Uri.parse('$serverUrl/api/health');
+      log('🔄 Iniciando prueba de conexión...');
+      log('📝 URL del servidor: $serverUrl');
+
+      // Normalizar la URL
+      final normalizedUrl = _normalizeUrl(serverUrl);
+      log('🔧 URL normalizada: $normalizedUrl');
+
+      final url = Uri.parse('$normalizedUrl/api/v1/config/ping');
+      log('🌐 Intentando conectar a: $url');
+
       final response = await http.get(url).timeout(const Duration(seconds: 10));
 
-      return response.statusCode == 200;
+      log('📡 Respuesta del servidor - Código: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        log('✅ Conexión exitosa - Servidor responde correctamente');
+        return true;
+      } else {
+        log('❌ Error HTTP: ${response.statusCode} - ${response.reasonPhrase}');
+        return false;
+      }
     } catch (e) {
-      print('Error testing server connection: $e');
+      log('💥 Error de conexión: ${e.toString()}');
       return false;
     }
+  }
+
+  /// Normaliza la URL para asegurar que tenga el formato correcto
+  static String _normalizeUrl(String url) {
+    if (url.endsWith('/')) {
+      url = url.substring(0, url.length - 1);
+    }
+    return url;
   }
 
   /// Guarda temporalmente la URL del servidor durante la configuración
@@ -39,31 +66,54 @@ class SetupService {
   }
 
   /// Carga los datos del trabajador usando el código secreto
-  static Future<WorkerData?> loadWorkerData(String workerCode) async {
+  static Future<WorkerData?> loadWorkerData(String workerCode, {Function(String)? onLog}) async {
+    final log = onLog ?? (String message) => print('SetupService: $message');
+
     try {
       final serverUrl = await getTempServerUrl();
       if (serverUrl == null) {
+        log('❌ No hay URL del servidor configurada');
         throw SetupException('URL del servidor no configurada');
       }
 
-      final url = Uri.parse('$serverUrl/api/mobile/worker/$workerCode');
-      print('Loading worker data from: $url');
+      log('🔄 Iniciando carga de datos del trabajador...');
+      log('👤 Código del trabajador: $workerCode');
+      log('📝 URL del servidor: $serverUrl');
 
+      final normalizedUrl = _normalizeUrl(serverUrl);
+      final url = Uri.parse('$normalizedUrl/api/mobile/worker/$workerCode');
+      log('🌐 URL completa: $url');
+
+      log('📡 Enviando petición GET...');
       final response = await http.get(url).timeout(const Duration(seconds: 30));
 
+      log('📡 Respuesta del servidor - Código: ${response.statusCode}');
+
       if (response.statusCode == 200) {
+        log('✅ Respuesta exitosa, procesando datos...');
         final jsonData = json.decode(response.body);
-        return WorkerData.fromJson(jsonData);
+        log('📦 Datos recibidos correctamente');
+
+        final workerData = WorkerData.fromJson(jsonData);
+        log('✅ Datos del trabajador procesados exitosamente');
+        log('👤 Nombre: ${workerData.user.name}');
+        log('🏢 Centro: ${workerData.workCenter.name}');
+        log('📅 Horarios: ${workerData.schedule.length} tramos');
+        log('🎉 Festivos: ${workerData.holidays.length} días');
+
+        return workerData;
       } else if (response.statusCode == 404) {
+        log('❌ Trabajador no encontrado (404)');
         return null; // Trabajador no encontrado
       } else {
+        log('❌ Error del servidor: ${response.statusCode} - ${response.body}');
         throw APIException(
           'Error del servidor: ${response.statusCode}',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
-      print('Error loading worker data: $e');
+      log('💥 Error al cargar datos: ${e.toString()}');
       if (e is APIException) rethrow;
       throw SetupException('Error de conexión: ${e.toString()}');
     }
