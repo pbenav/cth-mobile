@@ -157,6 +157,14 @@ class SetupService {
       final workerDataJson = json.encode(workerData.toJson());
       await StorageService.setString(_workerDataKey, workerDataJson);
 
+      // DEBUG: comprobar que se ha guardado el JSON completo
+      try {
+        final saved = await StorageService.getString(_workerDataKey);
+        print('DEBUG: worker_data guardado: $saved');
+      } catch (e) {
+        print('DEBUG: error leyendo worker_data tras guardar: $e');
+      }
+
       // Guardar datos individuales para compatibilidad con el código existente
       await StorageService.saveUser(workerData.user);
       await StorageService.saveWorkCenter(workerData.workCenter);
@@ -262,6 +270,14 @@ class SetupService {
     try {
       final workerDataJson = json.encode(workerData.toJson());
       await StorageService.setString(_workerDataKey, workerDataJson);
+
+      // DEBUG: comprobar que se ha guardado el JSON completo tras update
+      try {
+        final saved = await StorageService.getString(_workerDataKey);
+        print('DEBUG: worker_data actualizado: $saved');
+      } catch (e) {
+        print('DEBUG: error leyendo worker_data tras update: $e');
+      }
 
       // Guardar datos individuales para compatibilidad con el código existente
       await StorageService.saveUser(workerData.user);
