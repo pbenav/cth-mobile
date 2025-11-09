@@ -23,10 +23,30 @@ class WorkerData {
 
     final Map<String, dynamic> userMap = _ensureMap(json['user'] ?? json['worker'] ?? json['employee'] ?? json['empleado']);
 
-    final Map<String, dynamic> workCenterMap = _ensureMap(json['work_center'] ?? json['workcenter'] ?? json['workCenter'] ?? json['centro']);
+    // The backend may return work_center as a single map or as a list under
+    // the key 'work_centers'. If it's a list, take the first element.
+    Map<String, dynamic> workCenterCandidate = _ensureMap(json['work_center'] ?? json['workcenter'] ?? json['workCenter'] ?? json['centro']);
+    if (workCenterCandidate.isEmpty && json['work_centers'] is List<dynamic>) {
+      final list = json['work_centers'] as List<dynamic>;
+      if (list.isNotEmpty && list.first is Map<String, dynamic>) {
+        workCenterCandidate = list.first as Map<String, dynamic>;
+      }
+    }
+    final Map<String, dynamic> workCenterMap = _ensureMap(workCenterCandidate);
 
-    final List<dynamic>? scheduleList = (json['schedule'] is List<dynamic>) ? json['schedule'] as List<dynamic> : (json['schedules'] is List<dynamic> ? json['schedules'] as List<dynamic> : null);
-    final List<dynamic>? holidaysList = (json['holidays'] is List<dynamic>) ? json['holidays'] as List<dynamic> : (json['festivos'] is List<dynamic> ? json['festivos'] as List<dynamic> : null);
+  // Accept various keys for schedules used by backend: 'schedule',
+  // 'schedules', or 'work_schedule'.
+  final List<dynamic>? scheduleList = (json['schedule'] is List<dynamic>)
+    ? json['schedule'] as List<dynamic>
+    : (json['schedules'] is List<dynamic>
+      ? json['schedules'] as List<dynamic>
+      : (json['work_schedule'] is List<dynamic]
+        ? json['work_schedule'] as List<dynamic>
+        : null));
+
+  final List<dynamic>? holidaysList = (json['holidays'] is List<dynamic>)
+    ? json['holidays'] as List<dynamic>
+    : (json['festivos'] is List<dynamic> ? json['festivos'] as List<dynamic> : null);
 
     return WorkerData(
       user: User.fromJson(userMap),
