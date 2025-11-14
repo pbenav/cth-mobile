@@ -31,26 +31,23 @@ class _ClockScreenState extends State<ClockScreen> {
   ClockStatus? clockStatus;
   bool isLoading = false;
   bool isPerformingClock = false;
+  String? lastConnectionLog; // Log de conexión
 
   @override
-  void initState() {
-    super.initState();
-    _loadStatus();
-  }
-
-  // mobile/desktop web toggle removed
-
   Future<void> _loadStatus() async {
     setState(() => isLoading = true);
     try {
       // Comprobar precondiciones: user_code y, si es necesario, horario cargado
-      final effectiveUserCode = (widget.user.code.trim().isNotEmpty)
-          ? widget.user.code.trim()
+      final userCodeRaw = widget.user.code;
+      final workCenterCodeRaw = widget.workCenter.code;
+      final effectiveUserCode = (userCodeRaw != null && userCodeRaw.trim().isNotEmpty)
+          ? userCodeRaw.trim()
           : (await StorageService.getUser())?.code ?? '';
-
-      final effectiveWorkCenterCode = (widget.workCenter.code.trim().isNotEmpty)
-          ? widget.workCenter.code.trim()
+      final effectiveWorkCenterCode = (workCenterCodeRaw != null && workCenterCodeRaw.trim().isNotEmpty)
+          ? workCenterCodeRaw.trim()
           : (await StorageService.getWorkCenter())?.code ?? '';
+
+      lastConnectionLog = 'Solicitando estado:\nuser_code: $effectiveUserCode\nwork_center_code: $effectiveWorkCenterCode';
 
       if (effectiveUserCode.isEmpty) {
         if (mounted) _showError(I18n.of('clock.no_user'));
@@ -66,8 +63,7 @@ class _ClockScreenState extends State<ClockScreen> {
             await SetupService.saveWorkerData(fetched);
           }
         } catch (e) {
-          print('DEBUG: No se pudo obtener horario desde el servidor: $e');
-          // No bloqueamos el estado, pero avisamos
+          lastConnectionLog = (lastConnectionLog ?? '') + '\nError obteniendo horario: $e';
         }
       }
 
@@ -76,15 +72,42 @@ class _ClockScreenState extends State<ClockScreen> {
         userCode: effectiveUserCode,
       );
 
+      lastConnectionLog = (lastConnectionLog ?? '') + '\nRespuesta:\n${response.toString()}';
+
       if (mounted) {
         setState(() => clockStatus = response.data);
 
         // Si viene desde NFC y está habilitado el auto-fichaje, hacer fichaje automático
         if (widget.autoClockOnNFC && clockStatus != null && clockStatus!.canClock) {
-          // Pequeño delay para que el usuario vea la pantalla antes del fichaje
           Future.delayed(const Duration(milliseconds: 500), () {
             if (mounted) {
               _performClock();
+            }
+          });
+        }
+      }
+    } catch (e) {
+      lastConnectionLog = (lastConnectionLog ?? '') + '\nError general: $e';
+      if (mounted) {
+        _showError(I18n.of('clock.loading_error', {'error': e.toString()}));
+        _showConnectionLogModal();
+      }
+    } finally {
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
+    }
+  }
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
+    );
+  }
             }
           });
         }
@@ -103,25 +126,15 @@ class _ClockScreenState extends State<ClockScreen> {
   Future<void> _performClock() async {
     if (isPerformingClock) return;
 
-    setState(() => isPerformingClock = true);
-    try {
-      final effectiveUserCode = (widget.user.code.trim().isNotEmpty)
-          ? widget.user.code.trim()
-          : (await StorageService.getUser())?.code ?? '';
-
-      final effectiveWorkCenterCode = (widget.workCenter.code.trim().isNotEmpty)
-          ? widget.workCenter.code.trim()
-          : (await StorageService.getWorkCenter())?.code ?? '';
-
-      if (effectiveUserCode.isEmpty) {
-        if (mounted) _showError('Código de usuario no disponible. Por favor, identifícate.');
-        return;
+            // Pequeño delay para que el usuario vea la pantalla antes del fichaje
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted) {
+                _performClock();
+              }
+            });
+          }
+        }
       }
-
-      // Comprobar horario antes de fichar
-      final savedSchedule = await SetupService.getSavedSchedule();
-      if (savedSchedule.isEmpty) {
-        // Intentar obtener horario del servidor (no obligatorio, sólo aviso)
         try {
           final fetched = await SetupService.loadWorkerData(effectiveUserCode);
           if (fetched != null) {
@@ -152,13 +165,14 @@ class _ClockScreenState extends State<ClockScreen> {
         setState(() => isPerformingClock = false);
       }
     }
-  }
-
-  Future<void> _performClockWithAction(String action) async {
-    if (isPerformingClock) return;
-
-    setState(() => isPerformingClock = true);
-    try {
+            final userCodeRaw = widget.user.code;
+            final workCenterCodeRaw = widget.workCenter.code;
+            final effectiveUserCode = (userCodeRaw != null && userCodeRaw.trim().isNotEmpty)
+                ? userCodeRaw.trim()
+                : (await StorageService.getUser())?.code ?? '';
+            final effectiveWorkCenterCode = (workCenterCodeRaw != null && workCenterCodeRaw.trim().isNotEmpty)
+                ? workCenterCodeRaw.trim()
+                : (await StorageService.getWorkCenter())?.code ?? '';
       final response = await ClockService.performClock(
         workCenterCode: widget.workCenter.code,
         userCode: widget.user.code,
@@ -166,7 +180,7 @@ class _ClockScreenState extends State<ClockScreen> {
       );
 
       if (mounted) {
-        String actionText = action == 'pause' ? 'PAUSA' : 'SALIDA';
+            lastConnectionLog = 'Solicitando estado:\nuser_code: $effectiveUserCode\nwork_center_code: $effectiveWorkCenterCode'; // Log de conexión
         _showSuccess('$actionText registrada correctamente');
         await _loadStatus(); // Recargar estado
       }
@@ -210,6 +224,23 @@ class _ClockScreenState extends State<ClockScreen> {
             },
           ),
           IconButton(
+  void _showConnectionLogModal() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Log de conexión'),
+        content: SingleChildScrollView(
+          child: Text(lastConnectionLog ?? 'Sin log disponible'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
+    );
+  }
             icon: const Icon(Icons.settings),
             onPressed: () async {
               final result = await Navigator.of(context).push(

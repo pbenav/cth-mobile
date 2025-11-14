@@ -69,7 +69,7 @@ class CTHMobileApp extends StatelessWidget {
         primaryColor: const Color(AppConstants.primaryColorValue),
         useMaterial3: true,
       ),
-      initialRoute: AppConstants.routeStart,
+      home: SplashScreen(), // Usar SplashScreen como home
       routes: {
         AppConstants.routeStart: (context) => SplashScreen(),
         AppConstants.routeLogin: (context) => NFCStartScreen(),

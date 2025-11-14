@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../services/setup_service.dart';
 import '../models/worker_data.dart';
-import 'nfc_start_screen.dart';
+import 'clock_screen.dart';
 
 class SetupWorkerScreen extends StatefulWidget {
   const SetupWorkerScreen({super.key});
@@ -74,11 +74,14 @@ class _SetupWorkerScreenState extends State<SetupWorkerScreen> {
 
       if (!mounted) return;
 
-      // Navegar a la pantalla principal
+      // Navegar directamente a la pantalla principal de fichaje
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (context) => const NFCStartScreen(),
+          builder: (context) => ClockScreen(
+            workCenter: _workerData!.workCenter,
+            user: _workerData!.user,
+          ),
         ),
         (route) => false, // Eliminar todas las rutas anteriores
       );

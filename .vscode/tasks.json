@@ -10,6 +10,100 @@
 				"$flutter"
 			],
 			"group": "build"
+		},
+		{
+			"label": "Compilar app Flutter",
+			"type": "shell",
+			"command": "flutter build apk",
+			"args": [],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Instalar APK en dispositivo",
+			"type": "shell",
+			"command": "flutter install",
+			"args": [],
+			"isBackground": false,
+			"group": "test"
+		},
+		{
+			"label": "Compilar app Flutter",
+			"type": "shell",
+			"command": "flutter build apk",
+			"args": [],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Instalar APK en dispositivo",
+			"type": "shell",
+			"command": "flutter install",
+			"args": [],
+			"isBackground": false,
+			"group": "test"
+		},
+		{
+			"label": "Compilar app Flutter",
+			"type": "shell",
+			"command": "flutter build apk",
+			"args": [],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Instalar APK en dispositivo",
+			"type": "shell",
+			"command": "flutter install",
+			"args": [],
+			"isBackground": false,
+			"group": "test"
+		},
+		{
+			"label": "Compilar app Flutter",
+			"type": "shell",
+			"command": "flutter build apk",
+			"args": [],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Instalar APK en dispositivo",
+			"type": "shell",
+			"command": "flutter install",
+			"args": [],
+			"isBackground": false,
+			"group": "test"
+		},
+		{
+			"label": "Compilar app Flutter",
+			"type": "shell",
+			"command": "flutter build apk",
+			"args": [],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Instalar APK en dispositivo",
+			"type": "shell",
+			"command": "flutter install",
+			"args": [],
+			"isBackground": false,
+			"group": "test"
+		},
+		{
+			"label": "Compilar app Flutter (cth-mobile)",
+			"type": "shell",
+			"command": "flutter build apk",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Instalar APK en dispositivo (cth-mobile)",
+			"type": "shell",
+			"command": "flutter install",
+			"isBackground": false,
+			"group": "test"
 		}
 	]
 }
