@@ -42,9 +42,12 @@ class _ClockScreenState extends State<ClockScreen> {
   Future<void> _loadStatus() async {
     setState(() => isLoading = true);
     try {
+      // ✅ CORRECCIÓN: Usar el operador de navegación segura (?. )
+      // Esto previene un NullPointerException si widget.user o widget.workCenter es nulo.
+      final userCodeRaw = widget.user?.code;
+      final workCenterCodeRaw = widget.workCenter?.code;
+
       // Comprobar precondiciones: user_code y, si es necesario, horario cargado
-      final userCodeRaw = widget.user.code;
-      final workCenterCodeRaw = widget.workCenter.code;
       final effectiveUserCode = (userCodeRaw != null && userCodeRaw.trim().isNotEmpty)
           ? userCodeRaw.trim()
           : (await StorageService.getUser())?.code ?? '';
