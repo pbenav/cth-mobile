@@ -80,7 +80,8 @@ class StorageService {
       final data = prefs.getString(AppConstants.keyWorkCenter);
       print('DEBUG: getWorkCenter - Key: ${AppConstants.keyWorkCenter}, Data: $data');
       if (data != null) {
-        final workCenter = WorkCenter.fromJson(jsonDecode(data) as Map<String, dynamic>);
+        final decoded = jsonDecode(data) as Map<String, dynamic>? ?? <String, dynamic>{};
+        final workCenter = WorkCenter.fromJson(decoded);
         print('DEBUG: WorkCenter cargado - Code: ${workCenter.code}, Name: ${workCenter.name}');
         return workCenter;
       }
@@ -119,7 +120,8 @@ class StorageService {
       final data = prefs.getString(AppConstants.keyUser);
       print('DEBUG: getUser - Key: ${AppConstants.keyUser}, Data: $data');
       if (data != null) {
-        final user = User.fromJson(jsonDecode(data) as Map<String, dynamic>);
+        final decoded = jsonDecode(data) as Map<String, dynamic>? ?? <String, dynamic>{};
+        final user = User.fromJson(decoded);
         print('DEBUG: User cargado - Code: ${user.code}, Name: ${user.name}');
         return user;
       }
@@ -159,9 +161,9 @@ class StorageService {
       final prefs = await _preferences;
       final data = prefs.getString(AppConstants.keyOfflineEvents);
       if (data != null) {
-        final List<dynamic> eventsJson = jsonDecode(data) as List<dynamic>;
+        final List<dynamic> eventsJson = jsonDecode(data) as List<dynamic>? ?? [];
         return eventsJson
-            .map((e) => OfflineClockEvent.fromJson(e as Map<String, dynamic>))
+            .map((e) => OfflineClockEvent.fromJson(e as Map<String, dynamic>? ?? <String, dynamic>{}))
             .toList();
       }
       return [];
@@ -317,7 +319,13 @@ class StorageService {
       } else {
         final data = prefs.getString(key);
         if (data != null) {
-          return jsonDecode(data) as T;
+          final decoded = jsonDecode(data);
+          if (decoded is T) {
+            return decoded;
+          } else {
+            print('DEBUG: Error parsing config JSON for key $key: type mismatch');
+            return null;
+          }
         }
       }
       return null;

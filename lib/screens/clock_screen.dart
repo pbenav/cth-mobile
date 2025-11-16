@@ -34,6 +34,11 @@ class _ClockScreenState extends State<ClockScreen> {
   String? lastConnectionLog; // Log de conexión
 
   @override
+  void initState() {
+    super.initState();
+    _loadStatus();
+  }
+
   Future<void> _loadStatus() async {
     setState(() => isLoading = true);
     try {
@@ -87,34 +92,10 @@ class _ClockScreenState extends State<ClockScreen> {
         }
       }
     } catch (e) {
-      lastConnectionLog = (lastConnectionLog ?? '') + '\nError general: $e';
+      lastConnectionLog = (lastConnectionLog ?? '') + '\n❌ ERROR en _loadStatus: $e\n📍 Clase: ClockScreen\n🔧 Método: _loadStatus\n💥 Tipo de error: ${e.runtimeType}';
       if (mounted) {
         _showError(I18n.of('clock.loading_error', {'error': e.toString()}));
         _showConnectionLogModal();
-      }
-    } finally {
-      if (mounted) {
-        setState(() => isLoading = false);
-      }
-    }
-  }
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cerrar'),
-          ),
-        ],
-      ),
-    );
-  }
-            }
-          });
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        _showError(I18n.of('clock.loading_error', {'error': e.toString()}));
       }
     } finally {
       if (mounted) {
@@ -126,15 +107,20 @@ class _ClockScreenState extends State<ClockScreen> {
   Future<void> _performClock() async {
     if (isPerformingClock) return;
 
-            // Pequeño delay para que el usuario vea la pantalla antes del fichaje
-            Future.delayed(const Duration(milliseconds: 500), () {
-              if (mounted) {
-                _performClock();
-              }
-            });
-          }
-        }
-      }
+    setState(() => isPerformingClock = true);
+    try {
+      final userCodeRaw = widget.user.code;
+      final workCenterCodeRaw = widget.workCenter.code;
+      final effectiveUserCode = (userCodeRaw != null && userCodeRaw.trim().isNotEmpty)
+          ? userCodeRaw.trim()
+          : (await StorageService.getUser())?.code ?? '';
+      final effectiveWorkCenterCode = (workCenterCodeRaw != null && workCenterCodeRaw.trim().isNotEmpty)
+          ? workCenterCodeRaw.trim()
+          : (await StorageService.getWorkCenter())?.code ?? '';
+
+      // Asegurarnos de que hay horario; si no lo hay intentar obtenerlo del servidor
+      final savedSchedule = await SetupService.getSavedSchedule();
+      if (savedSchedule.isEmpty) {
         try {
           final fetched = await SetupService.loadWorkerData(effectiveUserCode);
           if (fetched != null) {
@@ -158,6 +144,7 @@ class _ClockScreenState extends State<ClockScreen> {
       }
     } catch (e) {
       if (mounted) {
+        lastConnectionLog = (lastConnectionLog ?? '') + '\n❌ ERROR en _performClock: $e\n📍 Clase: ClockScreen\n🔧 Método: _performClock\n💥 Tipo de error: ${e.runtimeType}';
         _showError('Error en fichaje: ${e.toString()}');
       }
     } finally {
@@ -165,27 +152,38 @@ class _ClockScreenState extends State<ClockScreen> {
         setState(() => isPerformingClock = false);
       }
     }
-            final userCodeRaw = widget.user.code;
-            final workCenterCodeRaw = widget.workCenter.code;
-            final effectiveUserCode = (userCodeRaw != null && userCodeRaw.trim().isNotEmpty)
-                ? userCodeRaw.trim()
-                : (await StorageService.getUser())?.code ?? '';
-            final effectiveWorkCenterCode = (workCenterCodeRaw != null && workCenterCodeRaw.trim().isNotEmpty)
-                ? workCenterCodeRaw.trim()
-                : (await StorageService.getWorkCenter())?.code ?? '';
+  }
+
+  Future<void> _performClockWithAction(String action) async {
+    if (isPerformingClock) return;
+
+    setState(() => isPerformingClock = true);
+    try {
+      final userCodeRaw = widget.user.code;
+      final workCenterCodeRaw = widget.workCenter.code;
+      final effectiveUserCode = (userCodeRaw != null && userCodeRaw.trim().isNotEmpty)
+          ? userCodeRaw.trim()
+          : (await StorageService.getUser())?.code ?? '';
+      final effectiveWorkCenterCode = (workCenterCodeRaw != null && workCenterCodeRaw.trim().isNotEmpty)
+          ? workCenterCodeRaw.trim()
+          : (await StorageService.getWorkCenter())?.code ?? '';
+
+      lastConnectionLog = 'Solicitando estado:\nuser_code: $effectiveUserCode\nwork_center_code: $effectiveWorkCenterCode'; // Log de conexión
+
       final response = await ClockService.performClock(
-        workCenterCode: widget.workCenter.code,
-        userCode: widget.user.code,
+        workCenterCode: effectiveWorkCenterCode,
+        userCode: effectiveUserCode,
         action: action,
       );
 
       if (mounted) {
-            lastConnectionLog = 'Solicitando estado:\nuser_code: $effectiveUserCode\nwork_center_code: $effectiveWorkCenterCode'; // Log de conexión
+        String actionText = action == 'pause' ? 'PAUSA' : 'SALIDA';
         _showSuccess('$actionText registrada correctamente');
         await _loadStatus(); // Recargar estado
       }
     } catch (e) {
       if (mounted) {
+        lastConnectionLog = (lastConnectionLog ?? '') + '\n❌ ERROR en _performClockWithAction: $e\n📍 Clase: ClockScreen\n🔧 Método: _performClockWithAction\n💥 Tipo de error: ${e.runtimeType}';
         _showError('Error en fichaje: ${e.toString()}');
       }
     } finally {
@@ -204,12 +202,11 @@ class _ClockScreenState extends State<ClockScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
-          // Mobile/desktop web buttons removed
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: isLoading ? null : _loadStatus,
           ),
-            IconButton(
+          IconButton(
             icon: const Icon(Icons.person),
             onPressed: () async {
               final result = await Navigator.of(context).push(
@@ -224,23 +221,6 @@ class _ClockScreenState extends State<ClockScreen> {
             },
           ),
           IconButton(
-  void _showConnectionLogModal() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Log de conexión'),
-        content: SingleChildScrollView(
-          child: Text(lastConnectionLog ?? 'Sin log disponible'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cerrar'),
-          ),
-        ],
-      ),
-    );
-  }
             icon: const Icon(Icons.settings),
             onPressed: () async {
               final result = await Navigator.of(context).push(
@@ -730,6 +710,24 @@ class _ClockScreenState extends State<ClockScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  void _showConnectionLogModal() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Log de conexión'),
+        content: SingleChildScrollView(
+          child: Text(lastConnectionLog ?? 'Sin log disponible'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
     );
   }
 

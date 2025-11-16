@@ -83,7 +83,7 @@ class ClockService {
 
       print('ClockService: response status=${response.statusCode} body_len=${response.body.length}');
 
-      final jsonData = jsonDecode(response.body);
+      final jsonData = jsonDecode(response.body) as Map<String, dynamic>? ?? <String, dynamic>{};
 
       if (response.statusCode == 200) {
         return ApiResponse<ClockResponse>.fromJson(
@@ -92,12 +92,14 @@ class ClockService {
         );
       } else {
         throw ClockException(
-          jsonData['message'] ?? 'Error en fichaje',
+          jsonData['message'] as String? ?? 'Error en fichaje',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
       if (e is ClockException) rethrow;
+      final errorMsg = '❌ ERROR en ClockService.performClock\n📍 Clase: ClockService\n🔧 Método: performClock\n💥 Tipo de error: ${e.runtimeType}\n📝 Detalles: $e';
+      print(errorMsg);
       throw NetworkException('Error de conexión: $e');
     }
   }
@@ -139,7 +141,7 @@ class ClockService {
       final response = await http.post(url, headers: headers, body: jsonEncode(bodyMap)).timeout(const Duration(seconds: 15));
       print('ClockService: response status=${response.statusCode} body_len=${response.body.length}');
 
-      final jsonData = jsonDecode(response.body);
+      final jsonData = jsonDecode(response.body) as Map<String, dynamic>? ?? <String, dynamic>{};
 
       if (response.statusCode == 200) {
         return ApiResponse<ClockStatus>.fromJson(
@@ -148,12 +150,14 @@ class ClockService {
         );
       } else {
         throw ClockException(
-          jsonData['message'] ?? 'Error obteniendo estado',
+          jsonData['message'] as String? ?? 'Error obteniendo estado',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
       if (e is ClockException) rethrow;
+      final errorMsg = '❌ ERROR en ClockService.getStatus\n📍 Clase: ClockService\n🔧 Método: getStatus\n💥 Tipo de error: ${e.runtimeType}\n📝 Detalles: $e';
+      print(errorMsg);
       throw NetworkException('Error de conexión: $e');
     }
   }
@@ -185,7 +189,7 @@ class ClockService {
           )
           .timeout(const Duration(seconds: 30));
 
-      final jsonData = jsonDecode(response.body);
+      final jsonData = jsonDecode(response.body) as Map<String, dynamic>? ?? <String, dynamic>{};
 
       if (response.statusCode == 200) {
         return ApiResponse<SyncResponse>.fromJson(
@@ -194,12 +198,14 @@ class ClockService {
         );
       } else {
         throw SyncException(
-          jsonData['message'] ?? 'Error en sincronización',
+          jsonData['message'] as String? ?? 'Error en sincronización',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
       if (e is SyncException) rethrow;
+      final errorMsg = '❌ ERROR en ClockService.syncOfflineData\n📍 Clase: ClockService\n🔧 Método: syncOfflineData\n💥 Tipo de error: ${e.runtimeType}\n📝 Detalles: $e';
+      print(errorMsg);
       throw NetworkException('Error de conexión: $e');
     }
   }
@@ -233,7 +239,7 @@ class ClockService {
       ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
+        return jsonDecode(response.body) as Map<String, dynamic>? ?? <String, dynamic>{};
       }
       return null;
     } catch (e) {

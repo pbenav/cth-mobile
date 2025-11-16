@@ -132,7 +132,7 @@ class SetupService {
         Map<String, dynamic>? payload;
         if (decoded is Map<String, dynamic>) {
           if (decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>) {
-            payload = decoded['data'] as Map<String, dynamic>;
+            payload = decoded['data'] as Map<String, dynamic>?;
           } else {
             payload = decoded as Map<String, dynamic>;
           }
@@ -226,7 +226,7 @@ class SetupService {
       Map<String, dynamic>? payload;
       if (decoded is Map<String, dynamic>) {
         if (decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>) {
-          payload = decoded['data'] as Map<String, dynamic>;
+          payload = decoded['data'] as Map<String, dynamic>?;
         } else {
           payload = decoded as Map<String, dynamic>;
         }

@@ -5,7 +5,7 @@ publish_to: 'none'
 version: 0.0.1+1
 
 environment:
-  sdk: ^3.5.4
+  sdk: ^3.5.0
 
 dependencies:
   flutter:
@@ -14,10 +14,10 @@ dependencies:
   # HTTP requests para API
   http: ^1.1.0
   
-  # NFC functionality
-  nfc_manager: ^4.1.1
-  nfc_manager_ndef: any
-  ndef: ^0.4.0
+  # NFC functionality - temporalmente deshabilitado para testing
+  # nfc_manager: ^3.4.0
+  # nfc_manager_ndef: ^3.4.0
+  # ndef: ^0.3.0
   
   # WebView para vistas complejas
   webview_flutter: ^4.4.2
@@ -37,7 +37,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^6.0.0
+  flutter_lints: ^4.0.0
   
   # JSON code generation
   json_serializable: ^6.7.1

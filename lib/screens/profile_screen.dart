@@ -71,12 +71,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // them from storage key 'worker_data' to offer selection.
           final raw = await StorageService.getString('worker_data');
           if (raw != null) {
-            final decoded = jsonDecode(raw);
-            if (decoded is Map<String, dynamic>) {
-              final wcRaw = decoded['work_centers'];
-              if (wcRaw is List<dynamic>) {
-                _availableWorkCenters = wcRaw.map((e) => WorkCenter.fromJson(e as Map<String, dynamic>)).toList();
-              }
+            final decoded = jsonDecode(raw) as Map<String, dynamic>? ?? <String, dynamic>{};
+            final wcRaw = decoded['work_centers'];
+            if (wcRaw is List<dynamic>) {
+              _availableWorkCenters = wcRaw.map((e) => WorkCenter.fromJson(e as Map<String, dynamic>? ?? <String, dynamic>{})).toList();
             }
           }
         } catch (_) {

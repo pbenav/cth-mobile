@@ -1,15 +1,66 @@
-import 'package:ndef_record/ndef_record.dart';
+// import 'package:ndef_record/ndef_record.dart';
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:convert';
-import 'package:nfc_manager/nfc_manager.dart';
-import 'package:nfc_manager_ndef/nfc_manager_ndef.dart';
+// import 'package:nfc_manager/nfc_manager.dart';
+// import 'package:nfc_manager_ndef/nfc_manager_ndef.dart';
 import '../models/work_center.dart';
 import '../services/setup_service.dart';
 import '../services/config_service.dart';
-import '../utils/exceptions.dart';
 import '../services/clock_service.dart';
 import '../services/storage_service.dart';
+import '../utils/exceptions.dart';
+
+// Stub classes for NFC functionality when packages are not available
+class NfcTag {
+  // Stub implementation
+}
+
+class NfcManager {
+  static NfcManager? _instance;
+  static NfcManager get instance => _instance ??= NfcManager();
+
+  Future<bool> isAvailable() async => false;
+
+  Future<void> startSession({
+    required Set<dynamic> pollingOptions,
+    required Function(dynamic) onDiscovered,
+    Function? onError,
+  }) async {
+    // Stub implementation
+  }
+
+  Future<void> stopSession() async {
+    // Stub implementation
+  }
+}
+
+class NfcPollingOption {
+  static dynamic get iso14443 => null;
+  static dynamic get iso18092 => null;
+  static dynamic get iso15693 => null;
+}
+
+class Ndef {
+  static dynamic from(dynamic tag) => null;
+}
+
+class NdefRecord {
+  NdefRecord({
+    required dynamic typeNameFormat,
+    required dynamic type,
+    required dynamic payload,
+    dynamic identifier,
+  });
+}
+
+class NdefMessage {
+  NdefMessage({required List<dynamic> records});
+}
+
+class TypeNameFormat {
+  static dynamic get wellKnown => null;
+}
 
 enum NFCPayloadType { simple, autoConfig }
 
@@ -37,7 +88,7 @@ class NFCService {
     try {
       await NfcManager.instance.startSession(
         pollingOptions: {NfcPollingOption.iso14443, NfcPollingOption.iso18092, NfcPollingOption.iso15693},
-        onDiscovered: (NfcTag tag) async {
+        onDiscovered: (dynamic tag) async {
           try {
             final payload = await _readNFCPayload(tag, onDebug: onNFCDebug);
             if (payload != null) {
@@ -112,7 +163,7 @@ class NFCService {
   }
 
   /// Lee el payload de una etiqueta NFC y determina su tipo
-  static Future<NFCPayload?> _readNFCPayload(NfcTag tag, {Function(String, Map<String, dynamic>?)? onDebug}) async {
+  static Future<NFCPayload?> _readNFCPayload(dynamic tag, {Function(String, Map<String, dynamic>?)? onDebug}) async {
     final ndef = Ndef.from(tag);
     if (ndef != null && ndef.cachedMessage != null && ndef.cachedMessage!.records.isNotEmpty) {
       final record = ndef.cachedMessage!.records.first;
@@ -341,7 +392,7 @@ class NFCService {
     try {
       await NfcManager.instance.startSession(
         pollingOptions: {NfcPollingOption.iso14443, NfcPollingOption.iso18092, NfcPollingOption.iso15693},
-        onDiscovered: (NfcTag tag) async {
+        onDiscovered: (dynamic tag) async {
           try {
             final ndef = Ndef.from(tag);
             if (ndef == null || !ndef.isWritable) {
