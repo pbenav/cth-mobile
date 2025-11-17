@@ -113,22 +113,14 @@ class StorageService {
     }
   }
 
+  // Obtener usuario almacenado
   static Future<User?> getUser() async {
-    try {
-      final prefs = await _preferences;
-      final data = prefs.getString(AppConstants.keyUser);
-      print('DEBUG: getUser - Key: ${AppConstants.keyUser}, Data: $data');
-      if (data != null) {
-        final user = User.fromJson(jsonDecode(data) as Map<String, dynamic>);
-        print('DEBUG: User cargado - Code: ${user.code}, Name: ${user.name}');
-        return user;
-      }
-      print('DEBUG: No se encontró User en SharedPreferences');
-      return null;
-    } catch (e) {
-      print('DEBUG: Error cargando User: $e');
-      throw StorageException('Error cargando usuario: $e');
+    final prefs = await _preferences;
+    final userJson = prefs.getString('user');
+    if (userJson != null) {
+      return User.fromJson(jsonDecode(userJson));
     }
+    return null;
   }
 
   static Future<void> clearUser() async {

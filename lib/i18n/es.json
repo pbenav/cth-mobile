@@ -21,5 +21,22 @@
   "clock.no_user": "Código de usuario no disponible. Por favor, identifícate.",
   "clock.loading_error": "Error cargando estado: :error",
   "clock.fichaje_error": "Error en fichaje: :error",
-  "clock.fichaje_success": ":action registrada correctamente"
+  "clock.fichaje_success": ":action registrada correctamente",
+  "clock.status_title": "Estado del reloj",
+  "clock.entries": "Entradas",
+  "clock.exits": "Salidas",
+  "clock.pause": "Pausa",
+  "clock.clock_out": "Registrar salida",
+  "clock.nfc_prompt": "Acerca tu dispositivo al lector NFC",
+  "clock.nfc_invalid": "Etiqueta NFC no válida",
+  "clock.open_web": "Abrir en el navegador",
+  "clock.more_functions": "Más funciones",
+  "clock.history_title": "Historial",
+  "clock.schedule_title": "Horario",
+  "clock.reports_title": "Reportes",
+  "clock.profile_title": "Perfil",
+  "dialog.logout_title": "Cerrar sesión",
+  "dialog.logout_content": "¿Estás seguro de que deseas cerrar sesión?",
+  "dialog.cancel": "Cancelar",
+  "dialog.logout": "Cerrar sesión"
 }

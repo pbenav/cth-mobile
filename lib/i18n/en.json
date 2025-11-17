@@ -21,5 +21,22 @@
   "clock.no_user": "User code not available. Please identify yourself.",
   "clock.loading_error": "Error loading status: :error",
   "clock.fichaje_error": "Clock error: :error",
-  "clock.fichaje_success": ":action registered successfully"
+  "clock.fichaje_success": ":action registered successfully",
+  "clock.status_title": "Clock Status",
+  "clock.entries": "Entries",
+  "clock.exits": "Exits",
+  "clock.pause": "Pause",
+  "clock.clock_out": "Clock Out",
+  "clock.nfc_prompt": "Place your device near the NFC reader",
+  "clock.nfc_invalid": "Invalid NFC tag",
+  "clock.open_web": "Open in browser",
+  "clock.more_functions": "More functions",
+  "clock.history_title": "History",
+  "clock.schedule_title": "Schedule",
+  "clock.reports_title": "Reports",
+  "clock.profile_title": "Profile",
+  "dialog.logout_title": "Log out",
+  "dialog.logout_content": "Are you sure you want to log out?",
+  "dialog.cancel": "Cancel",
+  "dialog.logout": "Log out"
 }
