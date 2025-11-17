@@ -11,18 +11,18 @@ class SetupService {
   static const String _setupCompletedKey = 'setup_completed';
   static const String _workerDataKey = 'worker_data';
 
-  /// Verifica si la configuración inicial está completa
+  /// Checks if initial setup is complete
   static Future<bool> isSetupCompleted() async {
     return await StorageService.getBool(_setupCompletedKey) ?? false;
   }
 
-  /// Prueba la conexión con el servidor
+  /// Tests server connection
   static Future<bool> testServerConnection(String serverUrl, {Function(String)? onLog}) async {
     final log = onLog ?? (String message) => print('SetupService: $message');
 
     try {
       log('🔄 Iniciando prueba de conexión...');
-      log('📝 URL del servidor: $serverUrl');
+  log('📝 Server URL: $serverUrl');
 
       // Normalizar la URL
       final normalizedUrl = _normalizeUrl(serverUrl);
@@ -33,17 +33,17 @@ class SetupService {
 
       final response = await http.get(url).timeout(const Duration(seconds: 10));
 
-      log('📡 Respuesta del servidor - Código: ${response.statusCode}');
+  log('📡 Server response - Code: ${response.statusCode}');
 
       if (response.statusCode == 200) {
-        log('✅ Conexión exitosa - Servidor responde correctamente');
+  log('✅ Connection successful - Server responded correctly');
         return true;
       } else {
-        log('❌ Error HTTP: ${response.statusCode} - ${response.reasonPhrase}');
+  log('❌ HTTP error: ${response.statusCode} - ${response.reasonPhrase}');
         return false;
       }
     } catch (e) {
-      log('💥 Error de conexión: ${e.toString()}');
+  log('💥 Connection error: ${e.toString()}');
       return false;
     }
   }
@@ -56,17 +56,17 @@ class SetupService {
     return url;
   }
 
-  /// Guarda temporalmente la URL del servidor durante la configuración
+  /// Temporarily saves the server URL during setup
   static Future<void> saveTempServerUrl(String serverUrl) async {
     await StorageService.setString(_tempServerUrlKey, serverUrl);
   }
 
-  /// Obtiene la URL del servidor temporal
+  /// Gets the temporary server URL
   static Future<String?> getTempServerUrl() async {
     return await StorageService.getString(_tempServerUrlKey);
   }
 
-  /// Carga los datos del trabajador usando el código secreto
+  /// Loads worker data using the secret code
   static Future<WorkerData?> loadWorkerData(String workerCode, {Function(String)? onLog}) async {
     final log = onLog ?? (String message) => print('SetupService: $message');
 
@@ -79,22 +79,22 @@ class SetupService {
       }
 
       if (serverUrl == null) {
-        log('❌ No hay URL del servidor configurada');
-        throw SetupException('URL del servidor no configurada');
+  log('❌ No server URL configured');
+  throw SetupException('Server URL not configured');
       }
 
       log('🔄 Iniciando carga de datos del trabajador...');
-      log('👤 Código del trabajador: $workerCode');
-      log('📝 URL del servidor: $serverUrl');
+  log('👤 Worker code: $workerCode');
+  log('📝 Server URL: $serverUrl');
 
-      final normalizedUrl = _normalizeUrl(serverUrl);
-      final url = Uri.parse('$normalizedUrl/api/mobile/worker/$workerCode');
-      log('🌐 URL completa: $url');
+  final normalizedUrl = _normalizeUrl(serverUrl);
+  final url = Uri.parse('$normalizedUrl/api/v1/mobile/worker/$workerCode');
+  log('🌐 URL completa: $url');
 
       log('📡 Enviando petición GET...');
       final response = await http.get(url).timeout(const Duration(seconds: 30));
 
-      log('📡 Respuesta del servidor - Código: ${response.statusCode}');
+  log('📡 Server response - Code: ${response.statusCode}');
 
         if (response.statusCode == 200) {
         log('✅ Respuesta exitosa, procesando datos...');
@@ -114,7 +114,7 @@ class SetupService {
 
         if (payload == null) {
           log('❌ Respuesta inesperada: payload nulo');
-          throw SetupException('Respuesta inesperada del servidor');
+          throw SetupException('Unexpected server response');
         }
 
         log('📦 Payload a procesar: keys=${payload.keys.toList()}');
@@ -126,33 +126,33 @@ class SetupService {
 
         final workerData = WorkerData.fromJson(payload);
         log('✅ Datos del trabajador procesados exitosamente');
-        log('👤 Nombre: ${workerData.user.name}');
-        log('🏢 Centro: ${workerData.workCenter.name}');
-        log('📅 Horarios: ${workerData.schedule.length} tramos');
-        log('🎉 Festivos: ${workerData.holidays.length} días');
+  log('👤 Name: ${workerData.user.name}');
+  log('🏢 Work center: ${workerData.workCenter.name}');
+  log('📅 Schedules: ${workerData.schedule.length} slots');
+  log('🎉 Holidays: ${workerData.holidays.length} days');
 
         return workerData;
       } else if (response.statusCode == 404) {
         log('❌ Trabajador no encontrado (404)');
         return null; // Trabajador no encontrado
       } else {
-        log('❌ Error del servidor: ${response.statusCode} - ${response.body}');
+  log('❌ Server error: ${response.statusCode} - ${response.body}');
         throw APIException(
-          'Error del servidor: ${response.statusCode}',
+          'Server error: ${response.statusCode}',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
-      log('💥 Error al cargar datos: ${e.toString()}');
+  log('💥 Error loading data: ${e.toString()}');
       if (e is APIException) rethrow;
-      throw SetupException('Error de conexión: ${e.toString()}');
+  throw SetupException('Connection error: ${e.toString()}');
     }
   }
 
-  /// Guarda todos los datos del trabajador y marca la configuración como completa
+  /// Saves all worker data and marks setup as complete
   static Future<void> saveWorkerData(WorkerData workerData) async {
     try {
-      // Guardar la URL del servidor permanentemente
+  // Save server URL permanently
       final serverUrl = await getTempServerUrl();
       if (serverUrl != null) {
         await StorageService.setString('server_url', serverUrl);
@@ -162,35 +162,35 @@ class SetupService {
       final workerDataJson = json.encode(workerData.toJson());
       await StorageService.setString(_workerDataKey, workerDataJson);
 
-      // DEBUG: comprobar que se ha guardado el JSON completo
+  // DEBUG: check that the full JSON was saved
       try {
         final saved = await StorageService.getString(_workerDataKey);
-        print('DEBUG: worker_data guardado: $saved');
+  print('DEBUG: worker_data saved: $saved');
       } catch (e) {
-        print('DEBUG: error leyendo worker_data tras guardar: $e');
+  print('DEBUG: error reading worker_data after save: $e');
       }
 
-      // Guardar datos individuales para compatibilidad con el código existente
+  // Save individual data for compatibility with existing code
       await StorageService.saveUser(workerData.user);
       await StorageService.saveWorkCenter(workerData.workCenter);
 
-      // Guardar horario y festivos
+  // Save schedule and holidays
       await _saveSchedule(workerData.schedule);
       await _saveHolidays(workerData.holidays);
 
-      // Marcar configuración como completa
+  // Mark setup as complete
       await StorageService.setBool(_setupCompletedKey, true);
 
       // Limpiar datos temporales
       await StorageService.remove(_tempServerUrlKey);
 
     } catch (e) {
-      print('Error saving worker data: $e');
-      throw SetupException('Error al guardar configuración: ${e.toString()}');
+  print('Error saving worker data: $e'); // Already in English
+  throw SetupException('Error saving setup: ${e.toString()}');
     }
   }
 
-  /// Obtiene los datos del trabajador guardados
+  /// Gets saved worker data
   static Future<WorkerData?> getSavedWorkerData() async {
     try {
       final workerDataJson = await StorageService.getString(_workerDataKey);
@@ -209,34 +209,34 @@ class SetupService {
       if (payload == null) return null;
       return WorkerData.fromJson(payload);
     } catch (e) {
-      print('Error getting saved worker data: $e');
+  print('Error getting saved worker data: $e'); // Already in English
       return null;
     }
   }
 
-  /// Obtiene la URL del servidor configurado
+  /// Gets configured server URL
   static Future<String?> getConfiguredServerUrl() async {
     return await StorageService.getString('server_url');
   }
 
-  /// Obtiene el horario guardado
+  /// Gets saved schedule
   static Future<List<ScheduleEntry>> getSavedSchedule() async {
     try {
       final workerData = await getSavedWorkerData();
       return workerData?.schedule ?? [];
     } catch (e) {
-      print('Error getting saved schedule: $e');
+  print('Error getting saved schedule: $e'); // Already in English
       return [];
     }
   }
 
-  /// Obtiene los festivos guardados
+  /// Gets saved holidays
   static Future<List<Holiday>> getSavedHolidays() async {
     try {
       final workerData = await getSavedWorkerData();
       return workerData?.holidays ?? [];
     } catch (e) {
-      print('Error getting saved holidays: $e');
+  print('Error getting saved holidays: $e'); // Already in English
       return [];
     }
   }
@@ -248,7 +248,7 @@ class SetupService {
     return holidays.any((holiday) => holiday.date == dateStr);
   }
 
-  /// Obtiene el horario para un día específico
+  /// Gets schedule for a specific day
   static Future<ScheduleEntry?> getScheduleForDay(String dayOfWeek) async {
     final schedule = await getSavedSchedule();
     try {

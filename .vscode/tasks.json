@@ -10,6 +10,41 @@
 				"$flutter"
 			],
 			"group": "build"
+		},
+		{
+			"label": "Compilar Flutter app",
+			"type": "shell",
+			"command": "flutter build apk",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Compilar Flutter app",
+			"type": "shell",
+			"command": "flutter build apk",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Compilar Flutter app",
+			"type": "shell",
+			"command": "flutter build apk",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Compilar Flutter app",
+			"type": "shell",
+			"command": "flutter build apk",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Compilar Flutter app",
+			"type": "shell",
+			"command": "flutter build apk",
+			"isBackground": false,
+			"group": "build"
 		}
 	]
 }

@@ -16,7 +16,7 @@ class ClockService {
       return _normalizeUrl(setupUrl);
     }
 
-    // Si no hay URL del setup, usar la configuración anterior
+      // If no setup URL, use previous configuration
     final configuredUrl = await ConfigService.getCurrentServerUrl();
     final baseUrl = configuredUrl ?? AppConstants.apiBaseUrl;
 
@@ -76,8 +76,10 @@ class ClockService {
           (data) => ClockResponse.fromJson(data),
         );
       } else {
+        // Asegura que el mensaje sea siempre String
+        final msg = jsonData['message'];
         throw ClockException(
-          jsonData['message'] ?? 'Error en fichaje',
+          msg is String ? msg : (msg?.toString() ?? 'Clock error'),
           statusCode: response.statusCode,
         );
       }
@@ -89,7 +91,6 @@ class ClockService {
 
   // Obtener estado actual
   static Future<ApiResponse<ClockStatus>> getStatus({
-    required String workCenterCode,
     required String userCode,
   }) async {
     try {
@@ -98,16 +99,20 @@ class ClockService {
         await SetupService.refreshSavedWorkerData(blocking: true, timeout: const Duration(seconds: 3));
       } catch (_) {}
       final baseUrl = await _getBaseUrl();
-      final response = await http.get(
-        Uri.parse('$baseUrl/status').replace(queryParameters: {
-          'work_center_code': workCenterCode,
-          'user_code': userCode,
-        }),
+      final bodyJson = jsonEncode({
+        'user_code': userCode,
+      });
+      print('[CTH] Enviando a $baseUrl/status: $bodyJson');
+      final response = await http.post(
+        Uri.parse('$baseUrl/status'),
         headers: {
           'Accept': 'application/json',
+          'Content-Type': 'application/json',
         },
+        body: bodyJson,
       ).timeout(const Duration(seconds: 15));
 
+      print('[CTH] Respuesta ${response.statusCode}: ${response.body}');
       final jsonData = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
@@ -116,8 +121,10 @@ class ClockService {
           (data) => ClockStatus.fromJson(data),
         );
       } else {
+        // Asegura que el mensaje sea siempre String
+        final msg = jsonData['message'];
         throw ClockException(
-          jsonData['message'] ?? 'Error obteniendo estado',
+          msg is String ? msg : (msg?.toString() ?? 'Status error'),
           statusCode: response.statusCode,
         );
       }
@@ -163,7 +170,7 @@ class ClockService {
         );
       } else {
         throw SyncException(
-          jsonData['message'] ?? 'Error en sincronización',
+            jsonData['message'] ?? 'Sync error',
           statusCode: response.statusCode,
         );
       }

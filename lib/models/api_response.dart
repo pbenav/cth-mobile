@@ -17,7 +17,7 @@ class ApiResponse<T> {
   ) {
     return ApiResponse<T>(
       success: json['success'] as bool,
-      message: json['message'] as String,
+      message: json['message'] is String ? json['message'] as String : '',
       data: json['data'] != null && fromJsonT != null
           ? fromJsonT(json['data'] as Map<String, dynamic>)
           : json['data'] as T?,

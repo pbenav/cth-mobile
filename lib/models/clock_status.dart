@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class ClockStatus {
   final String action; // 'clock_in', 'working_options', 'resume_workday', 'confirm_exceptional_clock_in', 'clock_out'
   final bool canClock;
@@ -7,42 +9,152 @@ class ClockStatus {
   final NextSlot? nextSlot;
   final TodayStats todayStats;
   final DateTime currentTime;
+  final String? workCenterCode;
 
   const ClockStatus({
-    required this.action,
-    required this.canClock,
-    this.message,
-    this.overtime,
-    this.eventTypeId,
-    this.nextSlot,
-    required this.todayStats,
-    required this.currentTime,
+  required this.action,
+  required this.canClock,
+  this.message,
+  this.overtime,
+  this.eventTypeId,
+  this.nextSlot,
+  required this.todayStats,
+  required this.currentTime,
+  this.workCenterCode,
   });
 
   Map<String, dynamic> toJson() => {
-        'action': action,
-        'can_clock': canClock,
-        'message': message,
-        'overtime': overtime,
-        'event_type_id': eventTypeId,
-        'next_slot': nextSlot?.toJson(),
-        'today_stats': todayStats.toJson(),
-        'current_time': currentTime.toIso8601String(),
-      };
+  'action': action,
+  'can_clock': canClock,
+  'message': message,
+  'overtime': overtime,
+  'event_type_id': eventTypeId,
+  'next_slot': nextSlot?.toJson(),
+  'today_stats': todayStats.toJson(),
+  'current_time': currentTime.toIso8601String(),
+  'work_center_code': workCenterCode,
+  };
 
-  factory ClockStatus.fromJson(Map<String, dynamic> json) => ClockStatus(
-        action: json['action'] as String,
-        canClock: json['can_clock'] as bool,
-        message: json['message'] as String?,
-        overtime: json['overtime'] as bool?,
-        eventTypeId: json['event_type_id'] as int?,
-        nextSlot: json['next_slot'] != null
-            ? NextSlot.fromJson(json['next_slot'] as Map<String, dynamic>)
-            : null,
-        todayStats:
-            TodayStats.fromJson(json['today_stats'] as Map<String, dynamic>),
-        currentTime: DateTime.parse(json['current_time'] as String),
+  static ClockStatus fromJson(Map<String, dynamic> json) {
+    try {
+      print('[ClockStatus][DEBUG] JSON recibido: ' + json.toString());
+      final action = (() {
+        final v = json['action'];
+        print('[ClockStatus][ClockStatus] action (raw): $v');
+        final result = v is String ? v : '';
+        print('[ClockStatus][ClockStatus] action (parsed): $result');
+        return result;
+      })();
+      final canClock = (() {
+        final v = json['can_clock'];
+        print('[ClockStatus][ClockStatus] canClock (raw): $v');
+        final result = v is bool ? v : false;
+        print('[ClockStatus][ClockStatus] canClock (parsed): $result');
+        return result;
+      })();
+      final message = (() {
+        final v = json['message'];
+        print('[ClockStatus][ClockStatus] message (raw): $v');
+        final result = v is String ? v : null;
+        print('[ClockStatus][ClockStatus] message (parsed): $result');
+        return result;
+      })();
+      final overtime = (() {
+        final v = json['overtime'];
+        print('[ClockStatus][ClockStatus] overtime (raw): $v');
+        final result = v as bool?;
+        print('[ClockStatus][ClockStatus] overtime (parsed): $result');
+        return result;
+      })();
+      final eventTypeId = (() {
+        final v = json['event_type_id'];
+        print('[ClockStatus][ClockStatus] eventTypeId (raw): $v');
+        if (v == null) return null;
+        if (v is int) return v;
+        if (v is String) {
+          // Si viene como string, intenta convertirlo a int
+          final parsed = int.tryParse(v);
+          return parsed;
+        }
+        return null;
+      })();
+      final nextSlot = (() {
+        final v = json['next_slot'];
+        print('[ClockStatus][ClockStatus] nextSlot (raw): $v');
+        try {
+          if (v == null) return null;
+          if (v is Map<String, dynamic>) {
+            return NextSlot.fromJson(v);
+          }
+          if (v is String) {
+            // Si viene como string, intenta decodificarlo
+            // (asumiendo que es un JSON string)
+            try {
+              final decoded = v.isNotEmpty ? Map<String, dynamic>.from(jsonDecode(v)) : null;
+              if (decoded != null) return NextSlot.fromJson(decoded);
+            } catch (e) {
+              print('[ClockStatus][ERROR] Error decoding nextSlot string: $e');
+            }
+          }
+          return null;
+        } catch (e) {
+          print('[ClockStatus][ERROR] Error converting nextSlot: $e');
+          return null;
+        }
+      })();
+      final todayStats = (() {
+        final v = json['today_stats'];
+        print('[ClockStatus][ClockStatus] todayStats (raw): $v');
+        if (v == null) return TodayStats(totalEntries: 0, totalExits: 0);
+        if (v is Map<String, dynamic>) return TodayStats.fromJson(v);
+        if (v is String) {
+          // Si viene como string, intenta decodificarlo
+          // (asumiendo que es un JSON string)
+          try {
+            final decoded = v.isNotEmpty ? Map<String, dynamic>.from(jsonDecode(v)) : null;
+            if (decoded != null) return TodayStats.fromJson(decoded);
+          } catch (e) {
+            print('[ClockStatus][ERROR] Error decoding todayStats string: $e');
+          }
+        }
+        return TodayStats(totalEntries: 0, totalExits: 0);
+      })();
+      final currentTime = (() {
+        final v = json['current_time'];
+        print('[ClockStatus][ClockStatus] currentTime (raw): $v');
+        final result = v is String ? (DateTime.tryParse(v) ?? DateTime.now()) : DateTime.now();
+        print('[ClockStatus][ClockStatus] currentTime (parsed): $result');
+        return result;
+      })();
+      final workCenterCode = (() {
+        final v = json['work_center_code'];
+        return v is String ? v : null;
+      })();
+      return ClockStatus(
+        action: action,
+        canClock: canClock,
+        message: message,
+        overtime: overtime,
+        eventTypeId: eventTypeId,
+        nextSlot: nextSlot,
+        todayStats: todayStats,
+        currentTime: currentTime,
+        workCenterCode: workCenterCode,
       );
+    } catch (e) {
+      print('[ClockStatus][ERROR] General error in fromJson: $e');
+      return ClockStatus(
+        action: '',
+        canClock: false,
+        message: null,
+        overtime: null,
+        eventTypeId: null,
+        nextSlot: null,
+        todayStats: TodayStats(totalEntries: 0, totalExits: 0),
+        currentTime: DateTime.now(),
+      );
+    }
+  }
 }
 
 class NextSlot {
@@ -62,11 +174,37 @@ class NextSlot {
         'minutes_until': minutesUntil,
       };
 
-  factory NextSlot.fromJson(Map<String, dynamic> json) => NextSlot(
-        start: json['start'] as String,
-        end: json['end'] as String,
-        minutesUntil: json['minutes_until'] as int?,
-      );
+  static NextSlot fromJson(Map<String, dynamic> json) {
+    try {
+      print('[ClockStatus][DEBUG] JSON recibido en NextSlot: ' + json.toString());
+      final start = (() {
+        final v = json['start'];
+        print('[ClockStatus][NextSlot] start (raw): $v');
+        final result = v is String ? v : '';
+        print('[ClockStatus][NextSlot] start (parsed): $result');
+        return result;
+      })();
+      final end = (() {
+        final v = json['end'];
+        print('[ClockStatus][NextSlot] end (raw): $v');
+        final result = v is String ? v : '';
+        print('[ClockStatus][NextSlot] end (parsed): $result');
+        return result;
+      })();
+      final minutesUntil = (() {
+        final v = json['minutes_until'];
+        print('[ClockStatus][NextSlot] minutesUntil (raw): $v');
+        final result = v as int?;
+        print('[ClockStatus][NextSlot] minutesUntil (parsed): $result');
+        return result;
+      })();
+      print('[ClockStatus][DEBUG] Valores convertidos NextSlot: start=$start, end=$end, minutesUntil=$minutesUntil');
+      return NextSlot(start: start, end: end, minutesUntil: minutesUntil);
+    } catch (e) {
+      print('[ClockStatus][ERROR] General error in NextSlot.fromJson: $e');
+      return NextSlot(start: '', end: '', minutesUntil: null);
+    }
+  }
 }
 
 class TodayStats {
@@ -89,12 +227,44 @@ class TodayStats {
         'current_status': currentStatus,
       };
 
-  factory TodayStats.fromJson(Map<String, dynamic> json) => TodayStats(
-        totalEntries: json['total_entries'] as int? ?? 0,
-        totalExits: json['total_exits'] as int? ?? 0,
-        workedHours: json['worked_hours'] as String?,
-        currentStatus: json['current_status'] as String?,
-      );
+  static TodayStats fromJson(Map<String, dynamic> json) {
+    try {
+      print('[ClockStatus][DEBUG] JSON recibido en TodayStats: ' + json.toString());
+      final totalEntries = (() {
+        final v = json['total_entries'];
+        print('[ClockStatus][TodayStats] totalEntries (raw): $v');
+        final result = v is int ? v : 0;
+        print('[ClockStatus][TodayStats] totalEntries (parsed): $result');
+        return result;
+      })();
+      final totalExits = (() {
+        final v = json['total_exits'];
+        print('[ClockStatus][TodayStats] totalExits (raw): $v');
+        final result = v is int ? v : 0;
+        print('[ClockStatus][TodayStats] totalExits (parsed): $result');
+        return result;
+      })();
+      final workedHours = (() {
+        final v = json['worked_hours'];
+        print('[ClockStatus][TodayStats] workedHours (raw): $v');
+        final result = v is String ? v : null;
+        print('[ClockStatus][TodayStats] workedHours (parsed): $result');
+        return result;
+      })();
+      final currentStatus = (() {
+        final v = json['current_status'];
+        print('[ClockStatus][TodayStats] currentStatus (raw): $v');
+        final result = v is String ? v : null;
+        print('[ClockStatus][TodayStats] currentStatus (parsed): $result');
+        return result;
+      })();
+      print('[ClockStatus][DEBUG] Valores convertidos TodayStats: totalEntries=$totalEntries, totalExits=$totalExits, workedHours=$workedHours, currentStatus=$currentStatus');
+      return TodayStats(totalEntries: totalEntries, totalExits: totalExits, workedHours: workedHours, currentStatus: currentStatus);
+    } catch (e) {
+      print('[ClockStatus][ERROR] General error in TodayStats.fromJson: $e');
+      return TodayStats(totalEntries: 0, totalExits: 0);
+    }
+  }
 }
 
 class ClockAction {
