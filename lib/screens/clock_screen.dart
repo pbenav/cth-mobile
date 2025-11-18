@@ -132,7 +132,7 @@ class _ClockScreenState extends State<ClockScreen> {
 
       if (mounted) {
         print('[ClockScreen][_performClock] SUCCESS');
-        _showSuccess(I18n.of('clock.action_success'));
+        _showSuccess(I18n.of('clock.fichaje_success', {'action': I18n.of('clock.clock_in')}));
         await _loadStatus();
       }
     } catch (e, stack) {
@@ -170,9 +170,9 @@ class _ClockScreenState extends State<ClockScreen> {
       if (mounted) {
         print('[ClockScreen][_performClockWithAction] SUCCESS');
         String actionText = action == 'pause'
-            ? I18n.of('clock.pause')
-            : I18n.of('clock.clock_out');
-        _showSuccess(I18n.of('clock.action_success', {'action': actionText}));
+          ? I18n.of('clock.pause')
+          : I18n.of('clock.clock_out');
+        _showSuccess(I18n.of('clock.fichaje_success', {'action': actionText}));
         await _loadStatus();
       }
     } catch (e, stack) {
@@ -213,7 +213,10 @@ class _ClockScreenState extends State<ClockScreen> {
       );
       if (mounted) {
         print('[ClockScreen][_performClockWithNFC] SUCCESS');
-        _showSuccess(I18n.of('clock.action_success'));
+        String actionText = (action == 'clock_in')
+          ? I18n.of('clock.clock_in')
+          : I18n.of('clock.clock_out');
+        _showSuccess(I18n.of('clock.fichaje_success', {'action': actionText}));
         await _loadStatus();
       }
     } catch (e, stack) {
@@ -464,9 +467,9 @@ class _ClockScreenState extends State<ClockScreen> {
                                               BorderRadius.circular(20),
                                         ),
                                         child: Text(
-                                          (clockStatus!.todayStats
-                                                      .currentStatus ??
-                                                  'UNKNOWN')
+                                            (((clockStatus!.todayStats.currentStatus != null)
+                                              ? clockStatus!.todayStats.currentStatus
+                                              : (clockStatus!.action == 'working_options' ? 'Trabajando' : 'UNKNOWN')) ?? 'UNKNOWN')
                                               .toUpperCase(),
                                           style: TextStyle(
                                             fontSize: 20,
@@ -570,8 +573,7 @@ class _ClockScreenState extends State<ClockScreen> {
                                           'trabajando') {
                                     return Row(
                                       children: [
-                                        SizedBox(
-                                          width: MediaQuery.of(context).size.width * 0.45,
+                                        Expanded(
                                           child: ElevatedButton(
                                             onPressed: isPerformingClock
                                                 ? null
@@ -611,8 +613,7 @@ class _ClockScreenState extends State<ClockScreen> {
                                           ),
                                         ),
                                         const SizedBox(width: 12),
-                                        SizedBox(
-                                          width: MediaQuery.of(context).size.width * 0.45,
+                                        Expanded(
                                           child: ElevatedButton(
                                             onPressed: isPerformingClock
                                                 ? null
