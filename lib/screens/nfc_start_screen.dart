@@ -25,8 +25,9 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
   Future<void> _navigateToStatusScreen() async {
     try {
       final user = await StorageService.getUser() ??
-          const User(id: 0, code: 'defaultCode', name: 'Default User');
-      final workCenter = const WorkCenter(id: 0, code: 'defaultCode', name: 'Default WorkCenter');
+          const User(id: 0, code: '', name: 'Usuario por defecto');
+      final workCenter = const WorkCenter(
+          id: 0, code: '', name: 'Centro de trabajo por defecto');
 
       if (!mounted) return; // Verificar si el widget sigue montado
 

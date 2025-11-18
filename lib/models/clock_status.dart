@@ -10,6 +10,7 @@ class ClockStatus {
   final TodayStats todayStats;
   final DateTime currentTime;
   final String? workCenterCode;
+  final String? workCenterName; // Nombre del centro de trabajo
 
   const ClockStatus({
   required this.action,
@@ -21,6 +22,7 @@ class ClockStatus {
   required this.todayStats,
   required this.currentTime,
   this.workCenterCode,
+  this.workCenterName,
   });
 
   Map<String, dynamic> toJson() => {
@@ -33,6 +35,7 @@ class ClockStatus {
   'today_stats': todayStats.toJson(),
   'current_time': currentTime.toIso8601String(),
   'work_center_code': workCenterCode,
+  'work_center_name': workCenterName,
   };
 
   static ClockStatus fromJson(Map<String, dynamic> json) {
@@ -130,6 +133,13 @@ class ClockStatus {
         final v = json['work_center_code'];
         return v is String ? v : null;
       })();
+      final workCenterName = (() {
+        final v = json['work_center_name'];
+        print('[ClockStatus][ClockStatus] workCenterName (raw): $v');
+        final result = v is String ? v : null;
+        print('[ClockStatus][ClockStatus] workCenterName (parsed): $result');
+        return result;
+      })();
       return ClockStatus(
         action: action,
         canClock: canClock,
@@ -140,6 +150,7 @@ class ClockStatus {
         todayStats: todayStats,
         currentTime: currentTime,
         workCenterCode: workCenterCode,
+        workCenterName: workCenterName,
       );
     } catch (e) {
       print('[ClockStatus][ERROR] General error in fromJson: $e');

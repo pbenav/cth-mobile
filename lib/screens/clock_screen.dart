@@ -218,7 +218,8 @@ class _ClockScreenState extends State<ClockScreen> {
       }
     } catch (e, stack) {
       if (mounted) {
-        print('[ClockScreen][_performClockWithNFC] ERROR: ${e.toString()} | ${stack.toString().split('\n')[0]}');
+        print(
+            '[ClockScreen][_performClockWithNFC] ERROR: ${e.toString()} | ${stack.toString().split('\n')[0]}');
         _showError(I18n.of('clock.fichaje_error', {'error': e.toString()}));
       }
     } finally {
@@ -332,15 +333,18 @@ class _ClockScreenState extends State<ClockScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                widget.workCenter.name,
+                                clockStatus?.workCenterName?.isNotEmpty == true
+                                    ? clockStatus!.workCenterName!
+                                    : widget.workCenter.name,
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               Text(
-                                clockStatus?.workCenterCode ??
-                                    widget.workCenter.code,
+                                clockStatus?.workCenterCode?.isNotEmpty == true
+                                    ? clockStatus!.workCenterCode!
+                                    : widget.workCenter.code,
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey[600],
@@ -386,10 +390,17 @@ class _ClockScreenState extends State<ClockScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                widget.user.name,
+                                '${widget.user.name} ${widget.user.familyName1 ?? ''} ${widget.user.familyName2 ?? ''}'.trim(),
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                clockStatus?.workCenterCode ?? widget.workCenter.code,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[600],
                                 ),
                               ),
                             ],
@@ -511,7 +522,8 @@ class _ClockScreenState extends State<ClockScreen> {
                                         onPressed: (isPerformingClock ||
                                                 !clockStatus!.canClock)
                                             ? null
-                                            : () => _performClockWithNFC(action: 'clock_in'),
+                                            : () => _performClockWithNFC(
+                                                action: 'clock_in'),
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: const Color(
                                               AppConstants.successColorValue),
@@ -666,7 +678,8 @@ class _ClockScreenState extends State<ClockScreen> {
                                         onPressed: (isPerformingClock ||
                                                 !clockStatus!.canClock)
                                             ? null
-                                            : () => _performClockWithNFC(action: 'clock_out'),
+                                            : () => _performClockWithNFC(
+                                                action: 'clock_out'),
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: const Color(
                                               AppConstants.errorColorValue),
