@@ -16,7 +16,7 @@ class ClockService {
       return _normalizeUrl(setupUrl);
     }
 
-      // If no setup URL, use previous configuration
+    // If no setup URL, use previous configuration
     final configuredUrl = await ConfigService.getCurrentServerUrl();
     final baseUrl = configuredUrl ?? AppConstants.apiBaseUrl;
 
@@ -48,12 +48,14 @@ class ClockService {
         // Hacemos un refresh bloqueante pero con timeout corto para evitar
         // latencias largas: si la API responde rápido, tendremos datos
         // actualizados; si no, procedemos con los datos en caché.
-        await SetupService.refreshSavedWorkerData(blocking: true, timeout: const Duration(seconds: 3));
+        await SetupService.refreshSavedWorkerData(
+            blocking: true, timeout: const Duration(seconds: 3));
       } catch (_) {
         // Silenciar: no queremos que un fallo en el refresh impida el fichaje
       }
       final baseUrl = await _getBaseUrl();
-      print('[ClockService][performClock] Enviando datos: work_center_code=$workCenterCode, user_code=$userCode, action=$action');
+      print(
+          '[ClockService][performClock] Enviando datos: work_center_code=$workCenterCode, user_code=$userCode, action=$action');
       final response = await http
           .post(
             Uri.parse('$baseUrl/clock'),
@@ -97,21 +99,24 @@ class ClockService {
     try {
       // Refrescar datos del trabajador antes de consultar estado
       try {
-        await SetupService.refreshSavedWorkerData(blocking: true, timeout: const Duration(seconds: 3));
+        await SetupService.refreshSavedWorkerData(
+            blocking: true, timeout: const Duration(seconds: 3));
       } catch (_) {}
       final baseUrl = await _getBaseUrl();
       final bodyJson = jsonEncode({
         'user_code': userCode,
       });
       print('[CTH] Enviando a $baseUrl/status: $bodyJson');
-      final response = await http.post(
-        Uri.parse('$baseUrl/status'),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: bodyJson,
-      ).timeout(const Duration(seconds: 15));
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/status'),
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: bodyJson,
+          )
+          .timeout(const Duration(seconds: 15));
 
       print('[CTH] Respuesta ${response.statusCode}: ${response.body}');
       final jsonData = jsonDecode(response.body);
@@ -144,7 +149,8 @@ class ClockService {
     try {
       // Refrescar datos guardados antes de sincronizar
       try {
-        await SetupService.refreshSavedWorkerData(blocking: true, timeout: const Duration(seconds: 3));
+        await SetupService.refreshSavedWorkerData(
+            blocking: true, timeout: const Duration(seconds: 3));
       } catch (_) {}
       final baseUrl = await _getBaseUrl();
       final response = await http
@@ -171,7 +177,7 @@ class ClockService {
         );
       } else {
         throw SyncException(
-            jsonData['message'] ?? 'Sync error',
+          jsonData['message'] ?? 'Sync error',
           statusCode: response.statusCode,
         );
       }
