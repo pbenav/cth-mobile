@@ -285,9 +285,9 @@ class _ClockScreenState extends State<ClockScreen> {
                                 ),
                               ),
                               Text(
-                                clockStatus?.workCenterCode?.isNotEmpty == true
-                                    ? clockStatus!.workCenterCode!
-                                    : widget.workCenter.code,
+                                (clockStatus?.nextSlot != null)
+                                  ? '${clockStatus!.nextSlot!.start} - ${clockStatus!.nextSlot!.end}'
+                                  : 'Sin tramo horario',
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey[600],
