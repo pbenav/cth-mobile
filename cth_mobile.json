@@ -1,0 +1,271 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2025-11-10T11:35:34.000Z",
+  "__export_source": "gemini.ai",
+  "resources": [
+    {
+      "_id": "fld_api_routes_1",
+      "parentId": "wrk_1",
+      "modified": 1697241034000,
+      "created": 1697241034000,
+      "name": "API Routes Collection",
+      "description": "Rutas de la API importadas",
+      "environment": {},
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_1",
+      "parentId": "fld_api_routes_1",
+      "modified": 1697241034001,
+      "created": 1697241034001,
+      "url": "{{ base_url }}/api/v1/admin/work_centers",
+      "name": "GET | api/v1/admin/work_centers",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_2",
+      "parentId": "fld_api_routes_1",
+      "modified": 1697241034002,
+      "created": 1697241034002,
+      "url": "{{ base_url }}/api/v1/config/ping",
+      "name": "GET | api/v1/config/ping",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_3",
+      "parentId": "fld_api_routes_1",
+      "modified": 1697241034003,
+      "created": 1697241034003,
+      "url": "{{ base_url }}/api/v1/config/server",
+      "name": "GET | api/v1/config/server",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_4",
+      "parentId": "fld_api_routes_1",
+      "modified": 1697241034004,
+      "created": 1697241034004,
+      "url": "{{ base_url }}/api/v1/config/work-centers/nfc",
+      "name": "GET | api/v1/config/work-centers/nfc",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_5",
+      "parentId": "fld_api_routes_1",
+      "modified": 1697241034005,
+      "created": 1697241034005,
+      "url": "{{ base_url }}/api/v1/login",
+      "name": "POST | api/v1/login",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_6",
+      "parentId": "fld_api_routes_1",
+      "modified": 1697241034006,
+      "created": 1697241034006,
+      "url": "{{ base_url }}/api/v1/mobile/clock",
+      "name": "POST | api/v1/mobile/clock",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_7",
+      "parentId": "fld_api_routes_1",
+      "modified": 1697241034007,
+      "created": 1697241034007,
+      "url": "{{ base_url }}/api/v1/mobile/status",
+      "name": "POST | api/v1/mobile/status",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_8",
+      "parentId": "fld_api_routes_1",
+      "modified": 1697241034008,
+      "created": 1697241034008,
+      "url": "{{ base_url }}/api/v1/mobile/sync",
+      "name": "POST | api/v1/mobile/sync",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_9",
+      "parentId": "fld_api_routes_1",
+      "modified": 1697241034009,
+      "created": 1697241034009,
+      "url": "{{ base_url }}/api/v1/mobile/worker/{{ code }}",
+      "name": "GET | api/v1/mobile/worker/{code}",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_10",
+      "parentId": "fld_api_routes_1",
+      "modified": 1697241034010,
+      "created": 1697241034010,
+      "url": "{{ base_url }}/api/v1/nfc/verify",
+      "name": "POST | api/v1/nfc/verify",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_11",
+      "parentId": "fld_api_routes_1",
+      "modified": 1697241034011,
+      "created": 1697241034011,
+      "url": "{{ base_url }}/api/v1/profile",
+      "name": "GET | api/v1/profile",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_12",
+      "parentId": "fld_api_routes_1",
+      "modified": 1697241034012,
+      "created": 1697241034012,
+      "url": "{{ base_url }}/api/v1/punch",
+      "name": "POST | api/v1/punch",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_13",
+      "parentId": "fld_api_routes_1",
+      "modified": 1697241034013,
+      "created": 1697241034013,
+      "url": "{{ base_url }}/api/v1/work_center/validate",
+      "name": "POST | api/v1/work_center/validate",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_14",
+      "parentId": "fld_api_routes_1",
+      "modified": 1697241034014,
+      "created": 1697241034014,
+      "url": "{{ base_url }}/user/api-tokens",
+      "name": "GET | user/api-tokens",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "_type": "request"
+    }
+  ],
+  "dependencies": []
+}
