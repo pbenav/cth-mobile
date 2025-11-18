@@ -53,6 +53,7 @@ class ClockService {
         // Silenciar: no queremos que un fallo en el refresh impida el fichaje
       }
       final baseUrl = await _getBaseUrl();
+      print('[ClockService][performClock] Enviando datos: work_center_code=$workCenterCode, user_code=$userCode, action=$action');
       final response = await http
           .post(
             Uri.parse('$baseUrl/clock'),
