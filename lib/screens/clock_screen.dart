@@ -390,14 +390,16 @@ class _ClockScreenState extends State<ClockScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '${widget.user.name} ${widget.user.familyName1 ?? ''} ${widget.user.familyName2 ?? ''}'.trim(),
+                                '${widget.user.name} ${widget.user.familyName1 ?? ''} ${widget.user.familyName2 ?? ''}'
+                                    .trim(),
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               Text(
-                                clockStatus?.workCenterCode ?? widget.workCenter.code,
+                                clockStatus?.workCenterCode ??
+                                    widget.workCenter.code,
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey[600],
