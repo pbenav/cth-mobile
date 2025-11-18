@@ -291,14 +291,6 @@ class _ClockScreenState extends State<ClockScreen> {
                                   color: Colors.grey[600],
                                 ),
                               ),
-                              if (clockStatus?.nextSlot != null)
-                                Text(
-                                  '${clockStatus!.nextSlot!.start} - ${clockStatus!.nextSlot!.end}',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey[500],
-                                  ),
-                                ),
                             ],
                           ),
                         ),
