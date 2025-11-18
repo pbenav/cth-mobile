@@ -113,12 +113,12 @@ class _ClockScreenState extends State<ClockScreen> {
           ? I18n.of('clock.pause')
           : I18n.of('clock.clock_out');
         _showSuccess(I18n.of('clock.fichaje_success', {'action': actionText}));
+        // Forzar recarga de estado para actualizar contadores
         await _loadStatus();
       }
     } catch (e, stack) {
       if (mounted) {
-        print(
-            '[ClockScreen][_performClockWithAction] ERROR: ${e.toString()} | ${stack.toString().split('\n')[0]}');
+        print('[ClockScreen][_performClockWithAction] ERROR: ${e.toString()} | ${stack.toString().split('\n')[0]}');
         _showError(I18n.of('clock.fichaje_error', {'error': e.toString()}));
       }
     } finally {
@@ -139,7 +139,7 @@ class _ClockScreenState extends State<ClockScreen> {
         return;
       }
       // Solicitar NFC
-      _showSuccess(I18n.of('clock.nfc_prompt'));
+      _showSuccess('Acerque el lector a la tarjeta');
       final nfcWorkCenter = await NFCService.scanWorkCenter();
       if (nfcWorkCenter == null || nfcWorkCenter.code != workCenterCode) {
         if (mounted) _showError(I18n.of('clock.nfc_invalid'));
@@ -161,8 +161,7 @@ class _ClockScreenState extends State<ClockScreen> {
       }
     } catch (e, stack) {
       if (mounted) {
-        print(
-            '[ClockScreen][_performClockWithNFC] ERROR: ${e.toString()} | ${stack.toString().split('\n')[0]}');
+        print('[ClockScreen][_performClockWithNFC] ERROR: ${e.toString()} | ${stack.toString().split('\n')[0]}');
         _showError(I18n.of('clock.fichaje_error', {'error': e.toString()}));
       }
     } finally {
@@ -342,8 +341,9 @@ class _ClockScreenState extends State<ClockScreen> {
                                 ),
                               ),
                               Text(
-                                clockStatus?.workCenterCode ??
-                                    widget.workCenter.code,
+                                (clockStatus?.nextSlot != null)
+                                  ? '${clockStatus!.nextSlot!.start} - ${clockStatus!.nextSlot!.end}'
+                                  : 'Sin tramo horario',
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey[600],
