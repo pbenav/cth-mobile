@@ -467,20 +467,17 @@ class _ClockScreenState extends State<ClockScreen> {
                                               BorderRadius.circular(20),
                                         ),
                                         child: Text(
-                                            (((clockStatus!.todayStats.currentStatus != null)
-                                              ? clockStatus!.todayStats.currentStatus
-                                              : (clockStatus!.action == 'working_options' ? 'Trabajando' : 'UNKNOWN')) ?? 'UNKNOWN')
-                                              .toUpperCase(),
+                                          (clockStatus?.message ?? clockStatus!.todayStats.currentStatus ?? 'UNKNOWN').toUpperCase(),
                                           style: TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                            color: clockStatus!.todayStats
-                                                        .currentStatus ==
-                                                    'trabajando'
-                                                ? const Color(AppConstants
-                                                    .successColorValue)
-                                                : const Color(AppConstants
-                                                    .warningColorValue),
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          color: clockStatus!.todayStats
+                                                .currentStatus ==
+                                              'TRABAJANDO'
+                                            ? const Color(AppConstants
+                                              .successColorValue)
+                                            : const Color(AppConstants
+                                              .warningColorValue),
                                           ),
                                         ),
                                       ),
@@ -518,23 +515,23 @@ class _ClockScreenState extends State<ClockScreen> {
                               // Clock Button(s)
                               Builder(
                                 builder: (context) {
-                                  if (clockStatus!.action == 'clock_in') {
+                                  final status = clockStatus!.todayStats.currentStatus;
+                                  if (status == 'INICIAR JORNADA' || status == 'INICIAR REGISTRO EXCEPCIONAL') {
+                                    final isExceptional = status == 'INICIAR REGISTRO EXCEPCIONAL';
                                     return SizedBox(
                                       width: double.infinity,
                                       height: AppConstants.buttonHeight * 1.2,
                                       child: ElevatedButton(
-                                        onPressed: (isPerformingClock ||
-                                                !clockStatus!.canClock)
+                                        onPressed: (isPerformingClock || !clockStatus!.canClock)
                                             ? null
-                                            : () => _performClockWithNFC(
-                                                action: 'clock_in'),
+                                            : () => _performClockWithNFC(action: 'clock_in'),
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(
-                                              AppConstants.successColorValue),
+                                          backgroundColor: isExceptional
+                                              ? const Color(AppConstants.warningColorValue)
+                                              : const Color(AppConstants.successColorValue),
                                           foregroundColor: Colors.white,
                                           shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
+                                            borderRadius: BorderRadius.circular(12),
                                           ),
                                           elevation: 6,
                                         ),
@@ -542,68 +539,58 @@ class _ClockScreenState extends State<ClockScreen> {
                                             ? const SizedBox(
                                                 width: 24,
                                                 height: 24,
-                                                child:
-                                                    CircularProgressIndicator(
+                                                child: CircularProgressIndicator(
                                                   color: Colors.white,
                                                   strokeWidth: 2,
                                                 ),
                                               )
                                             : Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
+                                                mainAxisAlignment: MainAxisAlignment.center,
                                                 children: [
-                                                  const Icon(Icons.login,
-                                                      size: 24),
+                                                  const Icon(Icons.login, size: 24),
                                                   const SizedBox(width: 8),
                                                   Text(
-                                                    I18n.of('clock.clock_in'),
+                                                    status ?? '',
                                                     style: const TextStyle(
                                                       fontSize: 18,
-                                                      fontWeight:
-                                                          FontWeight.bold,
+                                                      fontWeight: FontWeight.bold,
                                                     ),
                                                   ),
                                                 ],
                                               ),
                                       ),
                                     );
-                                  } else if (clockStatus!.action ==
-                                          'working_options' ||
-                                      clockStatus!.todayStats.currentStatus ==
-                                          'trabajando') {
+                                  } else if (status == 'TRABAJANDO') {
                                     return Row(
-                                      children: [
-                                        Expanded(
-                                          child: ElevatedButton(
-                                            onPressed: isPerformingClock
-                                                ? null
-                                                : () => _performClockWithAction('pause'),
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: const Color(AppConstants.warningColorValue),
-                                              foregroundColor: Colors.white,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(12),
-                                              ),
-                                              elevation: 6,
-                                              padding: const EdgeInsets.symmetric(vertical: 16),
-                                            ),
-                                            child: isPerformingClock
-                                                ? const SizedBox(
-                                                    width: 20,
-                                                    height: 20,
-                                                    child: CircularProgressIndicator(
-                                                      color: Colors.white,
-                                                      strokeWidth: 2,
-                                                    ),
-                                                  )
-                                                : Column(
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    children: [
-                                                      const Icon(Icons.pause, size: 20),
-                                                      const SizedBox(height: 4),
-                                                      Text(
-                                                        I18n.of('clock.pause'),
-                                                        style: const TextStyle(
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 24,
+                                          vertical: 12,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: clockStatus!.todayStats.currentStatus == 'INICIAR REGISTRO EXCEPCIONAL'
+                                              ? const Color(AppConstants.warningColorValue).withOpacity(0.1)
+                                              : clockStatus!.todayStats.currentStatus == 'INICIAR JORNADA'
+                                                  ? const Color(AppConstants.successColorValue).withOpacity(0.1)
+                                                  : clockStatus!.todayStats.currentStatus == 'TRABAJANDO'
+                                                      ? const Color(AppConstants.successColorValue).withOpacity(0.1)
+                                                      : const Color(AppConstants.warningColorValue).withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        child: Text(
+                                          (clockStatus?.message ?? clockStatus!.todayStats.currentStatus ?? 'UNKNOWN').toUpperCase(),
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: clockStatus!.todayStats.currentStatus == 'INICIAR REGISTRO EXCEPCIONAL'
+                                                ? const Color(AppConstants.warningColorValue)
+                                                : clockStatus!.todayStats.currentStatus == 'INICIAR JORNADA'
+                                                    ? const Color(AppConstants.successColorValue)
+                                                    : clockStatus!.todayStats.currentStatus == 'TRABAJANDO'
+                                                        ? const Color(AppConstants.successColorValue)
+                                                        : const Color(AppConstants.warningColorValue),
+                                          ),
+                                        ),
                                                           fontSize: 12,
                                                           fontWeight: FontWeight.bold,
                                                         ),
@@ -617,7 +604,7 @@ class _ClockScreenState extends State<ClockScreen> {
                                           child: ElevatedButton(
                                             onPressed: isPerformingClock
                                                 ? null
-                                                : () => _performClockWithAction('clock_out'),
+                                                : () => _performClockWithNFC(action: 'clock_out'),
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor: const Color(AppConstants.errorColorValue),
                                               foregroundColor: Colors.white,
@@ -654,23 +641,19 @@ class _ClockScreenState extends State<ClockScreen> {
                                         ),
                                       ],
                                     );
-                                  } else {
+                                  } else if (status == 'EN PAUSA') {
                                     return SizedBox(
                                       width: double.infinity,
                                       height: AppConstants.buttonHeight * 1.2,
                                       child: ElevatedButton(
-                                        onPressed: (isPerformingClock ||
-                                                !clockStatus!.canClock)
+                                        onPressed: (isPerformingClock || !clockStatus!.canClock)
                                             ? null
-                                            : () => _performClockWithNFC(
-                                                action: 'clock_out'),
+                                            : () => _performClockWithAction('resume_workday'),
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(
-                                              AppConstants.errorColorValue),
+                                          backgroundColor: Colors.blue,
                                           foregroundColor: Colors.white,
                                           shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
+                                            borderRadius: BorderRadius.circular(12),
                                           ),
                                           elevation: 6,
                                         ),
@@ -678,31 +661,29 @@ class _ClockScreenState extends State<ClockScreen> {
                                             ? const SizedBox(
                                                 width: 24,
                                                 height: 24,
-                                                child:
-                                                    CircularProgressIndicator(
+                                                child: CircularProgressIndicator(
                                                   color: Colors.white,
                                                   strokeWidth: 2,
                                                 ),
                                               )
                                             : Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
+                                                mainAxisAlignment: MainAxisAlignment.center,
                                                 children: [
-                                                  const Icon(Icons.logout,
-                                                      size: 24),
+                                                  const Icon(Icons.play_arrow, size: 24),
                                                   const SizedBox(width: 8),
                                                   Text(
-                                                    I18n.of('clock.clock_out'),
+                                                    I18n.of('clock.resume_workday'),
                                                     style: const TextStyle(
                                                       fontSize: 18,
-                                                      fontWeight:
-                                                          FontWeight.bold,
+                                                      fontWeight: FontWeight.bold,
                                                     ),
                                                   ),
                                                 ],
                                               ),
                                       ),
                                     );
+                                  } else {
+                                    return const SizedBox.shrink();
                                   }
                                 },
                               ),

@@ -28,6 +28,8 @@
   "clock.pause": "Pausa",
   "clock.clock_out": "Registrar salida",
   "clock.clock_in": "Registrar entrada",
+  "clock.start_workday": "Iniciar jornada",
+  "clock.resume_workday": "Salir de la pausa",
   "clock.nfc_prompt": "Acerca tu dispositivo al lector NFC",
   "clock.nfc_invalid": "Etiqueta NFC no válida",
   "clock.open_web": "Abrir en el navegador",
