@@ -5,7 +5,6 @@ import '../models/work_center.dart';
 import '../models/user.dart';
 import '../models/clock_status.dart';
 import '../services/clock_service.dart';
-import '../services/setup_service.dart';
 import '../services/webview_service.dart';
 import '../services/nfc_service.dart';
 import 'settings_screen.dart';
@@ -18,11 +17,11 @@ class ClockScreen extends StatefulWidget {
   final bool autoClockOnNFC;
 
   const ClockScreen({
-    super.key,
+    Key? key,
     required this.workCenter,
     required this.user,
     this.autoClockOnNFC = false,
-  });
+  }) : super(key: key);
 
   @override
   _ClockScreenState createState() => _ClockScreenState();
@@ -34,6 +33,40 @@ class _ClockScreenState extends State<ClockScreen> {
   bool isPerformingClock = false;
 
   @override
+
+  Future<void> _loadStatus() async {
+    setState(() => isLoading = true);
+    try {
+      final response = await ClockService.getStatus(
+        userCode: widget.user.code,
+      );
+      setState(() {
+        clockStatus = response.data;
+      });
+    } catch (e) {
+      _showError(I18n.of('clock.loading_error', {'error': e.toString()}));
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _ensureScheduleLoaded(String userCode) async {
+    // Stub: Aquí se puede agregar lógica para cargar el horario si es necesario
+    return;
+  }
+
+  Color _getStatusBackgroundColor(String? status) {
+    if (status == null) return Colors.grey;
+    if (status.toUpperCase() == 'INICIAR JORNADA' || status.toUpperCase() == 'TRABAJANDO') {
+      return const Color(AppConstants.successColorValue);
+    }
+    if (status.toUpperCase() == 'INICIAR REGISTRO EXCEPCIONAL') {
+      return const Color(AppConstants.warningColorValue);
+    }
+    return Colors.grey;
+  }
+
+  // ...resto de la clase y métodos...
   void initState() {
     super.initState();
     _loadStatus();
@@ -53,100 +86,7 @@ class _ClockScreenState extends State<ClockScreen> {
         : (await StorageService.getWorkCenter())?.code ?? '';
   }
 
-  /// Tries to fetch and save worker schedule if not already loaded.
-  Future<void> _ensureScheduleLoaded(String userCode) async {
-    final savedSchedule = await SetupService.getSavedSchedule();
-    if (savedSchedule.isEmpty) {
-      try {
-        final fetched = await SetupService.loadWorkerData(userCode);
-        if (fetched != null) {
-          await SetupService.saveWorkerData(fetched);
-        }
-      } catch (e) {
-        print('[ClockScreen] DEBUG: Could not fetch schedule from server: $e');
-      }
-    }
-  }
 
-  // --- LÓGICA DE ESTADO Y FICHAJE ---
-
-  Future<void> _loadStatus() async {
-    if (!mounted) return;
-    setState(() => isLoading = true);
-
-    try {
-      final userCode = await _getEffectiveUserCode();
-      if (userCode.isEmpty) {
-        if (mounted) _showError(I18n.of('clock.no_user'));
-        return;
-      }
-
-      await _ensureScheduleLoaded(userCode);
-
-      final response = await ClockService.getStatus(userCode: userCode);
-
-      if (mounted) {
-        clockStatus = response.data;
-        setState(() {});
-
-        if (widget.autoClockOnNFC && clockStatus?.canClock == true) {
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (mounted) {
-              _performClock();
-            }
-          });
-        }
-      }
-    } catch (e, stack) {
-      if (mounted) {
-        print(
-            '[ClockScreen][_loadStatus] ERROR: ${e.toString()} | ${stack.toString().split('\n')[0]}');
-        _showError(I18n.of('clock.loading_error', {'error': e.toString()}));
-      }
-    } finally {
-      if (mounted) {
-        setState(() => isLoading = false);
-      }
-    }
-  }
-
-  Future<void> _performClock() async {
-    if (isPerformingClock) return;
-
-    setState(() => isPerformingClock = true);
-    try {
-      final userCode = await _getEffectiveUserCode();
-      final workCenterCode = await _getEffectiveWorkCenterCode();
-
-      if (userCode.isEmpty) {
-        if (mounted) _showError(I18n.of('clock.no_user'));
-        return;
-      }
-
-      await _ensureScheduleLoaded(userCode);
-
-      await ClockService.performClock(
-        workCenterCode: workCenterCode,
-        userCode: userCode,
-      );
-
-      if (mounted) {
-        print('[ClockScreen][_performClock] SUCCESS');
-        _showSuccess(I18n.of('clock.fichaje_success', {'action': I18n.of('clock.clock_in')}));
-        await _loadStatus();
-      }
-    } catch (e, stack) {
-      if (mounted) {
-        print(
-            '[ClockScreen][_performClock] ERROR: ${e.toString()} | ${stack.toString().split('\n')[0]}');
-        _showError(I18n.of('clock.fichaje_error', {'error': e.toString()}));
-      }
-    } finally {
-      if (mounted) {
-        setState(() => isPerformingClock = false);
-      }
-    }
-  }
 
   Future<void> _performClockWithAction(String action) async {
     if (isPerformingClock) return;
@@ -454,30 +394,15 @@ class _ClockScreenState extends State<ClockScreen> {
                                           vertical: 12,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: clockStatus!.todayStats
-                                                      .currentStatus ==
-                                                  'trabajando'
-                                              ? const Color(AppConstants
-                                                      .successColorValue)
-                                                  .withOpacity(0.1)
-                                              : const Color(AppConstants
-                                                      .warningColorValue)
-                                                  .withOpacity(0.1),
-                                          borderRadius:
-                                              BorderRadius.circular(20),
+                                          color: _getStatusBackgroundColor(clockStatus?.todayStats.currentStatus),
+                                          borderRadius: BorderRadius.circular(20),
                                         ),
                                         child: Text(
                                           (clockStatus?.message ?? clockStatus!.todayStats.currentStatus ?? 'UNKNOWN').toUpperCase(),
-                                          style: TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                          color: clockStatus!.todayStats
-                                                .currentStatus ==
-                                              'TRABAJANDO'
-                                            ? const Color(AppConstants
-                                              .successColorValue)
-                                            : const Color(AppConstants
-                                              .warningColorValue),
+                                          style: const TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
                                           ),
                                         ),
                                       ),
@@ -560,37 +485,41 @@ class _ClockScreenState extends State<ClockScreen> {
                                               ),
                                       ),
                                     );
-                                  } else if (status == 'TRABAJANDO') {
+                                  }
+                                  if (status == 'TRABAJANDO') {
                                     return Row(
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 24,
-                                          vertical: 12,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: clockStatus!.todayStats.currentStatus == 'INICIAR REGISTRO EXCEPCIONAL'
-                                              ? const Color(AppConstants.warningColorValue).withOpacity(0.1)
-                                              : clockStatus!.todayStats.currentStatus == 'INICIAR JORNADA'
-                                                  ? const Color(AppConstants.successColorValue).withOpacity(0.1)
-                                                  : clockStatus!.todayStats.currentStatus == 'TRABAJANDO'
-                                                      ? const Color(AppConstants.successColorValue).withOpacity(0.1)
-                                                      : const Color(AppConstants.warningColorValue).withOpacity(0.1),
-                                          borderRadius: BorderRadius.circular(20),
-                                        ),
-                                        child: Text(
-                                          (clockStatus?.message ?? clockStatus!.todayStats.currentStatus ?? 'UNKNOWN').toUpperCase(),
-                                          style: TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                            color: clockStatus!.todayStats.currentStatus == 'INICIAR REGISTRO EXCEPCIONAL'
-                                                ? const Color(AppConstants.warningColorValue)
-                                                : clockStatus!.todayStats.currentStatus == 'INICIAR JORNADA'
-                                                    ? const Color(AppConstants.successColorValue)
-                                                    : clockStatus!.todayStats.currentStatus == 'TRABAJANDO'
-                                                        ? const Color(AppConstants.successColorValue)
-                                                        : const Color(AppConstants.warningColorValue),
-                                          ),
-                                        ),
+                                      children: [
+                                        Expanded(
+                                          child: ElevatedButton(
+                                            onPressed: isPerformingClock
+                                                ? null
+                                                : () => _performClockWithAction('pause'),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color(AppConstants.warningColorValue),
+                                              foregroundColor: Colors.white,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              elevation: 6,
+                                              padding: const EdgeInsets.symmetric(vertical: 16),
+                                            ),
+                                            child: isPerformingClock
+                                                ? const SizedBox(
+                                                    width: 20,
+                                                    height: 20,
+                                                    child: CircularProgressIndicator(
+                                                      color: Colors.white,
+                                                      strokeWidth: 2,
+                                                    ),
+                                                  )
+                                                : Column(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      const Icon(Icons.pause, size: 20),
+                                                      const SizedBox(height: 4),
+                                                      Text(
+                                                        I18n.of('clock.pause'),
+                                                        style: const TextStyle(
                                                           fontSize: 12,
                                                           fontWeight: FontWeight.bold,
                                                         ),
@@ -641,7 +570,8 @@ class _ClockScreenState extends State<ClockScreen> {
                                         ),
                                       ],
                                     );
-                                  } else if (status == 'EN PAUSA') {
+                                  }
+                                  if (status == 'EN PAUSA') {
                                     return SizedBox(
                                       width: double.infinity,
                                       height: AppConstants.buttonHeight * 1.2,
@@ -682,9 +612,8 @@ class _ClockScreenState extends State<ClockScreen> {
                                               ),
                                       ),
                                     );
-                                  } else {
-                                    return const SizedBox.shrink();
                                   }
+                                  return const SizedBox.shrink();
                                 },
                               ),
                               const SizedBox(height: AppConstants.spacing * 2),
