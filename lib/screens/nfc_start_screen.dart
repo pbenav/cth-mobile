@@ -3,6 +3,7 @@ import '../services/storage_service.dart';
 import '../models/work_center.dart';
 import '../models/user.dart';
 import 'clock_screen.dart';
+import 'setup_worker_screen.dart';
 
 class NFCStartScreen extends StatefulWidget {
   const NFCStartScreen({super.key});
@@ -26,8 +27,8 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
     try {
       final user = await StorageService.getUser() ??
           const User(id: 0, code: '', name: 'Usuario por defecto');
-      final workCenter = const WorkCenter(
-          id: 0, code: '', name: 'Centro de trabajo por defecto');
+      final workCenter = await StorageService.getWorkCenter() ??
+          const WorkCenter(id: 0, code: '', name: 'Centro de trabajo por defecto');
 
       if (!mounted) return; // Verificar si el widget sigue montado
 
@@ -45,6 +46,14 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
         setState(() {
           statusMessage = 'Por favor, configure el servidor y el usuario.';
         });
+        await Future.delayed(const Duration(seconds: 2));
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const SetupWorkerScreen(),
+          ),
+        );
       }
     } catch (e) {
       if (!mounted) return;
