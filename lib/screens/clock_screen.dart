@@ -102,6 +102,12 @@ class _ClockScreenState extends State<ClockScreen> {
 
       if (action == 'resume_workday') {
         final pauseEventId = clockStatus?.pauseEventId;
+        if (pauseEventId == null) {
+          if (mounted) {
+            _showError('No se puede reanudar la jornada: falta el identificador de pausa.');
+          }
+          return;
+        }
         await ClockService.performClock(
           workCenterCode: workCenterCode,
           userCode: userCode,
