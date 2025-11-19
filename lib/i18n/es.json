@@ -22,7 +22,7 @@
   "clock.loading_error": "Error cargando estado: :error",
   "clock.fichaje_error": "Error en fichaje: :error",
   "clock.fichaje_success": ":action registrada correctamente",
-  "clock.status_title": "Estado del reloj",
+  "clock.status_title": "Estado",
   "clock.entries": "Entradas",
   "clock.exits": "Salidas",
   "clock.pause": "Pausa",
