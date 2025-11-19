@@ -32,8 +32,6 @@ class _ClockScreenState extends State<ClockScreen> {
   bool isLoading = false;
   bool isPerformingClock = false;
 
-  @override
-
   Future<void> _loadStatus() async {
     setState(() => isLoading = true);
     try {
@@ -57,10 +55,11 @@ class _ClockScreenState extends State<ClockScreen> {
 
   Color _getStatusBackgroundColor(String? status) {
     if (status == null) return Colors.grey;
-    if (status.toUpperCase() == 'INICIAR JORNADA' || status.toUpperCase() == 'TRABAJANDO') {
+    final upper = status.toUpperCase();
+    if (upper == 'INICIAR JORNADA' || upper == 'TRABAJANDO') {
       return const Color(AppConstants.successColorValue);
     }
-    if (status.toUpperCase() == 'INICIAR REGISTRO EXCEPCIONAL') {
+    if (upper == 'INICIAR REGISTRO EXCEPCIONAL' || upper.contains('EXCEPCIONAL') || upper.contains('FUERA DE HORARIO')) {
       return const Color(AppConstants.warningColorValue);
     }
     return Colors.grey;
@@ -101,11 +100,21 @@ class _ClockScreenState extends State<ClockScreen> {
         return;
       }
 
-      await ClockService.performClock(
-        workCenterCode: workCenterCode,
-        userCode: userCode,
-        action: action,
-      );
+      if (action == 'resume_workday') {
+        final pauseEventId = clockStatus?.pauseEventId;
+        await ClockService.performClock(
+          workCenterCode: workCenterCode,
+          userCode: userCode,
+          action: action,
+          pauseEventId: pauseEventId,
+        );
+      } else {
+        await ClockService.performClock(
+          workCenterCode: workCenterCode,
+          userCode: userCode,
+          action: action,
+        );
+      }
 
       if (mounted) {
         print('[ClockScreen][_performClockWithAction] SUCCESS');
