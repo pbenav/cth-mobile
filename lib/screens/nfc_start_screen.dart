@@ -67,10 +67,34 @@ class _NFCStartScreenState extends State<NFCStartScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('NFC Start'),
+      ),
       body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            const Text('Escanea tu tarjeta NFC'),
+            ElevatedButton(
+              onPressed: () {
+                // Acción del botón
+              },
+              child: const Text('Iniciar'),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: TextButton(
+        onPressed: () {
+          Navigator.pushNamed(context, '/settings');
+        },
         child: Text(
-          statusMessage,
-          style: const TextStyle(fontSize: 16),
+          '⚙️ Preferencias',
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.9),
+            fontSize: 16,
+            decoration: TextDecoration.underline,
+          ),
         ),
       ),
     );

@@ -192,7 +192,8 @@ class _SetupServerScreenState extends State<SetupServerScreen> {
                     padding: const EdgeInsets.all(AppConstants.spacing * 1.5),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(AppConstants.cardBorderRadius),
+                      borderRadius:
+                          BorderRadius.circular(AppConstants.cardBorderRadius),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.1),
@@ -214,9 +215,7 @@ class _SetupServerScreenState extends State<SetupServerScreen> {
                               color: Colors.black87,
                             ),
                           ),
-
                           const SizedBox(height: 8),
-
                           Text(
                             'Introduce la URL del servidor CTH al que te quieres conectar.',
                             style: TextStyle(
@@ -224,9 +223,7 @@ class _SetupServerScreenState extends State<SetupServerScreen> {
                               color: Colors.grey[600],
                             ),
                           ),
-
                           const SizedBox(height: AppConstants.spacing * 1.5),
-
                           TextFormField(
                             controller: _serverUrlController,
                             decoration: InputDecoration(
@@ -244,7 +241,6 @@ class _SetupServerScreenState extends State<SetupServerScreen> {
                             textInputAction: TextInputAction.done,
                             onFieldSubmitted: (_) => _testConnection(),
                           ),
-
                           if (_errorMessage != null) ...[
                             const SizedBox(height: AppConstants.spacing),
                             Container(
@@ -275,16 +271,15 @@ class _SetupServerScreenState extends State<SetupServerScreen> {
                               ),
                             ),
                           ],
-
                           const Spacer(),
-
                           SizedBox(
                             width: double.infinity,
                             height: AppConstants.buttonHeight,
                             child: ElevatedButton(
                               onPressed: _isLoading ? null : _testConnection,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(AppConstants.primaryColorValue),
+                                backgroundColor:
+                                    const Color(AppConstants.primaryColorValue),
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),

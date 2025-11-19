@@ -20,7 +20,7 @@ class I18n {
       });
     } catch (e) {
       // fallback empty
-      print('I18n load error for locale "${locale}" : $e');
+      print('I18n load error for locale "$locale" : $e');
     }
   }
 

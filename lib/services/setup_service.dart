@@ -3,13 +3,17 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/worker_data.dart';
 import '../services/storage_service.dart';
-import '../utils/constants.dart';
 import '../utils/exceptions.dart';
 
 class SetupService {
   static const String _tempServerUrlKey = 'temp_server_url';
   static const String _setupCompletedKey = 'setup_completed';
   static const String _workerDataKey = 'worker_data';
+
+  /// Centralized logging function
+  static void _log(String message, {Function(String)? onLog}) {
+    onLog?.call(message);
+  }
 
   /// Checks if initial setup is complete
   static Future<bool> isSetupCompleted() async {
@@ -19,43 +23,38 @@ class SetupService {
   /// Tests server connection
   static Future<bool> testServerConnection(String serverUrl,
       {Function(String)? onLog}) async {
-    final log =
-        onLog ?? (String message) => {}; // Reemplazar print con función vacía
-
     try {
-      log('🔄 Iniciando prueba de conexión...');
-      log('📝 Server URL: $serverUrl');
+      _log('🔄 Iniciando prueba de conexión...', onLog: onLog);
+      _log('📝 Server URL: $serverUrl', onLog: onLog);
 
-      // Normalizar la URL
       final normalizedUrl = _normalizeUrl(serverUrl);
-      log('🔧 URL normalizada: $normalizedUrl');
+      _log('🔧 URL normalizada: $normalizedUrl', onLog: onLog);
 
       final url = Uri.parse('$normalizedUrl/api/v1/config/ping');
-      log('🌐 Intentando conectar a: $url');
+      _log('🌐 Intentando conectar a: $url', onLog: onLog);
 
       final response = await http.get(url).timeout(const Duration(seconds: 10));
 
-      log('📡 Server response - Code: ${response.statusCode}');
+      _log('📡 Server response - Code: ${response.statusCode}', onLog: onLog);
 
       if (response.statusCode == 200) {
-        log('✅ Connection successful - Server responded correctly');
+        _log('✅ Connection successful - Server responded correctly',
+            onLog: onLog);
         return true;
       } else {
-        log('❌ HTTP error: ${response.statusCode} - ${response.reasonPhrase}');
+        _log('❌ HTTP error: ${response.statusCode} - ${response.reasonPhrase}',
+            onLog: onLog);
         return false;
       }
     } catch (e) {
-      log('💥 Connection error: ${e.toString()}');
+      _log('💥 Connection error: ${e.toString()}', onLog: onLog);
       return false;
     }
   }
 
   /// Normaliza la URL para asegurar que tenga el formato correcto
   static String _normalizeUrl(String url) {
-    if (url.endsWith('/')) {
-      url = url.substring(0, url.length - 1);
-    }
-    return url;
+    return url.endsWith('/') ? url.substring(0, url.length - 1) : url;
   }
 
   /// Temporarily saves the server URL during setup
@@ -71,84 +70,54 @@ class SetupService {
   /// Loads worker data using the secret code
   static Future<WorkerData?> loadWorkerData(String workerCode,
       {Function(String)? onLog}) async {
-    final log =
-        onLog ?? (String message) => {}; // Reemplazar print con función vacía
-
     try {
-      // Preferir la URL temporal durante el asistente, pero si no existe
-      // usar la URL configurada permanentemente (caso de uso normal de la app).
-      String? serverUrl = await getTempServerUrl();
-      if (serverUrl == null) {
-        serverUrl = await getConfiguredServerUrl();
-      }
+      String? serverUrl =
+          await getTempServerUrl() ?? await getConfiguredServerUrl();
 
       if (serverUrl == null) {
-        log('❌ No server URL configured');
+        _log('❌ No server URL configured', onLog: onLog);
         throw SetupException('Server URL not configured');
       }
 
-      log('🔄 Iniciando carga de datos del trabajador...');
-      log('👤 Worker code: $workerCode');
-      log('📝 Server URL: $serverUrl');
+      _log('🔄 Iniciando carga de datos del trabajador...', onLog: onLog);
+      _log('👤 Worker code: $workerCode', onLog: onLog);
+      _log('📝 Server URL: $serverUrl', onLog: onLog);
 
       final normalizedUrl = _normalizeUrl(serverUrl);
       final url = Uri.parse('$normalizedUrl/api/v1/mobile/worker/$workerCode');
-      log('🌐 URL completa: $url');
+      _log('🌐 URL completa: $url', onLog: onLog);
 
-      log('📡 Enviando petición GET...');
       final response = await http.get(url).timeout(const Duration(seconds: 30));
 
-      log('📡 Server response - Code: ${response.statusCode}');
+      _log('📡 Server response - Code: ${response.statusCode}', onLog: onLog);
 
       if (response.statusCode == 200) {
-        log('✅ Respuesta exitosa, procesando datos...');
         final decoded = json.decode(response.body);
-        log('📦 Datos recibidos (raw): ${decoded.runtimeType}');
-
-        // La API devuelve { success: true, data: { ... } }
-        // Asegurarnos de extraer el mapa correcto con los campos esperados
-        Map<String, dynamic>? payload;
-        if (decoded is Map<String, dynamic>) {
-          if (decoded.containsKey('data') &&
-              decoded['data'] is Map<String, dynamic>) {
-            payload = decoded['data'] as Map<String, dynamic>;
-          } else {
-            payload = decoded as Map<String, dynamic>;
-          }
-        }
+        final payload =
+            decoded is Map<String, dynamic> && decoded.containsKey('data')
+                ? decoded['data']
+                : decoded;
 
         if (payload == null) {
-          log('❌ Respuesta inesperada: payload nulo');
+          _log('❌ Respuesta inesperada: payload nulo', onLog: onLog);
           throw SetupException('Unexpected server response');
         }
 
-        log('📦 Payload a procesar: keys=${payload.keys.toList()}');
-        try {
-          log('📦 Payload completo: ${json.encode(payload)}');
-        } catch (e) {
-          log('📦 Payload completo (no serializable): $e');
-        }
-
-        final workerData = WorkerData.fromJson(payload);
-        log('✅ Datos del trabajador procesados exitosamente');
-        log('👤 Name: ${workerData.user.name}');
-        log('🏢 Work center: ${workerData.workCenter.name}');
-        log('📅 Schedules: ${workerData.schedule.length} slots');
-        log('🎉 Holidays: ${workerData.holidays.length} days');
-
-        return workerData;
+        _log('📦 Payload procesado correctamente', onLog: onLog);
+        return WorkerData.fromJson(payload);
       } else if (response.statusCode == 404) {
-        log('❌ Trabajador no encontrado (404)');
-        return null; // Trabajador no encontrado
+        _log('❌ Trabajador no encontrado (404)', onLog: onLog);
+        return null;
       } else {
-        log('❌ Server error: ${response.statusCode} - ${response.body}');
+        _log('❌ Server error: ${response.statusCode} - ${response.body}',
+            onLog: onLog);
         throw APIException(
           'Server error: ${response.statusCode}',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
-      log('💥 Error loading data: ${e.toString()}');
+      _log('💥 Error loading data: ${e.toString()}', onLog: onLog);
       if (e is APIException) rethrow;
       throw SetupException('Connection error: ${e.toString()}');
     }
@@ -157,36 +126,22 @@ class SetupService {
   /// Saves all worker data and marks setup as complete
   static Future<void> saveWorkerData(WorkerData workerData) async {
     try {
-      // Save server URL permanently
       final serverUrl = await getTempServerUrl();
       if (serverUrl != null) {
         await StorageService.setString('server_url', serverUrl);
       }
 
-      // Guardar los datos del trabajador
       final workerDataJson = json.encode(workerData.toJson());
       await StorageService.setString(_workerDataKey, workerDataJson);
 
-      // DEBUG: check that the full JSON was saved
-      try {
-        final saved = await StorageService.getString(_workerDataKey);
-      } catch (e) {}
-
-      // Save individual data for compatibility with existing code
       await StorageService.saveUser(workerData.user);
       await StorageService.saveWorkCenter(workerData.workCenter);
-
-      // Save schedule and holidays
       await _saveSchedule(workerData.schedule);
       await _saveHolidays(workerData.holidays);
 
-      // Mark setup as complete
       await StorageService.setBool(_setupCompletedKey, true);
-
-      // Limpiar datos temporales
       await StorageService.remove(_tempServerUrlKey);
     } catch (e) {
-      print('Error saving worker data: $e'); // Already in English
       throw SetupException('Error saving setup: ${e.toString()}');
     }
   }
@@ -202,9 +157,9 @@ class SetupService {
       if (decoded is Map<String, dynamic>) {
         if (decoded.containsKey('data') &&
             decoded['data'] is Map<String, dynamic>) {
-          payload = decoded['data'] as Map<String, dynamic>;
+          payload = decoded['data'];
         } else {
-          payload = decoded as Map<String, dynamic>;
+          payload = decoded;
         }
       }
 
@@ -280,11 +235,6 @@ class SetupService {
       final workerDataJson = json.encode(workerData.toJson());
       await StorageService.setString(_workerDataKey, workerDataJson);
 
-      // DEBUG: comprobar que se ha guardado el JSON completo tras update
-      try {
-        final saved = await StorageService.getString(_workerDataKey);
-      } catch (e) {}
-
       // Guardar datos individuales para compatibilidad con el código existente
       await StorageService.saveUser(workerData.user);
       await StorageService.saveWorkCenter(workerData.workCenter);
@@ -301,8 +251,8 @@ class SetupService {
         print('SetupService: warning saving worker last update: $e');
       }
 
-      print(
-          'SetupService: updateSavedWorkerData -> datos actualizados localmente');
+      // print(
+      //     'SetupService: updateSavedWorkerData -> datos actualizados localmente');
     } catch (e) {
       print('SetupService: Error updateSavedWorkerData: $e');
       throw SetupException(

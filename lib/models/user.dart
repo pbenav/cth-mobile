@@ -29,12 +29,8 @@ class User {
   name: (json['name'] ?? json['first_name'] ?? json['given_name'] ?? json['nombre']) != null
     ? (json['name'] ?? json['first_name'] ?? json['given_name'] ?? json['nombre']).toString()
     : '',
-  familyName1: (json['family_name1'] ?? json['family_name'] ?? json['last_name'] ?? json['surname'] ?? json['apellido1'] ?? json['apellido'] ) != null
-    ? (json['family_name1'] ?? json['family_name'] ?? json['last_name'] ?? json['surname'] ?? json['apellido1'] ?? json['apellido']).toString()
-    : null,
-  familyName2: (json['family_name2'] ?? json['second_surname'] ?? json['apellido2'] ?? json['apellido_2']) != null
-    ? (json['family_name2'] ?? json['second_surname'] ?? json['apellido2'] ?? json['apellido_2']).toString()
-    : null,
+  familyName1: (json['family_name1'] ?? json['family_name'] ?? json['last_name'] ?? json['surname'] ?? json['apellido1'] ?? json['apellido'])?.toString(),
+  familyName2: (json['family_name2'] ?? json['second_surname'] ?? json['apellido2'] ?? json['apellido_2'])?.toString(),
       );
 
   @override

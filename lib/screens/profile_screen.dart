@@ -21,8 +21,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController _familyName1Controller = TextEditingController();
   final TextEditingController _familyName2Controller = TextEditingController();
   final TextEditingController _userCodeController = TextEditingController();
-  final TextEditingController _workCenterCodeController = TextEditingController();
-  final TextEditingController _workCenterNameController = TextEditingController();
+  final TextEditingController _workCenterCodeController =
+      TextEditingController();
+  final TextEditingController _workCenterNameController =
+      TextEditingController();
 
   User? _currentUser;
   WorkCenter? _currentWorkCenter;
@@ -75,7 +77,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             if (decoded is Map<String, dynamic>) {
               final wcRaw = decoded['work_centers'];
               if (wcRaw is List<dynamic>) {
-                _availableWorkCenters = wcRaw.map((e) => WorkCenter.fromJson(e as Map<String, dynamic>)).toList();
+                _availableWorkCenters = wcRaw
+                    .map((e) => WorkCenter.fromJson(e as Map<String, dynamic>))
+                    .toList();
               }
             }
           }
@@ -164,21 +168,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _formatDateTime(DateTime? dt) {
     if (dt == null) return 'Nunca';
     final local = dt.toLocal();
-    return '${local.year}-${local.month.toString().padLeft(2,'0')}-${local.day.toString().padLeft(2,'0')} ${local.hour.toString().padLeft(2,'0')}:${local.minute.toString().padLeft(2,'0')}';
+    return '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')} ${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
   }
 
   Future<void> _forceRefresh() async {
     setState(() => _isRefreshing = true);
     try {
-      final success = await RefreshService.forceRefresh(timeout: const Duration(seconds: 5));
+      final success = await RefreshService.forceRefresh(
+          timeout: const Duration(seconds: 5));
       _lastUpdate = await StorageService.getWorkerLastUpdate();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(success ? 'Actualización completada' : 'No se actualizaron los datos')),
+          SnackBar(
+              content: Text(success
+                  ? 'Actualización completada'
+                  : 'No se actualizaron los datos')),
         );
-          // Reload the profile data to reflect any changes from the refresh
-          await _loadProfileData();
+        // Reload the profile data to reflect any changes from the refresh
+        await _loadProfileData();
       }
     } catch (e) {
       if (mounted) {
@@ -285,25 +293,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Última actualización', style: TextStyle(fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 4),
-                        Text(_formatDateTime(_lastUpdate)),
-                      ],
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Última actualización',
+                          style: TextStyle(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 4),
+                      Text(_formatDateTime(_lastUpdate)),
+                    ],
                   ),
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: ElevatedButton.icon(
-                        onPressed: _isRefreshing ? null : _forceRefresh,
-                        icon: _isRefreshing ? const SizedBox(width:16,height:16,child:CircularProgressIndicator(color:Colors.white,strokeWidth:2)) : const Icon(Icons.refresh),
-                        label: Text(_isRefreshing ? 'Actualizando...' : 'Forzar actualización'),
-                      ),
-                    ),
+                  ElevatedButton.icon(
+                    onPressed: _isRefreshing ? null : _forceRefresh,
+                    icon: _isRefreshing
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2))
+                        : const Icon(Icons.refresh),
+                    label: const Text('Actualizar'),
                   ),
                 ],
               ),
@@ -365,11 +373,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<WorkCenter>(
-                  value: _currentWorkCenter,
-                  items: _availableWorkCenters.map((wc) => DropdownMenuItem(
-                    value: wc,
-                    child: Text('${wc.name} (${wc.code})'),
-                  )).toList(),
+                  initialValue: _currentWorkCenter,
+                  items: _availableWorkCenters
+                      .map((wc) => DropdownMenuItem(
+                            value: wc,
+                            child: Text('${wc.name} (${wc.code})'),
+                          ))
+                      .toList(),
                   onChanged: (val) {
                     setState(() {
                       _currentWorkCenter = val;
@@ -379,7 +389,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       }
                     });
                   },
-                  decoration: const InputDecoration(border: OutlineInputBorder()),
+                  decoration:
+                      const InputDecoration(border: OutlineInputBorder()),
                 ),
                 const SizedBox(height: 16),
               ],
@@ -407,7 +418,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: ListTile(
                         leading: const Icon(Icons.schedule),
                         title: Text('${s.startTime} - ${s.endTime}'),
-                        subtitle: Text(s.dayOfWeek.isNotEmpty ? s.dayOfWeek : s.dayName),
+                        subtitle: Text(
+                            s.dayOfWeek.isNotEmpty ? s.dayOfWeek : s.dayName),
                       ),
                     );
                   },
@@ -453,17 +465,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: ElevatedButton(
                   onPressed: _isSaving ? null : _saveProfile,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(AppConstants.primaryColorValue),
+                    backgroundColor:
+                        const Color(AppConstants.primaryColorValue),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppConstants.cardBorderRadius),
+                      borderRadius:
+                          BorderRadius.circular(AppConstants.cardBorderRadius),
                     ),
                   ),
                   child: _isSaving
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
                           'Guardar Cambios',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                 ),
               ),

@@ -6,9 +6,10 @@ import '../models/clock_status.dart';
 import '../services/clock_service.dart';
 import '../services/storage_service.dart';
 import '../services/nfc_service.dart';
-import '../utils/constants.dart';
+import '../services/webview_service.dart';
 import 'settings_screen.dart';
 import 'profile_screen.dart';
+import '../utils/constants.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
@@ -18,11 +19,11 @@ class ClockScreen extends StatefulWidget {
   final bool autoClockOnNFC;
 
   const ClockScreen({
-    Key? key,
+    super.key,
     required this.workCenter,
     required this.user,
     this.autoClockOnNFC = false,
-  }) : super(key: key);
+  });
 
   @override
   _ClockScreenState createState() => _ClockScreenState();
@@ -257,7 +258,7 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
           }
           return;
         }
-        final resp = await ClockService.performClock(
+        await ClockService.performClock(
           workCenterCode: workCenterCode,
           userCode: userCode,
           action: action,
@@ -287,13 +288,9 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
       }
 
       if (mounted) {
-        String actionText = action == 'pause'
-            ? I18n.of('clock.pause')
-            : (action == 'resume_workday'
-                ? I18n.of('clock.resume_workday')
-                : (action == 'clock_in'
-                    ? I18n.of('clock.clock_in')
-                    : I18n.of('clock.clock_out')));
+        String actionText = (action == 'clock_in' || action == 'exceptional_clock_in')
+            ? I18n.of('clock.clock_in')
+            : I18n.of('clock.clock_out');
         _showSuccess(I18n.of('clock.fichaje_success', {'action': actionText}));
         await _loadStatus();
         // Si se reanuda jornada, puedes agregar aquí un log si lo necesitas
@@ -386,7 +383,7 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
         );
       }
       if (mounted) {
-        String actionText = (action == 'clock_in')
+        String actionText = (action == 'clock_in' || action == 'exceptional_clock_in')
             ? I18n.of('clock.clock_in')
             : I18n.of('clock.clock_out');
         _showSuccess(I18n.of('clock.fichaje_success', {'action': actionText}));
@@ -414,6 +411,46 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          IconButton(
+            tooltip: I18n.of('clock.open_web'),
+            icon: const Icon(Icons.open_in_browser),
+            onPressed: () async {
+              await WebViewService.openAuthenticatedWebView(
+                context: context,
+                workCenter: widget.workCenter,
+                user: widget.user,
+                path: AppConstants.webViewHome,
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: isLoading ? null : _loadStatus,
+          ),
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const ProfileScreen(),
+                ),
+              );
+              await _loadStatus();
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () async {
+              final result = await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const SettingsScreen(),
+                ),
+              );
+              if (result == true) {
+                await _loadStatus();
+              }
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => _showLogoutDialog(),
@@ -610,17 +647,9 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
                                               MainAxisAlignment.spaceAround,
                                           children: [
                                             _buildStatItem(
-                                              'clock.entries',
-                                              clockStatus!
-                                                  .todayStats.totalEntries
-                                                  .toString(),
-                                              Icons.login,
-                                            ),
-                                            _buildStatItem(
-                                              'clock.exits',
-                                              clockStatus!.todayStats.totalExits
-                                                  .toString(),
-                                              Icons.logout,
+                                              'clock.records',
+                                              (clockStatus!.todayRecords.length).toString(),
+                                              Icons.list,
                                             ),
                                             _buildStatItem(
                                               'clock.hours',
@@ -739,13 +768,11 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
                                                   }
                                                 },
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.green,
+                                            backgroundColor: isExceptional
+                                                ? Colors.orange
+                                                : Theme.of(context)
+                                                    .primaryColor,
                                             foregroundColor: Colors.white,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                            elevation: 6,
                                           ),
                                           child: isPerformingClock
                                               ? const SizedBox(

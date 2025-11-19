@@ -16,16 +16,16 @@ class WorkerData {
 
   factory WorkerData.fromJson(Map<String, dynamic> json) {
     // Defensive extraction: accept multiple possible key names used by the API
-    Map<String, dynamic> _ensureMap(dynamic v) {
+    Map<String, dynamic> ensureMap(dynamic v) {
       if (v is Map<String, dynamic>) return v;
       return <String, dynamic>{};
     }
 
-    final Map<String, dynamic> userMap = _ensureMap(json['user'] ?? json['worker'] ?? json['employee'] ?? json['empleado']);
+    final Map<String, dynamic> userMap = ensureMap(json['user'] ?? json['worker'] ?? json['employee'] ?? json['empleado']);
 
     // The backend may return work_center as a single map or as a list under
     // the key 'work_centers'. If it's a list, take the first element.
-    Map<String, dynamic> workCenterCandidate = _ensureMap(json['work_center'] ?? json['workcenter'] ?? json['workCenter'] ?? json['centro']);
+    Map<String, dynamic> workCenterCandidate = ensureMap(json['work_center'] ?? json['workcenter'] ?? json['workCenter'] ?? json['centro']);
     if (workCenterCandidate.isEmpty) {
       final wc = json['work_centers'];
       if (wc is List<dynamic>) {
@@ -62,7 +62,7 @@ class WorkerData {
         }
       }
     }
-    final Map<String, dynamic> workCenterMap = _ensureMap(workCenterCandidate);
+    final Map<String, dynamic> workCenterMap = ensureMap(workCenterCandidate);
 
   // Accept various keys for schedules used by backend: 'schedule',
   // 'schedules', or 'work_schedule'. Prefer the first one that exists.
@@ -102,8 +102,9 @@ class WorkerData {
   if (scheduleList == null) {
     if (json['data'] is Map<String, dynamic>) {
       final rootData = json['data'] as Map<String, dynamic>;
-      if (rootData['work_schedule'] is List<dynamic>) scheduleList = rootData['work_schedule'] as List<dynamic>;
-      else if (rootData['schedule'] is List<dynamic>) scheduleList = rootData['schedule'] as List<dynamic>;
+      if (rootData['work_schedule'] is List<dynamic>) {
+        scheduleList = rootData['work_schedule'] as List<dynamic>;
+      } else if (rootData['schedule'] is List<dynamic>) scheduleList = rootData['schedule'] as List<dynamic>;
       else if (rootData['schedules'] is List<dynamic>) scheduleList = rootData['schedules'] as List<dynamic>;
       else if (rootData['work_schedule'] is Map<String, dynamic>) {
         final ws = rootData['work_schedule'] as Map<String, dynamic>;

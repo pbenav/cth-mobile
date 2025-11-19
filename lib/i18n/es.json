@@ -39,8 +39,10 @@
   "clock.reports_title": "Reportes",
   "clock.profile_title": "Perfil",
   "clock.hours": "Horas trabajadas",
+  "clock.records": "Registros",
   "dialog.logout_title": "Cerrar sesión",
   "dialog.logout_content": "¿Estás seguro de que deseas cerrar sesión?",
   "dialog.cancel": "Cancelar",
-  "dialog.logout": "Cerrar sesión"
+  "dialog.logout": "Cerrar sesión",
+  "clock.exceptional_start": "Inicio excepcional"
 }

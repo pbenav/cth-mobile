@@ -37,8 +37,10 @@
   "clock.reports_title": "Reports",
   "clock.profile_title": "Profile",
   "clock.hours": "Worked hours",
+  "clock.records": "Records",
   "dialog.logout_title": "Log out",
   "dialog.logout_content": "Are you sure you want to log out?",
   "dialog.cancel": "Cancel",
-  "dialog.logout": "Log out"
+  "dialog.logout": "Log out",
+  "clock.exceptional_start": "Exceptional start"
 }
