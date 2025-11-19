@@ -1,18 +1,18 @@
 import 'dart:convert';
 
 class ClockStatus {
-    final String
+  final String
       action; // 'clock_in', 'working_options', 'resume_workday', 'confirm_exceptional_clock_in', 'clock_out'
-    final bool canClock;
-    final String? message;
-    final bool? overtime;
-    final int? eventTypeId;
-    final NextSlot? nextSlot;
-    final TodayStats todayStats;
-    final DateTime currentTime;
-    final String? workCenterCode;
-    final String? workCenterName; // Nombre del centro de trabajo
-    final int? pauseEventId; // Nuevo campo para reanudar desde pausa
+  final bool canClock;
+  final String? message;
+  final bool? overtime;
+  final int? eventTypeId;
+  final NextSlot? nextSlot;
+  final TodayStats todayStats;
+  final DateTime currentTime;
+  final String? workCenterCode;
+  final String? workCenterName; // Nombre del centro de trabajo
+  final int? pauseEventId; // Nuevo campo para reanudar desde pausa
 
   const ClockStatus({
     required this.action,

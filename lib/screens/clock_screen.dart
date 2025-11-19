@@ -59,7 +59,9 @@ class _ClockScreenState extends State<ClockScreen> {
     if (upper == 'INICIAR JORNADA' || upper == 'TRABAJANDO') {
       return const Color(AppConstants.successColorValue);
     }
-    if (upper == 'INICIAR REGISTRO EXCEPCIONAL' || upper.contains('EXCEPCIONAL') || upper.contains('FUERA DE HORARIO')) {
+    if (upper == 'INICIAR REGISTRO EXCEPCIONAL' ||
+        upper.contains('EXCEPCIONAL') ||
+        upper.contains('FUERA DE HORARIO')) {
       return const Color(AppConstants.warningColorValue);
     }
     return Colors.grey;
@@ -85,8 +87,6 @@ class _ClockScreenState extends State<ClockScreen> {
         : (await StorageService.getWorkCenter())?.code ?? '';
   }
 
-
-
   Future<void> _performClockWithAction(String action) async {
     if (isPerformingClock) return;
 
@@ -104,7 +104,8 @@ class _ClockScreenState extends State<ClockScreen> {
         final pauseEventId = clockStatus?.pauseEventId;
         if (pauseEventId == null) {
           if (mounted) {
-            _showError('No se puede reanudar la jornada: falta el identificador de pausa.');
+            _showError(
+                'No se puede reanudar la jornada: falta el identificador de pausa.');
           }
           return;
         }
@@ -125,15 +126,16 @@ class _ClockScreenState extends State<ClockScreen> {
       if (mounted) {
         print('[ClockScreen][_performClockWithAction] SUCCESS');
         String actionText = action == 'pause'
-          ? I18n.of('clock.pause')
-          : I18n.of('clock.clock_out');
+            ? I18n.of('clock.pause')
+            : I18n.of('clock.clock_out');
         _showSuccess(I18n.of('clock.fichaje_success', {'action': actionText}));
         // Forzar recarga de estado para actualizar contadores
         await _loadStatus();
       }
     } catch (e, stack) {
       if (mounted) {
-        print('[ClockScreen][_performClockWithAction] ERROR: ${e.toString()} | ${stack.toString().split('\n')[0]}');
+        print(
+            '[ClockScreen][_performClockWithAction] ERROR: ${e.toString()} | ${stack.toString().split('\n')[0]}');
         _showError(I18n.of('clock.fichaje_error', {'error': e.toString()}));
       }
     } finally {
@@ -169,14 +171,15 @@ class _ClockScreenState extends State<ClockScreen> {
       if (mounted) {
         print('[ClockScreen][_performClockWithNFC] SUCCESS');
         String actionText = (action == 'clock_in')
-          ? I18n.of('clock.clock_in')
-          : I18n.of('clock.clock_out');
+            ? I18n.of('clock.clock_in')
+            : I18n.of('clock.clock_out');
         _showSuccess(I18n.of('clock.fichaje_success', {'action': actionText}));
         await _loadStatus();
       }
     } catch (e, stack) {
       if (mounted) {
-        print('[ClockScreen][_performClockWithNFC] ERROR: ${e.toString()} | ${stack.toString().split('\n')[0]}');
+        print(
+            '[ClockScreen][_performClockWithNFC] ERROR: ${e.toString()} | ${stack.toString().split('\n')[0]}');
         _showError(I18n.of('clock.fichaje_error', {'error': e.toString()}));
       }
     } finally {
@@ -260,449 +263,514 @@ class _ClockScreenState extends State<ClockScreen> {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                // Línea 261 (Inicio de la lista de children)
-                // Work Center Info
-                Card(
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(AppConstants.cardBorderRadius),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppConstants.spacing),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: const Color(AppConstants.primaryColorValue)
-                                .withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(
-                            Icons.business,
-                            color: Color(AppConstants.primaryColorValue),
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                clockStatus?.workCenterName?.isNotEmpty == true
-                                    ? clockStatus!.workCenterName!
-                                    : widget.workCenter.name,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                clockStatus?.workCenterCode ?? widget.workCenter.code,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                  // Línea 261 (Inicio de la lista de children)
+                  // Work Center Info
+                  Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(AppConstants.cardBorderRadius),
                     ),
-                  ),
-                ),
-
-                const SizedBox(height: AppConstants.spacing),
-
-                // Usuario
-                Card(
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(AppConstants.cardBorderRadius),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppConstants.spacing),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: const Color(AppConstants.successColorValue)
-                                .withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppConstants.spacing),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(AppConstants.primaryColorValue)
+                                  .withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.business,
+                              color: Color(AppConstants.primaryColorValue),
+                              size: 24,
+                            ),
                           ),
-                          child: const Icon(
-                            Icons.person,
-                            color: Color(AppConstants.successColorValue),
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${widget.user.name} ${widget.user.familyName1 ?? ''} ${widget.user.familyName2 ?? ''}'
-                                    .trim(),
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                (clockStatus?.nextSlot != null)
-                                  ? '${clockStatus!.nextSlot!.start} - ${clockStatus!.nextSlot!.end}'
-                                  : 'Sin tramo horario',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: AppConstants.spacing * 1.5),
-
-                // Clock Status Section
-                isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(),
-                      )
-                    : clockStatus != null
-                        ? Column(
-                            children: [
-                              // Status Card
-                              Card(
-                                elevation: 6,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                      AppConstants.cardBorderRadius),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(
-                                      AppConstants.spacing * 1.5),
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        I18n.of('clock.status_title'),
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.grey[800],
-                                        ),
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 24,
-                                          vertical: 12,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: _getStatusBackgroundColor(clockStatus?.todayStats.currentStatus),
-                                          borderRadius: BorderRadius.circular(20),
-                                        ),
-                                        child: Text(
-                                          (clockStatus?.message ?? clockStatus!.todayStats.currentStatus ?? 'DESCONOCIDO').toUpperCase(),
-                                          style: const TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceAround,
-                                        children: [
-                                          _buildStatItem(
-                                            'clock.entries',
-                                            clockStatus!.todayStats.totalEntries
-                                                .toString(),
-                                            Icons.login,
-                                          ),
-                                          _buildStatItem(
-                                            'clock.exits',
-                                            clockStatus!.todayStats.totalExits
-                                                .toString(),
-                                            Icons.logout,
-                                          ),
-                                          _buildStatItem(
-                                            'clock.hours',
-                                            clockStatus!
-                                                    .todayStats.workedHours ??
-                                                '0:00',
-                                            Icons.access_time,
-                                          ),
-                                        ],
-                                      ),
-                                    ],
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  clockStatus?.workCenterName?.isNotEmpty ==
+                                          true
+                                      ? clockStatus!.workCenterName!
+                                      : widget.workCenter.name,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: AppConstants.spacing * 2),
-                              // Clock Button(s)
-                              Builder(
-                                builder: (context) {
-                                  final status = clockStatus!.todayStats.currentStatus;
-                                  if (status == 'INICIAR JORNADA' || status == 'INICIAR REGISTRO EXCEPCIONAL') {
-                                    final isExceptional = status == 'INICIAR REGISTRO EXCEPCIONAL';
-                                    return SizedBox(
-                                      width: double.infinity,
-                                      height: AppConstants.buttonHeight * 1.2,
-                                      child: ElevatedButton(
-                                        onPressed: (isPerformingClock || (status != 'INICIAR REGISTRO EXCEPCIONAL' && !clockStatus!.canClock))
-                                          ? null
-                                          : () {
-                                              if (status == 'INICIAR REGISTRO EXCEPCIONAL') {
-                                                _performClockWithAction('exceptional_clock_in');
-                                              } else {
-                                                _performClockWithNFC(action: 'clock_in');
-                                              }
-                                            },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: isExceptional
-                                              ? const Color(AppConstants.warningColorValue)
-                                              : const Color(AppConstants.successColorValue),
-                                          foregroundColor: Colors.white,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          elevation: 6,
-                                        ),
-                                        child: isPerformingClock
-                                            ? const SizedBox(
-                                                width: 24,
-                                                height: 24,
-                                                child: CircularProgressIndicator(
-                                                  color: Colors.white,
-                                                  strokeWidth: 2,
-                                                ),
-                                              )
-                                            : Row(
-                                                mainAxisAlignment: MainAxisAlignment.center,
-                                                children: [
-                                                  const Icon(Icons.login, size: 24),
-                                                  const SizedBox(width: 8),
-                                                  Text(
-                                                    status ?? '',
-                                                    style: const TextStyle(
-                                                      fontSize: 18,
-                                                      fontWeight: FontWeight.bold,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                      ),
-                                    );
-                                  }
-                                  if (status == 'TRABAJANDO') {
-                                    return Row(
+                                Text(
+                                  clockStatus?.workCenterCode ??
+                                      widget.workCenter.code,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: AppConstants.spacing),
+
+                  // Usuario
+                  Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(AppConstants.cardBorderRadius),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppConstants.spacing),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(AppConstants.successColorValue)
+                                  .withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.person,
+                              color: Color(AppConstants.successColorValue),
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${widget.user.name} ${widget.user.familyName1 ?? ''} ${widget.user.familyName2 ?? ''}'
+                                      .trim(),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  (clockStatus?.nextSlot != null)
+                                      ? '${clockStatus!.nextSlot!.start} - ${clockStatus!.nextSlot!.end}'
+                                      : 'Sin tramo horario',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: AppConstants.spacing * 1.5),
+
+                  // Clock Status Section
+                  isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(),
+                        )
+                      : clockStatus != null
+                          ? Column(
+                              children: [
+                                // Status Card
+                                Card(
+                                  elevation: 6,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                        AppConstants.cardBorderRadius),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(
+                                        AppConstants.spacing * 1.5),
+                                    child: Column(
                                       children: [
-                                        Expanded(
-                                          child: ElevatedButton(
-                                            onPressed: isPerformingClock
-                                                ? null
-                                                : () => _performClockWithAction('pause'),
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: const Color(AppConstants.warningColorValue),
-                                              foregroundColor: Colors.white,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(12),
-                                              ),
-                                              elevation: 6,
-                                              padding: const EdgeInsets.symmetric(vertical: 16),
-                                            ),
-                                            child: isPerformingClock
-                                                ? const SizedBox(
-                                                    width: 20,
-                                                    height: 20,
-                                                    child: CircularProgressIndicator(
-                                                      color: Colors.white,
-                                                      strokeWidth: 2,
-                                                    ),
-                                                  )
-                                                : Column(
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    children: [
-                                                      const Icon(Icons.pause, size: 20),
-                                                      const SizedBox(height: 4),
-                                                      Text(
-                                                        I18n.of('clock.pause'),
-                                                        style: const TextStyle(
-                                                          fontSize: 12,
-                                                          fontWeight: FontWeight.bold,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
+                                        Text(
+                                          I18n.of('clock.status_title'),
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.grey[800],
                                           ),
                                         ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: ElevatedButton(
-                                            onPressed: isPerformingClock
-                                                ? null
-                                                : () => _performClockWithNFC(action: 'clock_out'),
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: const Color(AppConstants.errorColorValue),
-                                              foregroundColor: Colors.white,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(12),
-                                              ),
-                                              elevation: 6,
-                                              padding: const EdgeInsets.symmetric(vertical: 16),
-                                            ),
-                                            child: isPerformingClock
-                                                ? const SizedBox(
-                                                    width: 20,
-                                                    height: 20,
-                                                    child: CircularProgressIndicator(
-                                                      color: Colors.white,
-                                                      strokeWidth: 2,
-                                                    ),
-                                                  )
-                                                : Column(
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    children: [
-                                                      const Icon(Icons.logout, size: 20),
-                                                      const SizedBox(height: 4),
-                                                      Text(
-                                                        I18n.of('clock.clock_out'),
-                                                        style: const TextStyle(
-                                                          fontSize: 12,
-                                                          fontWeight: FontWeight.bold,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
+                                        const SizedBox(height: 12),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 24,
+                                            vertical: 12,
                                           ),
+                                          decoration: BoxDecoration(
+                                            color: _getStatusBackgroundColor(
+                                                clockStatus
+                                                    ?.todayStats.currentStatus),
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                          ),
+                                          child: Text(
+                                            (clockStatus?.message ??
+                                                    clockStatus!.todayStats
+                                                        .currentStatus ??
+                                                    'DESCONOCIDO')
+                                                .toUpperCase(),
+                                            style: const TextStyle(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceAround,
+                                          children: [
+                                            _buildStatItem(
+                                              'clock.entries',
+                                              clockStatus!
+                                                  .todayStats.totalEntries
+                                                  .toString(),
+                                              Icons.login,
+                                            ),
+                                            _buildStatItem(
+                                              'clock.exits',
+                                              clockStatus!.todayStats.totalExits
+                                                  .toString(),
+                                              Icons.logout,
+                                            ),
+                                            _buildStatItem(
+                                              'clock.hours',
+                                              clockStatus!
+                                                      .todayStats.workedHours ??
+                                                  '0:00',
+                                              Icons.access_time,
+                                            ),
+                                          ],
                                         ),
                                       ],
-                                    );
-                                  }
-                                  if (status == 'EN PAUSA') {
-                                    return SizedBox(
-                                      width: double.infinity,
-                                      height: AppConstants.buttonHeight * 1.2,
-                                      child: ElevatedButton(
-                                        onPressed: (isPerformingClock || !clockStatus!.canClock)
-                                            ? null
-                                            : () => _performClockWithAction('resume_workday'),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.blue,
-                                          foregroundColor: Colors.white,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          elevation: 6,
-                                        ),
-                                        child: isPerformingClock
-                                            ? const SizedBox(
-                                                width: 24,
-                                                height: 24,
-                                                child: CircularProgressIndicator(
-                                                  color: Colors.white,
-                                                  strokeWidth: 2,
-                                                ),
-                                              )
-                                            : Row(
-                                                mainAxisAlignment: MainAxisAlignment.center,
-                                                children: [
-                                                  const Icon(Icons.play_arrow, size: 24),
-                                                  const SizedBox(width: 8),
-                                                  Text(
-                                                    I18n.of('clock.resume_workday'),
-                                                    style: const TextStyle(
-                                                      fontSize: 18,
-                                                      fontWeight: FontWeight.bold,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                      ),
-                                    );
-                                  }
-                                  return const SizedBox.shrink();
-                                },
-                              ),
-                              const SizedBox(height: AppConstants.spacing * 2),
-                              // WebView Navigation
-                              Card(
-                                elevation: 4,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                      AppConstants.cardBorderRadius),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(
-                                      AppConstants.spacing),
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        I18n.of('clock.more_functions'),
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.grey[800],
-                                        ),
-                                      ),
-                                      const SizedBox(
-                                          height: AppConstants.spacing),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceEvenly,
-                                        children: [
-                                          _buildWebViewButton(
-                                            icon: Icons.history,
-                                            label:
-                                                I18n.of('clock.history_title'),
-                                            path: AppConstants.webViewHistory,
-                                          ),
-                                          _buildWebViewButton(
-                                            icon: Icons.schedule,
-                                            label:
-                                                I18n.of('clock.schedule_title'),
-                                            path: AppConstants.webViewSchedule,
-                                          ),
-                                          _buildWebViewButton(
-                                            icon: Icons.assessment,
-                                            label:
-                                                I18n.of('clock.reports_title'),
-                                            path: AppConstants.webViewReports,
-                                          ),
-                                          _buildWebViewButton(
-                                            icon: Icons.person,
-                                            label:
-                                                I18n.of('clock.profile_title'),
-                                            path: AppConstants.webViewProfile,
-                                          ),
-                                        ],
-                                      ),
-                                    ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          )
-                        : const SizedBox.shrink(),
-              ], // Cierre de la lista 'children' de la Column principal
+                                const SizedBox(
+                                    height: AppConstants.spacing * 2),
+                                // Clock Button(s)
+                                Builder(
+                                  builder: (context) {
+                                    final status =
+                                        clockStatus!.todayStats.currentStatus;
+                                    if (status == 'INICIAR JORNADA' ||
+                                        status ==
+                                            'INICIAR REGISTRO EXCEPCIONAL') {
+                                      final isExceptional = status ==
+                                          'INICIAR REGISTRO EXCEPCIONAL';
+                                      return SizedBox(
+                                        width: double.infinity,
+                                        height: AppConstants.buttonHeight * 1.2,
+                                        child: ElevatedButton(
+                                          onPressed: (isPerformingClock ||
+                                                  (status !=
+                                                          'INICIAR REGISTRO EXCEPCIONAL' &&
+                                                      !clockStatus!.canClock))
+                                              ? null
+                                              : () {
+                                                  if (status ==
+                                                      'INICIAR REGISTRO EXCEPCIONAL') {
+                                                    _performClockWithAction(
+                                                        'exceptional_clock_in');
+                                                  } else {
+                                                    _performClockWithNFC(
+                                                        action: 'clock_in');
+                                                  }
+                                                },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: isExceptional
+                                                ? const Color(AppConstants
+                                                    .warningColorValue)
+                                                : const Color(AppConstants
+                                                    .successColorValue),
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            elevation: 6,
+                                          ),
+                                          child: isPerformingClock
+                                              ? const SizedBox(
+                                                  width: 24,
+                                                  height: 24,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    color: Colors.white,
+                                                    strokeWidth: 2,
+                                                  ),
+                                                )
+                                              : Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    const Icon(Icons.login,
+                                                        size: 24),
+                                                    const SizedBox(width: 8),
+                                                    Text(
+                                                      status ?? '',
+                                                      style: const TextStyle(
+                                                        fontSize: 18,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                        ),
+                                      );
+                                    }
+                                    if (status == 'TRABAJANDO') {
+                                      return Row(
+                                        children: [
+                                          Expanded(
+                                            child: ElevatedButton(
+                                              onPressed: isPerformingClock
+                                                  ? null
+                                                  : () =>
+                                                      _performClockWithAction(
+                                                          'pause'),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: const Color(
+                                                    AppConstants
+                                                        .warningColorValue),
+                                                foregroundColor: Colors.white,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                elevation: 6,
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 16),
+                                              ),
+                                              child: isPerformingClock
+                                                  ? const SizedBox(
+                                                      width: 20,
+                                                      height: 20,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                        color: Colors.white,
+                                                        strokeWidth: 2,
+                                                      ),
+                                                    )
+                                                  : Column(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        const Icon(Icons.pause,
+                                                            size: 20),
+                                                        const SizedBox(
+                                                            height: 4),
+                                                        Text(
+                                                          I18n.of(
+                                                              'clock.pause'),
+                                                          style:
+                                                              const TextStyle(
+                                                            fontSize: 12,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: ElevatedButton(
+                                              onPressed: isPerformingClock
+                                                  ? null
+                                                  : () => _performClockWithNFC(
+                                                      action: 'clock_out'),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: const Color(
+                                                    AppConstants
+                                                        .errorColorValue),
+                                                foregroundColor: Colors.white,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                elevation: 6,
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 16),
+                                              ),
+                                              child: isPerformingClock
+                                                  ? const SizedBox(
+                                                      width: 20,
+                                                      height: 20,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                        color: Colors.white,
+                                                        strokeWidth: 2,
+                                                      ),
+                                                    )
+                                                  : Column(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        const Icon(Icons.logout,
+                                                            size: 20),
+                                                        const SizedBox(
+                                                            height: 4),
+                                                        Text(
+                                                          I18n.of(
+                                                              'clock.clock_out'),
+                                                          style:
+                                                              const TextStyle(
+                                                            fontSize: 12,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    }
+                                    if (status == 'EN PAUSA') {
+                                      return SizedBox(
+                                        width: double.infinity,
+                                        height: AppConstants.buttonHeight * 1.2,
+                                        child: ElevatedButton(
+                                          onPressed: (isPerformingClock ||
+                                                  !clockStatus!.canClock)
+                                              ? null
+                                              : () => _performClockWithAction(
+                                                  'resume_workday'),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.blue,
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            elevation: 6,
+                                          ),
+                                          child: isPerformingClock
+                                              ? const SizedBox(
+                                                  width: 24,
+                                                  height: 24,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    color: Colors.white,
+                                                    strokeWidth: 2,
+                                                  ),
+                                                )
+                                              : Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    const Icon(Icons.play_arrow,
+                                                        size: 24),
+                                                    const SizedBox(width: 8),
+                                                    Text(
+                                                      I18n.of(
+                                                          'clock.resume_workday'),
+                                                      style: const TextStyle(
+                                                        fontSize: 18,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                        ),
+                                      );
+                                    }
+                                    return const SizedBox.shrink();
+                                  },
+                                ),
+                                const SizedBox(
+                                    height: AppConstants.spacing * 2),
+                                // WebView Navigation
+                                Card(
+                                  elevation: 4,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                        AppConstants.cardBorderRadius),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(
+                                        AppConstants.spacing),
+                                    child: Column(
+                                      children: [
+                                        Text(
+                                          I18n.of('clock.more_functions'),
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.grey[800],
+                                          ),
+                                        ),
+                                        const SizedBox(
+                                            height: AppConstants.spacing),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceEvenly,
+                                          children: [
+                                            _buildWebViewButton(
+                                              icon: Icons.history,
+                                              label: I18n.of(
+                                                  'clock.history_title'),
+                                              path: AppConstants.webViewHistory,
+                                            ),
+                                            _buildWebViewButton(
+                                              icon: Icons.schedule,
+                                              label: I18n.of(
+                                                  'clock.schedule_title'),
+                                              path:
+                                                  AppConstants.webViewSchedule,
+                                            ),
+                                            _buildWebViewButton(
+                                              icon: Icons.assessment,
+                                              label: I18n.of(
+                                                  'clock.reports_title'),
+                                              path: AppConstants.webViewReports,
+                                            ),
+                                            _buildWebViewButton(
+                                              icon: Icons.person,
+                                              label: I18n.of(
+                                                  'clock.profile_title'),
+                                              path: AppConstants.webViewProfile,
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : const SizedBox.shrink(),
+                ], // Cierre de la lista 'children' de la Column principal
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
   }
 
   // --- WIDGETS AUXILIARES ---
