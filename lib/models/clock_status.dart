@@ -1,17 +1,18 @@
 import 'dart:convert';
 
 class ClockStatus {
-  final String
+    final String
       action; // 'clock_in', 'working_options', 'resume_workday', 'confirm_exceptional_clock_in', 'clock_out'
-  final bool canClock;
-  final String? message;
-  final bool? overtime;
-  final int? eventTypeId;
-  final NextSlot? nextSlot;
-  final TodayStats todayStats;
-  final DateTime currentTime;
-  final String? workCenterCode;
-  final String? workCenterName; // Nombre del centro de trabajo
+    final bool canClock;
+    final String? message;
+    final bool? overtime;
+    final int? eventTypeId;
+    final NextSlot? nextSlot;
+    final TodayStats todayStats;
+    final DateTime currentTime;
+    final String? workCenterCode;
+    final String? workCenterName; // Nombre del centro de trabajo
+    final int? pauseEventId; // Nuevo campo para reanudar desde pausa
 
   const ClockStatus({
     required this.action,
@@ -24,6 +25,7 @@ class ClockStatus {
     required this.currentTime,
     this.workCenterCode,
     this.workCenterName,
+    this.pauseEventId,
   });
 
   Map<String, dynamic> toJson() => {
@@ -37,6 +39,7 @@ class ClockStatus {
         'current_time': currentTime.toIso8601String(),
         'work_center_code': workCenterCode,
         'work_center_name': workCenterName,
+        'pause_event_id': pauseEventId,
       };
 
   static ClockStatus fromJson(Map<String, dynamic> json) {
@@ -146,6 +149,17 @@ class ClockStatus {
         print('[ClockStatus][ClockStatus] workCenterName (parsed): $result');
         return result;
       })();
+      final pauseEventId = (() {
+        final v = json['pause_event_id'];
+        print('[ClockStatus][ClockStatus] pauseEventId (raw): $v');
+        if (v == null) return null;
+        if (v is int) return v;
+        if (v is String) {
+          final parsed = int.tryParse(v);
+          return parsed;
+        }
+        return null;
+      })();
       return ClockStatus(
         action: action,
         canClock: canClock,
@@ -157,6 +171,7 @@ class ClockStatus {
         currentTime: currentTime,
         workCenterCode: workCenterCode,
         workCenterName: workCenterName,
+        pauseEventId: pauseEventId,
       );
     } catch (e) {
       print('[ClockStatus][ERROR] General error in fromJson: $e');
@@ -169,6 +184,7 @@ class ClockStatus {
         nextSlot: null,
         todayStats: TodayStats(totalEntries: 0, totalExits: 0),
         currentTime: DateTime.now(),
+        pauseEventId: null,
       );
     }
   }

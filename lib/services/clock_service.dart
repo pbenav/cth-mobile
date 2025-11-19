@@ -38,7 +38,8 @@ class ClockService {
   static Future<ApiResponse<ClockResponse>> performClock({
     required String workCenterCode,
     required String userCode,
-    String? action, // 'pause' or 'clock_out' when working
+    String? action, // 'pause', 'resume_workday', 'clock_out', etc.
+    int? pauseEventId, // Nuevo parámetro opcional
   }) async {
     try {
       // Intentar refrescar datos del trabajador guardado antes de cualquier
@@ -54,8 +55,22 @@ class ClockService {
         // Silenciar: no queremos que un fallo en el refresh impida el fichaje
       }
       final baseUrl = await _getBaseUrl();
-      print(
-          '[ClockService][performClock] Enviando datos: work_center_code=$workCenterCode, user_code=$userCode, action=$action');
+      print('[ClockService][performClock] --- REQUEST ---');
+      print('work_center_code: $workCenterCode');
+      print('user_code: $userCode');
+      print('action: $action');
+      print('pause_event_id: $pauseEventId');
+      if (pauseEventId != null) {
+        print('[ClockService][performClock] --- INFO PAUSE EVENT ---');
+        // Aquí podrías agregar más info si tienes acceso al evento, pero desde el frontend solo tienes el id
+      }
+      final body = {
+        'work_center_code': workCenterCode,
+        'user_code': userCode,
+        if (action != null) 'action': action,
+        if (pauseEventId != null) 'pause_event_id': pauseEventId,
+      };
+      print('[ClockService][performClock] Body enviado: ' + body.toString());
       final response = await http
           .post(
             Uri.parse('$baseUrl/clock'),
@@ -63,11 +78,7 @@ class ClockService {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
             },
-            body: jsonEncode({
-              'work_center_code': workCenterCode,
-              'user_code': userCode,
-              if (action != null) 'action': action,
-            }),
+            body: jsonEncode(body),
           )
           .timeout(const Duration(seconds: 30));
 
