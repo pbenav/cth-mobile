@@ -446,9 +446,9 @@ class _ClockScreenState extends State<ClockScreen> {
                                       width: double.infinity,
                                       height: AppConstants.buttonHeight * 1.2,
                                       child: ElevatedButton(
-                                        onPressed: (isPerformingClock || !clockStatus!.canClock)
-                                            ? null
-                                            : () => _performClockWithNFC(action: 'clock_in'),
+                                        onPressed: (isPerformingClock || (status != 'INICIAR REGISTRO EXCEPCIONAL' && !clockStatus!.canClock))
+                                          ? null
+                                          : () => _performClockWithNFC(action: 'clock_in'),
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: isExceptional
                                               ? const Color(AppConstants.warningColorValue)
