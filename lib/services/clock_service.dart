@@ -45,17 +45,17 @@ class ClockService {
       // acción que haga una conexión. Esto asegura que la app tenga los
       // datos más recientes del trabajador y evita errores por user not found.
       try {
+        // Hacemos un refresh bloqueante pero con timeout corto para evitar
+        // latencias largas: si la API responde rápido, tendremos datos
+        // actualizados; si no, procedemos con los datos en caché.
         await SetupService.refreshSavedWorkerData(
             blocking: true, timeout: const Duration(seconds: 3));
-      } catch (_) {}
+      } catch (_) {
+        // Silenciar: no queremos que un fallo en el refresh impida el fichaje
+      }
       final baseUrl = await _getBaseUrl();
-      final allowedActions = ['pause', 'clock_out', 'confirm_exceptional_clock_in'];
-      final clockPayload = {
-        'work_center_code': workCenterCode,
-        'user_code': userCode,
-        if (action != null && allowedActions.contains(action)) 'action': action,
-      };
-      print('[ClockService][performClock] JSON enviado: ' + jsonEncode(clockPayload));
+      print(
+          '[ClockService][performClock] Enviando datos: work_center_code=$workCenterCode, user_code=$userCode, action=$action');
       final response = await http
           .post(
             Uri.parse('$baseUrl/clock'),
@@ -63,7 +63,11 @@ class ClockService {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
             },
-            body: jsonEncode(clockPayload),
+            body: jsonEncode({
+              'work_center_code': workCenterCode,
+              'user_code': userCode,
+              if (action != null) 'action': action,
+            }),
           )
           .timeout(const Duration(seconds: 30));
 

@@ -396,7 +396,7 @@ class _ClockScreenState extends State<ClockScreen> {
                                           borderRadius: BorderRadius.circular(20),
                                         ),
                                         child: Text(
-                                          (clockStatus?.message ?? clockStatus!.todayStats.currentStatus ?? 'UNKNOWN').toUpperCase(),
+                                          (clockStatus?.message ?? clockStatus!.todayStats.currentStatus ?? 'DESCONOCIDO').toUpperCase(),
                                           style: const TextStyle(
                                             fontSize: 20,
                                             fontWeight: FontWeight.bold,
