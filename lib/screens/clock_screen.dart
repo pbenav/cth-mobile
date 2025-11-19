@@ -31,6 +31,7 @@ class _ClockScreenState extends State<ClockScreen> {
   ClockStatus? clockStatus;
   bool isLoading = false;
   bool isPerformingClock = false;
+  bool _nfcEnabled = true;
 
   Future<void> _loadStatus() async {
     setState(() => isLoading = true);
@@ -71,6 +72,14 @@ class _ClockScreenState extends State<ClockScreen> {
   void initState() {
     super.initState();
     _loadStatus();
+    _loadNFCEnabled();
+  }
+
+  Future<void> _loadNFCEnabled() async {
+    final enabled = await StorageService.getBool('nfc_enabled');
+    setState(() {
+      _nfcEnabled = enabled ?? true;
+    });
   }
 
   // --- MÉTODOS DE UTILIDAD REFACTORIZADOS (DRY) ---
@@ -490,8 +499,13 @@ class _ClockScreenState extends State<ClockScreen> {
                                                     _performClockWithAction(
                                                         'exceptional_clock_in');
                                                   } else {
-                                                    _performClockWithNFC(
-                                                        action: 'clock_in');
+                                                    if (_nfcEnabled) {
+                                                      _performClockWithNFC(
+                                                          action: 'clock_in');
+                                                    } else {
+                                                      _performClockWithAction(
+                                                          'clock_in');
+                                                    }
                                                   }
                                                 },
                                           style: ElevatedButton.styleFrom(
@@ -598,8 +612,15 @@ class _ClockScreenState extends State<ClockScreen> {
                                             child: ElevatedButton(
                                               onPressed: isPerformingClock
                                                   ? null
-                                                  : () => _performClockWithNFC(
-                                                      action: 'clock_out'),
+                                                  : () {
+                                                      if (_nfcEnabled) {
+                                                        _performClockWithNFC(
+                                                            action: 'clock_out');
+                                                      } else {
+                                                        _performClockWithAction(
+                                                            'clock_out');
+                                                      }
+                                                    },
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: const Color(
                                                     AppConstants

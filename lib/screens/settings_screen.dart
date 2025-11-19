@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/config_service.dart';
+import '../services/storage_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -14,11 +15,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String? _error;
   List<String> _logs = [];
   final ScrollController _scrollController = ScrollController();
+  bool _nfcEnabled = true;
 
   @override
   void initState() {
     super.initState();
     _loadCurrentUrl();
+    _loadNFCEnabled();
+  }
+
+  Future<void> _loadNFCEnabled() async {
+    final enabled = await StorageService.getBool('nfc_enabled');
+    setState(() {
+      _nfcEnabled = enabled ?? true;
+    });
   }
 
   @override
@@ -58,6 +68,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
 
     _addLog('Iniciando configuración del servidor...');
+    await StorageService.setBool('nfc_enabled', _nfcEnabled);
 
     try {
       final success = await ConfigService.configureServer(_urlController.text, onLog: _addLog);
@@ -94,6 +105,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 errorText: _error,
               ),
               keyboardType: TextInputType.url,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Fichaje por NFC', style: TextStyle(fontSize: 16)),
+                Switch(
+                  value: _nfcEnabled,
+                  onChanged: (value) {
+                    setState(() {
+                      _nfcEnabled = value;
+                    });
+                  },
+                ),
+              ],
             ),
             const SizedBox(height: 24),
             ElevatedButton(
