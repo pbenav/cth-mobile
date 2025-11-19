@@ -141,11 +141,9 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(const Duration(seconds: 2));
 
     try {
-      print('DEBUG: Verificando configuración inicial...');
       final isSetupCompleted = await SetupService.isSetupCompleted();
 
       if (!isSetupCompleted) {
-        print('DEBUG: Configuración no completada, iniciando asistente...');
         if (mounted) {
           Navigator.pushReplacement(
             context,
@@ -157,9 +155,7 @@ class _SplashScreenState extends State<SplashScreen> {
         return;
       }
 
-      print('DEBUG: Configuración completada, verificando sesión...');
       final hasSession = await StorageService.hasValidSession();
-      print('DEBUG: HasValidSession: $hasSession');
 
       if (!mounted) return;
 
@@ -167,10 +163,7 @@ class _SplashScreenState extends State<SplashScreen> {
         final workCenter = await StorageService.getWorkCenter();
         final user = await StorageService.getUser();
 
-        print('DEBUG: Datos cargados - WorkCenter: ${workCenter?.code}, User: ${user?.code}');
-
         if (workCenter != null && user != null) {
-          print('DEBUG: Navegando a ClockScreen');
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -181,17 +174,12 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
           );
           return;
-        } else {
-          print('DEBUG: WorkCenter o User son null, navegando a login');
         }
-      } else {
-        print('DEBUG: No hay sesión válida, navegando a login');
-      }
+      } 
 
       Navigator.pushReplacementNamed(context, AppConstants.routeLogin);
 
     } catch (e) {
-      print('DEBUG: Error en _checkSession: $e');
       if (mounted) {
         Navigator.pushReplacementNamed(context, AppConstants.routeLogin);
       }

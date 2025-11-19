@@ -41,6 +41,7 @@ class ClockService {
     String? action, // 'pause', 'resume_workday', 'clock_out', etc.
     int? pauseEventId, // Nuevo parámetro opcional
     int? eventTypeId, // Nuevo parámetro para clock_in
+    String? observations, // Nuevo parámetro para observaciones
   }) async {
     try {
       // Intentar refrescar datos del trabajador guardado antes de cualquier
@@ -56,23 +57,14 @@ class ClockService {
         // Silenciar: no queremos que un fallo en el refresh impida el fichaje
       }
       final baseUrl = await _getBaseUrl();
-      print('[ClockService][performClock] --- REQUEST ---');
-      print('work_center_code: $workCenterCode');
-      print('user_code: $userCode');
-      print('action: $action');
-      print('pause_event_id: $pauseEventId');
-      if (pauseEventId != null) {
-        print('[ClockService][performClock] --- INFO PAUSE EVENT ---');
-        // Aquí podrías agregar más info si tienes acceso al evento, pero desde el frontend solo tienes el id
-      }
       final body = {
         'work_center_code': workCenterCode,
         'user_code': userCode,
-        // Solo incluir 'action' y 'pause_event_id' si es pausa o continuar
-        if (action == 'pause' || action == 'resume_workday') 'action': action,
-        if (action == 'resume_workday' && pauseEventId != null) 'pause_event_id': pauseEventId,
+        if (action != null) 'action': action,
+        if (pauseEventId != null) 'pause_event_id': pauseEventId,
+        if (eventTypeId != null) 'event_type_id': eventTypeId,
+        if (observations != null) 'observations': observations,
       };
-      print('[ClockService][performClock] Body enviado: ' + body.toString());
       final response = await http
           .post(
             Uri.parse('$baseUrl/clock'),
@@ -119,7 +111,6 @@ class ClockService {
       final bodyJson = jsonEncode({
         'user_code': userCode,
       });
-      print('[CTH] Enviando a $baseUrl/status: $bodyJson');
       final response = await http
           .post(
             Uri.parse('$baseUrl/status'),
@@ -131,7 +122,6 @@ class ClockService {
           )
           .timeout(const Duration(seconds: 15));
 
-      print('[CTH] Respuesta ${response.statusCode}: ${response.body}');
       final jsonData = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
@@ -201,22 +191,9 @@ class ClockService {
   }
 
   // Validar conectividad con el servidor
-  static Future<bool> checkConnectivity() async {
-    try {
-      final baseUrl = await _getBaseUrl();
-      final response = await http.get(
-        Uri.parse('$baseUrl/status').replace(queryParameters: {
-          'work_center_code': 'test',
-          'user_code': 'test',
-        }),
-        headers: {'Accept': 'application/json'},
-      ).timeout(const Duration(seconds: 5));
-
-      return response.statusCode == 200 || response.statusCode == 422;
-    } catch (e) {
-      return false;
-    }
-  }
+  // static Future<bool> checkConnectivity() async {
+  //   // Implementar si es necesario
+  // }
 
   // Obtener configuración del servidor
   static Future<Map<String, dynamic>?> getServerConfig() async {

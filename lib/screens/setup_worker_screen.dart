@@ -303,12 +303,15 @@ class _SetupWorkerScreenState extends State<SetupWorkerScreen> {
                                         size: 24,
                                       ),
                                       const SizedBox(width: 8),
-                                      const Text(
-                                        'Datos cargados correctamente',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.green,
+                                      Expanded(
+                                        child: Text(
+                                          'Datos cargados correctamente',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.green,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
                                     ],

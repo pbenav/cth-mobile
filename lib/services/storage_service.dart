@@ -18,6 +18,7 @@ class StorageService {
     final prefs = await _preferences;
     return prefs.getString('laravel_session');
   }
+
   static SharedPreferences? _prefs;
 
   // Inicializar SharedPreferences
@@ -68,7 +69,6 @@ class StorageService {
       final prefs = await _preferences;
       final jsonData = jsonEncode(workCenter.toJson());
       await prefs.setString(AppConstants.keyWorkCenter, jsonData);
-      print('DEBUG: WorkCenter guardado - Key: ${AppConstants.keyWorkCenter}, Data: $jsonData');
     } catch (e) {
       throw StorageException('Error guardando centro de trabajo: $e');
     }
@@ -78,13 +78,11 @@ class StorageService {
     try {
       final prefs = await _preferences;
       final data = prefs.getString(AppConstants.keyWorkCenter);
-      print('DEBUG: getWorkCenter - Key: ${AppConstants.keyWorkCenter}, Data: $data');
       if (data != null) {
-        final workCenter = WorkCenter.fromJson(jsonDecode(data) as Map<String, dynamic>);
-        print('DEBUG: WorkCenter cargado - Code: ${workCenter.code}, Name: ${workCenter.name}');
+        final workCenter =
+            WorkCenter.fromJson(jsonDecode(data) as Map<String, dynamic>);
         return workCenter;
       }
-      print('DEBUG: No se encontró WorkCenter en SharedPreferences');
       return null;
     } catch (e) {
       print('DEBUG: Error cargando WorkCenter: $e');
@@ -107,7 +105,6 @@ class StorageService {
       final prefs = await _preferences;
       final jsonData = jsonEncode(user.toJson());
       await prefs.setString(AppConstants.keyUser, jsonData);
-      print('DEBUG: User guardado - Key: ${AppConstants.keyUser}, Data: $jsonData');
     } catch (e) {
       throw StorageException('Error guardando usuario: $e');
     }
@@ -225,9 +222,11 @@ class StorageService {
   static Future<void> saveWorkerLastUpdate(DateTime updatedAt) async {
     try {
       final prefs = await _preferences;
-      await prefs.setString(AppConstants.keyWorkerLastUpdate, updatedAt.toIso8601String());
+      await prefs.setString(
+          AppConstants.keyWorkerLastUpdate, updatedAt.toIso8601String());
     } catch (e) {
-      throw StorageException('Error guardando última actualización del worker: $e');
+      throw StorageException(
+          'Error guardando última actualización del worker: $e');
     }
   }
 
@@ -240,7 +239,8 @@ class StorageService {
       }
       return null;
     } catch (e) {
-      throw StorageException('Error cargando última actualización del worker: $e');
+      throw StorageException(
+          'Error cargando última actualización del worker: $e');
     }
   }
 
@@ -249,7 +249,6 @@ class StorageService {
     final workCenter = await getWorkCenter();
     final user = await getUser();
     final result = workCenter != null && user != null;
-    print('DEBUG: hasValidSession - WorkCenter: ${workCenter?.code}, User: ${user?.code}, Result: $result');
     return result;
   }
 

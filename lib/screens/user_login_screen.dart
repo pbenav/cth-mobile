@@ -52,7 +52,8 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
     }
 
     // If still empty, try to load saved user from preferences
-    if ((_codeController.text.trim().isEmpty) || (_nameController.text.trim().isEmpty)) {
+    if ((_codeController.text.trim().isEmpty) ||
+        (_nameController.text.trim().isEmpty)) {
       try {
         final savedUser = await StorageService.getUser();
         if (savedUser != null) {
@@ -71,16 +72,10 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
   }
 
   Future<void> _submitLogin() async {
-    print('DEBUG: _submitLogin called');
-    print('DEBUG: _codeController.text: "${_codeController.text}"');
-    print('DEBUG: _nameController.text: "${_nameController.text}"');
-
     if (!_formKey.currentState!.validate()) {
-      print('DEBUG: Form validation failed');
       return;
     }
 
-    print('DEBUG: Form validation passed');
     setState(() => isLoading = true);
 
     try {
@@ -88,9 +83,6 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
       final userName = _nameController.text.trim().isNotEmpty
           ? _nameController.text.trim()
           : userCode;
-
-      print('DEBUG: Guardando usuario - Code: $userCode, Name: $userName');
-      print('DEBUG: WorkCenter: ${widget.workCenter.code} - ${widget.workCenter.name}');
 
       final user = User(
         id: 0, // ID temporal, se asignará desde el servidor
@@ -102,12 +94,10 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
       await StorageService.saveWorkCenter(widget.workCenter);
       await StorageService.saveUser(user);
 
-      // Verificar que se guardó correctamente
-      final savedWorkCenter = await StorageService.getWorkCenter();
-      final savedUser = await StorageService.getUser();
-      final hasSession = await StorageService.hasValidSession();
-
-      print('DEBUG: Datos guardados - WorkCenter: ${savedWorkCenter?.code}, User: ${savedUser?.code}, HasSession: $hasSession');
+      // Eliminar variables locales no utilizadas
+      await StorageService.getWorkCenter();
+      await StorageService.getUser();
+      await StorageService.hasValidSession();
 
       if (!mounted) return;
 
@@ -123,7 +113,6 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
         ),
       );
     } catch (e) {
-      print('DEBUG: Error guardando datos: $e');
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -377,8 +366,8 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
                                 child: ElevatedButton(
                                   onPressed: isLoading ? null : _submitLogin,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        const Color(AppConstants.primaryColorValue),
+                                    backgroundColor: const Color(
+                                        AppConstants.primaryColorValue),
                                     foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
@@ -406,7 +395,14 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
                               const SizedBox(height: AppConstants.spacing),
 
                               // Información adicional
-                              // ...existing code...
+                              const Text(
+                                'Al iniciar sesión, aceptas las políticas de la empresa.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
                             ],
                           ),
                         ),

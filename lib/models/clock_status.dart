@@ -1,4 +1,3 @@
-
 class ClockStatus {
   final String
       action; // 'clock_in', 'working_options', 'resume_workday', 'confirm_exceptional_clock_in', 'clock_out'
@@ -12,6 +11,7 @@ class ClockStatus {
   final String? workCenterCode;
   final String? workCenterName; // Nombre del centro de trabajo
   final int? pauseEventId; // Nuevo campo para reanudar desde pausa
+  final List<ClockEvent> todayRecords; // Nuevo campo para eventos del día
 
   const ClockStatus({
     required this.action,
@@ -25,6 +25,7 @@ class ClockStatus {
     this.workCenterCode,
     this.workCenterName,
     this.pauseEventId,
+    this.todayRecords = const [],
   });
 
   Map<String, dynamic> toJson() => {
@@ -39,55 +40,100 @@ class ClockStatus {
         'work_center_code': workCenterCode,
         'work_center_name': workCenterName,
         'pause_event_id': pauseEventId,
+        'today_records': todayRecords.map((e) => e.toJson()).toList(),
       };
 
   static ClockStatus fromJson(Map<String, dynamic> json) {
-    try {
-      print('[ClockStatus][DEBUG] JSON recibido: ' + json.toString());
-      // Solo log de los campos principales y pausa
-      final action = json['action'] is String ? json['action'] as String : '';
-      print('[ClockStatus][PARSE] action: $action');
-      final pauseEventIdRaw = json['pause_event_id'];
-      print('[ClockStatus][PARSE] pause_event_id: $pauseEventIdRaw');
-      final pauseEventId = (pauseEventIdRaw == null)
-          ? null
-          : (pauseEventIdRaw is int
-              ? pauseEventIdRaw
-              : (pauseEventIdRaw is String ? int.tryParse(pauseEventIdRaw) : null));
-      return ClockStatus(
-        action: action,
-        canClock: json['can_clock'] is bool ? json['can_clock'] as bool : false,
-        message: json['message'] is String ? json['message'] as String : null,
-        overtime: json['overtime'] as bool?,
-        eventTypeId: json['event_type_id'] is int
-            ? json['event_type_id'] as int
-            : (json['event_type_id'] is String
-                ? int.tryParse(json['event_type_id'])
-                : null),
-        nextSlot: null, // No log ni parseo extendido
-        todayStats: json['today_stats'] is Map<String, dynamic>
-            ? TodayStats.fromJson(json['today_stats'])
-            : TodayStats(totalEntries: 0, totalExits: 0),
-        currentTime: DateTime.now(),
-        workCenterCode: json['work_center_code'] is String ? json['work_center_code'] as String : null,
-        workCenterName: json['work_center_name'] is String ? json['work_center_name'] as String : null,
-        pauseEventId: pauseEventId,
-      );
-    } catch (e) {
-      print('[ClockStatus][ERROR] General error in fromJson: $e');
-      return ClockStatus(
-        action: '',
-        canClock: false,
-        message: null,
-        overtime: null,
-        eventTypeId: null,
-        nextSlot: null,
-        todayStats: TodayStats(totalEntries: 0, totalExits: 0),
-        currentTime: DateTime.now(),
-        pauseEventId: null,
-      );
-    }
+    final action = json['action'] is String ? json['action'] as String : '';
+    final pauseEventIdRaw = json['pause_event_id'];
+    final pauseEventId = (pauseEventIdRaw == null)
+        ? null
+        : (pauseEventIdRaw is int
+            ? pauseEventIdRaw
+            : (pauseEventIdRaw is String
+                ? int.tryParse(pauseEventIdRaw)
+                : null));
+    final todayRecordsRaw = json['today_records'];
+    final List<ClockEvent> todayRecords = (todayRecordsRaw is List)
+        ? todayRecordsRaw
+            .map((e) => ClockEvent.fromJson(e as Map<String, dynamic>))
+            .toList()
+        : [];
+    return ClockStatus(
+      action: action,
+      canClock: json['can_clock'] is bool ? json['can_clock'] as bool : false,
+      message: json['message'] is String ? json['message'] as String : null,
+      overtime: json['overtime'] as bool?,
+      eventTypeId: json['event_type_id'] is int
+          ? json['event_type_id'] as int
+          : (json['event_type_id'] is String
+              ? int.tryParse(json['event_type_id'])
+              : null),
+      nextSlot: null,
+      todayStats: json['today_stats'] is Map<String, dynamic>
+          ? TodayStats.fromJson(json['today_stats'])
+          : TodayStats(totalEntries: 0, totalExits: 0),
+      currentTime: DateTime.now(),
+      workCenterCode: json['work_center_code'] is String
+          ? json['work_center_code'] as String
+          : null,
+      workCenterName: json['work_center_name'] is String
+          ? json['work_center_name'] as String
+          : null,
+      pauseEventId: pauseEventId,
+      todayRecords: todayRecords,
+    );
   }
+}
+
+// Modelo para los eventos del día
+class ClockEvent {
+  final int id;
+  final int? eventTypeId;
+  final String type;
+  final String status;
+  final DateTime timestamp;
+  final int? pauseEventId;
+  final bool? isOpen;
+
+  ClockEvent({
+    required this.id,
+    this.eventTypeId,
+    required this.type,
+    required this.status,
+    required this.timestamp,
+    this.pauseEventId,
+    this.isOpen,
+  });
+
+  factory ClockEvent.fromJson(Map<String, dynamic> json) {
+    return ClockEvent(
+      id: json['id'] is int
+          ? json['id']
+          : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      eventTypeId: json['event_type_id'] is int
+          ? json['event_type_id']
+          : int.tryParse(json['event_type_id']?.toString() ?? ''),
+      type: json['type']?.toString() ?? '',
+      status: json['status']?.toString() ?? '',
+      timestamp: DateTime.tryParse(json['timestamp']?.toString() ?? '') ??
+          DateTime.now(),
+      pauseEventId: json['pause_event_id'] is int
+          ? json['pause_event_id']
+          : int.tryParse(json['pause_event_id']?.toString() ?? ''),
+      isOpen: json['is_open'] == true || json['is_open']?.toString() == 'true',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'event_type_id': eventTypeId,
+        'type': type,
+        'status': status,
+        'timestamp': timestamp.toIso8601String(),
+        'pause_event_id': pauseEventId,
+        'is_open': isOpen,
+      };
 }
 
 class NextSlot {
@@ -107,38 +153,12 @@ class NextSlot {
         'minutes_until': minutesUntil,
       };
 
-  static NextSlot fromJson(Map<String, dynamic> json) {
-    try {
-      print(
-          '[ClockStatus][DEBUG] JSON recibido en NextSlot: ' + json.toString());
-      final start = (() {
-        final v = json['start'];
-        print('[ClockStatus][NextSlot] start (raw): $v');
-        final result = v is String ? v : '';
-        print('[ClockStatus][NextSlot] start (parsed): $result');
-        return result;
-      })();
-      final end = (() {
-        final v = json['end'];
-        print('[ClockStatus][NextSlot] end (raw): $v');
-        final result = v is String ? v : '';
-        print('[ClockStatus][NextSlot] end (parsed): $result');
-        return result;
-      })();
-      final minutesUntil = (() {
-        final v = json['minutes_until'];
-        print('[ClockStatus][NextSlot] minutesUntil (raw): $v');
-        final result = v as int?;
-        print('[ClockStatus][NextSlot] minutesUntil (parsed): $result');
-        return result;
-      })();
-      print(
-          '[ClockStatus][DEBUG] Valores convertidos NextSlot: start=$start, end=$end, minutesUntil=$minutesUntil');
-      return NextSlot(start: start, end: end, minutesUntil: minutesUntil);
-    } catch (e) {
-      print('[ClockStatus][ERROR] General error in NextSlot.fromJson: $e');
-      return NextSlot(start: '', end: '', minutesUntil: null);
-    }
+  factory NextSlot.fromJson(Map<String, dynamic> json) {
+    final start = json['start'] is String ? json['start'] : '';
+    final end = json['end'] is String ? json['end'] : '';
+    final minutesUntil =
+        json['minutes_until'] is int ? json['minutes_until'] : null;
+    return NextSlot(start: start, end: end, minutesUntil: minutesUntil);
   }
 }
 
@@ -163,48 +183,29 @@ class TodayStats {
       };
 
   static TodayStats fromJson(Map<String, dynamic> json) {
-    try {
-      print('[ClockStatus][DEBUG] JSON recibido en TodayStats: ' +
-          json.toString());
-      final totalEntries = (() {
-        final v = json['total_entries'];
-        print('[ClockStatus][TodayStats] totalEntries (raw): $v');
-        final result = v is int ? v : 0;
-        print('[ClockStatus][TodayStats] totalEntries (parsed): $result');
-        return result;
-      })();
-      final totalExits = (() {
-        final v = json['total_exits'];
-        print('[ClockStatus][TodayStats] totalExits (raw): $v');
-        final result = v is int ? v : 0;
-        print('[ClockStatus][TodayStats] totalExits (parsed): $result');
-        return result;
-      })();
-      final workedHours = (() {
-        final v = json['worked_hours'];
-        print('[ClockStatus][TodayStats] workedHours (raw): $v');
-        final result = v is String ? v : null;
-        print('[ClockStatus][TodayStats] workedHours (parsed): $result');
-        return result;
-      })();
-      final currentStatus = (() {
-        final v = json['current_status'];
-        print('[ClockStatus][TodayStats] currentStatus (raw): $v');
-        final result = v is String ? v : null;
-        print('[ClockStatus][TodayStats] currentStatus (parsed): $result');
-        return result;
-      })();
-      print(
-          '[ClockStatus][DEBUG] Valores convertidos TodayStats: totalEntries=$totalEntries, totalExits=$totalExits, workedHours=$workedHours, currentStatus=$currentStatus');
-      return TodayStats(
-          totalEntries: totalEntries,
-          totalExits: totalExits,
-          workedHours: workedHours,
-          currentStatus: currentStatus);
-    } catch (e) {
-      print('[ClockStatus][ERROR] General error in TodayStats.fromJson: $e');
-      return TodayStats(totalEntries: 0, totalExits: 0);
+    int parseInt(dynamic v) {
+      if (v == null) return 0;
+      if (v is int) return v;
+      if (v is String) return int.tryParse(v) ?? 0;
+      return 0;
     }
+
+    String? parseString(dynamic v) {
+      if (v == null) return null;
+      if (v is String) return v;
+      return v.toString();
+    }
+
+    final totalEntries = parseInt(json['total_entries']);
+    final totalExits = parseInt(json['total_exits']);
+    final workedHours = parseString(json['worked_hours']);
+    final currentStatus = parseString(json['current_status']);
+    return TodayStats(
+      totalEntries: totalEntries,
+      totalExits: totalExits,
+      workedHours: workedHours,
+      currentStatus: currentStatus,
+    );
   }
 }
 

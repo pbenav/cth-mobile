@@ -29,16 +29,22 @@ class NFCPayload {
 
 class NFCService {
   /// Escanea una etiqueta NFC y detecta automáticamente el tipo de payload
-  static Future<WorkCenter?> scanWorkCenter({Function(String, Map<String, dynamic>?)? onNFCDebug}) async {
+  static Future<WorkCenter?> scanWorkCenter(
+      {Function(String, Map<String, dynamic>?)? onNFCDebug}) async {
     if (!await NfcManager.instance.isAvailable()) {
-      throw const NFCNotAvailableException('NFC no está disponible en este dispositivo');
+      throw const NFCNotAvailableException(
+          'NFC no está disponible en este dispositivo');
     }
 
     Completer<WorkCenter?> completer = Completer();
 
     try {
       await NfcManager.instance.startSession(
-        pollingOptions: {NfcPollingOption.iso14443, NfcPollingOption.iso18092, NfcPollingOption.iso15693},
+        pollingOptions: {
+          NfcPollingOption.iso14443,
+          NfcPollingOption.iso18092,
+          NfcPollingOption.iso15693
+        },
         onDiscovered: (NfcTag tag) async {
           try {
             final payload = await _readNFCPayload(tag, onDebug: onNFCDebug);
@@ -62,7 +68,8 @@ class NFCService {
             }
           } catch (e) {
             if (!completer.isCompleted) {
-              completer.completeError(NFCReadException('Error leyendo etiqueta NFC: $e'));
+              completer.completeError(
+                  NFCReadException('Error leyendo etiqueta NFC: $e'));
             }
           } finally {
             await NfcManager.instance.stopSession();
@@ -71,105 +78,66 @@ class NFCService {
       );
     } catch (e) {
       if (!completer.isCompleted) {
-        completer.completeError(const NFCException('Error iniciando sesión NFC'));
+        completer
+            .completeError(const NFCException('Error iniciando sesión NFC'));
       }
     }
     return completer.future;
   }
 
   /// Lee el payload de una etiqueta NFC y determina su tipo
-  static Future<NFCPayload?> _readNFCPayload(NfcTag tag, {Function(String, Map<String, dynamic>?)? onDebug}) async {
+  static Future<NFCPayload?> _readNFCPayload(NfcTag tag,
+      {Function(String, Map<String, dynamic>?)? onDebug}) async {
     final ndef = Ndef.from(tag);
-    if (ndef != null && ndef.cachedMessage != null && ndef.cachedMessage!.records.isNotEmpty) {
+    if (ndef != null &&
+        ndef.cachedMessage != null &&
+        ndef.cachedMessage!.records.isNotEmpty) {
       final record = ndef.cachedMessage!.records.first;
       final payload = record.payload;
       final text = utf8.decode(payload.skip(3).toList());
-
-      print('🔍 NFC Content Read: "$text"');
-      print('📏 Content Length: ${text.length} characters');
 
       // Notificar al callback de debug si existe
       onDebug?.call(text, null);
 
       if (text.trim().startsWith('{') && text.trim().endsWith('}')) {
-        print('🔍 Attempting to parse JSON payload');
-        print('📄 Raw text to parse: "$text"');
-        
-        // Mostrar caracteres individuales para debug
-        print('🔤 Character codes: ${text.codeUnits}');
-        
         try {
           final data = json.decode(text);
-          print('📋 Successfully parsed JSON: $data');
-          print('🔍 JSON type: ${data.runtimeType}');
-          
+
           if (data is Map<String, dynamic>) {
-            print('✅ JSON is valid Map with keys: ${data.keys.toList()}');
-            
-            // Verificar que tenga los campos requeridos
-            final hasUrl = data.containsKey('url') || data.containsKey('server_url');
-            final hasId = data.containsKey('id') || data.containsKey('nfc_tag_id');
-
-            print('✅ JSON valid - Has URL: $hasUrl, Has ID: $hasId');
-
-            // Notificar datos parseados
-            onDebug?.call(text, data);
-
             return NFCPayload(
               type: NFCPayloadType.autoConfig,
               content: text,
               data: data,
             );
           } else {
-            print('❌ JSON parsed but not a Map: $data');
             return NFCPayload(
               type: NFCPayloadType.simple,
               content: text,
             );
           }
         } catch (e) {
-          print('❌ JSON parsing failed: $e');
-          print('❌ Error details: ${e.toString()}');
-          
           // Intentar diagnosticar el problema
           if (e is FormatException) {
-            print('🔍 FormatException details:');
-            print('  - Message: ${e.message}');
-            print('  - Offset: ${e.offset}');
-            if (e.offset != null && e.offset! < text.length) {
-              final errorPos = e.offset!;
-              final start = errorPos - 10 < 0 ? 0 : errorPos - 10;
-              final end = errorPos + 10 > text.length ? text.length : errorPos + 10;
-              print('  - Context: "...${text.substring(start, end)}..."');
-              print('  - Char at error: "${text[errorPos]}" (code: ${text.codeUnitAt(errorPos)})');
-            }
-          }
-          
-          // Intentar reparar JSON si parece que faltan comillas
-          print('🔧 Attempting to repair malformed JSON...');
-          final repairedJson = _attemptJsonRepair(text);
-          if (repairedJson != null) {
-            print('✅ JSON repair successful, trying to parse again...');
-            try {
-              final data = json.decode(repairedJson);
-              print('📋 Repaired JSON parsed successfully: $data');
-              
-              // Notificar datos parseados
-              onDebug?.call(text, data);
-              
-              return NFCPayload(
-                type: NFCPayloadType.autoConfig,
-                content: text,
-                data: data,
-              );
-            } catch (repairError) {
-              print('❌ Even repaired JSON failed: $repairError');
+            // Intentar reparar JSON si parece que faltan comillas
+            final repairedJson = _attemptJsonRepair(text);
+            if (repairedJson != null) {
+              try {
+                final data = json.decode(repairedJson);
+
+                // Notificar datos parseados
+                onDebug?.call(text, data);
+
+                return NFCPayload(
+                  type: NFCPayloadType.autoConfig,
+                  content: text,
+                  data: data,
+                );
+              } catch (repairError) {}
             }
           }
         }
       }
       if (text.startsWith('CTH:')) {
-        print('🏷️ Detected simple CTH format');
         return NFCPayload(
           type: NFCPayloadType.simple,
           content: text,
@@ -177,9 +145,6 @@ class NFCService {
       }
     }
 
-    print('❓ No valid NFC payload found');
-    // Intentar leer ID del tag como fallback
-    // Si necesitas soporte para otras tecnologías, consulta la documentación oficial
     return null;
   }
 
@@ -187,51 +152,35 @@ class NFCService {
   static Future<WorkCenter?> _handleAutoConfigPayload(
       NFCPayload payload) async {
     if (payload.data == null) {
-      print('❌ Auto-config payload has no data');
       return null;
     }
-
-    print('🔧 Processing auto-config payload');
-    print('📦 Payload data keys: ${payload.data!.keys.toList()}');
 
     try {
       final url = payload.data!['url'] as String?;
       final workCenterId = payload.data!['id'] as String?;
 
-      print('🌐 Extracted URL: $url');
-      print('🆔 Extracted WorkCenter ID: $workCenterId');
-
       if (url == null || workCenterId == null) {
-        print('❌ Missing required fields in payload');
         throw const NFCVerificationException('Payload JSON incompleto');
       }
 
       // Configurar servidor automáticamente
-      print('⚙️ Starting server configuration...');
       final configResult = await ConfigService.configureServer(url);
 
       if (!configResult) {
-        print('❌ Server configuration failed');
         throw const ConfigException(
             'No se pudo configurar el servidor automáticamente');
       }
 
-      print('✅ Server configured successfully');
-
       // Verificar la etiqueta NFC con el servidor
-      print('🔍 Verifying NFC tag with server...');
       final workCenter = await ConfigService.verifyNFCTag(workCenterId);
 
       if (workCenter == null) {
-        print('❌ Work center not found on server');
         throw const NFCVerificationException(
             'Centro de trabajo no encontrado en el servidor');
       }
 
-      print('✅ Work center verified: ${workCenter.name}');
       return workCenter;
     } catch (e) {
-      print('💥 Error in auto-config: $e');
       rethrow;
     }
   }
@@ -253,7 +202,6 @@ class NFCService {
     }
 
     // Para IDs de hardware, podrías implementar lógica de mapeo
-    print('Payload simple no reconocido: $content');
     return null;
   }
 
@@ -306,7 +254,11 @@ class NFCService {
 
     try {
       await NfcManager.instance.startSession(
-        pollingOptions: {NfcPollingOption.iso14443, NfcPollingOption.iso18092, NfcPollingOption.iso15693},
+        pollingOptions: {
+          NfcPollingOption.iso14443,
+          NfcPollingOption.iso18092,
+          NfcPollingOption.iso15693
+        },
         onDiscovered: (NfcTag tag) async {
           try {
             final ndef = Ndef.from(tag);
@@ -319,7 +271,8 @@ class NFCService {
             final languageCode = 'en';
             final textBytes = utf8.encode(content);
             final langBytes = utf8.encode(languageCode);
-            final payload = Uint8List.fromList([langBytes.length] + langBytes + textBytes);
+            final payload =
+                Uint8List.fromList([langBytes.length] + langBytes + textBytes);
             final record = NdefRecord(
               typeNameFormat: TypeNameFormat.wellKnown,
               type: Uint8List.fromList(utf8.encode('T')),
@@ -330,14 +283,16 @@ class NFCService {
             await ndef.write(message: message);
             completer.complete(true);
           } catch (e) {
-            completer.completeError(NFCWriteException('Error escribiendo etiqueta: $e'));
+            completer.completeError(
+                NFCWriteException('Error escribiendo etiqueta: $e'));
           } finally {
             await NfcManager.instance.stopSession();
           }
         },
       );
     } catch (e) {
-      completer.completeError(const NFCException('Error iniciando sesión de escritura'));
+      completer.completeError(
+          const NFCException('Error iniciando sesión de escritura'));
     }
     return completer.future;
   }
@@ -371,84 +326,81 @@ class NFCService {
     try {
       // Si parece que faltan comillas alrededor de valores, intentar agregarlas
       // Ejemplo: {url:http://example.com,id:123} -> {"url":"http://example.com","id":"123"}
-      
+
       final cleaned = text.trim();
       if (!cleaned.startsWith('{') || !cleaned.endsWith('}')) {
         return null;
       }
-      
+
       // Extraer contenido interno
       final inner = cleaned.substring(1, cleaned.length - 1);
-      
+
       // Dividir por comas
       final pairs = inner.split(',');
       final repairedPairs = <String>[];
-      
+
       for (final pair in pairs) {
         final trimmedPair = pair.trim();
         if (trimmedPair.isEmpty) continue;
-        
+
         final colonIndex = trimmedPair.indexOf(':');
         if (colonIndex == -1) continue;
-        
+
         final key = trimmedPair.substring(0, colonIndex).trim();
         final value = trimmedPair.substring(colonIndex + 1).trim();
-        
+
         // Agregar comillas si no las tiene
         final quotedKey = key.startsWith('"') ? key : '"$key"';
         final quotedValue = _quoteValue(value);
-        
+
         repairedPairs.add('$quotedKey:$quotedValue');
       }
-      
+
       return '{${repairedPairs.join(',')}}';
     } catch (e) {
-      print('❌ JSON repair failed: $e');
       return null;
     }
   }
-  
+
   /// Agrega comillas a un valor si es necesario
   static String _quoteValue(String value) {
     if (value.startsWith('"') && value.endsWith('"')) {
       return value; // Ya tiene comillas
     }
-    
+
     // Si parece un número, no agregar comillas
     if (int.tryParse(value) != null || double.tryParse(value) != null) {
       return value;
     }
-    
+
     // Si parece un booleano
     if (value == 'true' || value == 'false') {
       return value;
     }
-    
+
     // Si parece null
     if (value == 'null') {
       return value;
     }
-    
+
     // Agregar comillas para strings
     return '"$value"';
   }
 
   /// Realiza el fichaje usando NFC, consultando el estado y enviando la acción correcta
-  static Future<Map<String, dynamic>?> scanAndPerformClock({Function(String, Map<String, dynamic>?)? onDebug}) async {
+  static Future<Map<String, dynamic>?> scanAndPerformClock(
+      {Function(String, Map<String, dynamic>?)? onDebug}) async {
     try {
       final workCenter = await scanWorkCenter(onNFCDebug: onDebug);
       if (workCenter == null) {
-        print('NFC: No se obtuvo workCenter del scan');
         return null;
       }
 
       final user = await StorageService.getUser();
       if (user == null) {
-        print('NFC: No hay usuario guardado para realizar fichaje');
         throw const NFCException('Usuario no autenticado');
       }
 
-      print('NFC: Consultando estado actual para user=[200C{user.code} workCenter=[200C{workCenter.code}');
       // Consultar el estado actual para obtener la acción correcta
       ApiResponse<ClockStatus>? statusResponse;
       try {
@@ -462,12 +414,9 @@ class NFCService {
       String? actionToSend;
       if (statusResponse != null && statusResponse.data != null) {
         actionToSend = statusResponse.data!.action;
-        print('NFC: Acción obtenida del estado: $actionToSend');
       } else {
         print('NFC: No se pudo obtener acción, se enviará null');
       }
-
-      print('NFC: Realizando llamada a ClockService.performClock para user=[200C{user.code} workCenter=[200C{workCenter.code} action=$actionToSend');
 
       final response = await ClockService.performClock(
         workCenterCode: workCenter.code,
@@ -475,14 +424,11 @@ class NFCService {
         action: actionToSend,
       );
 
-      print('NFC: performClock returned ApiResponse success=${response.success} message=${response.message}');
-
       return {
         'workCenter': workCenter,
         'response': response,
       };
     } catch (e) {
-      print('NFC: Error en scanAndPerformClock: $e');
       return null;
     }
   }

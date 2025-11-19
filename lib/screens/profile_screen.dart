@@ -285,18 +285,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Última actualización', style: TextStyle(fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 4),
-                      Text(_formatDateTime(_lastUpdate)),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Última actualización', style: TextStyle(fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 4),
+                        Text(_formatDateTime(_lastUpdate)),
+                      ],
+                    ),
                   ),
-                  ElevatedButton.icon(
-                    onPressed: _isRefreshing ? null : _forceRefresh,
-                    icon: _isRefreshing ? const SizedBox(width:16,height:16,child:CircularProgressIndicator(color:Colors.white,strokeWidth:2)) : const Icon(Icons.refresh),
-                    label: Text(_isRefreshing ? 'Actualizando...' : 'Forzar actualización'),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: ElevatedButton.icon(
+                        onPressed: _isRefreshing ? null : _forceRefresh,
+                        icon: _isRefreshing ? const SizedBox(width:16,height:16,child:CircularProgressIndicator(color:Colors.white,strokeWidth:2)) : const Icon(Icons.refresh),
+                        label: Text(_isRefreshing ? 'Actualizando...' : 'Forzar actualización'),
+                      ),
+                    ),
                   ),
                 ],
               ),

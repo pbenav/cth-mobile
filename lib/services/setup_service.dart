@@ -17,12 +17,14 @@ class SetupService {
   }
 
   /// Tests server connection
-  static Future<bool> testServerConnection(String serverUrl, {Function(String)? onLog}) async {
-    final log = onLog ?? (String message) => print('SetupService: $message');
+  static Future<bool> testServerConnection(String serverUrl,
+      {Function(String)? onLog}) async {
+    final log =
+        onLog ?? (String message) => {}; // Reemplazar print con función vacía
 
     try {
       log('🔄 Iniciando prueba de conexión...');
-  log('📝 Server URL: $serverUrl');
+      log('📝 Server URL: $serverUrl');
 
       // Normalizar la URL
       final normalizedUrl = _normalizeUrl(serverUrl);
@@ -33,17 +35,17 @@ class SetupService {
 
       final response = await http.get(url).timeout(const Duration(seconds: 10));
 
-  log('📡 Server response - Code: ${response.statusCode}');
+      log('📡 Server response - Code: ${response.statusCode}');
 
       if (response.statusCode == 200) {
-  log('✅ Connection successful - Server responded correctly');
+        log('✅ Connection successful - Server responded correctly');
         return true;
       } else {
-  log('❌ HTTP error: ${response.statusCode} - ${response.reasonPhrase}');
+        log('❌ HTTP error: ${response.statusCode} - ${response.reasonPhrase}');
         return false;
       }
     } catch (e) {
-  log('💥 Connection error: ${e.toString()}');
+      log('💥 Connection error: ${e.toString()}');
       return false;
     }
   }
@@ -67,8 +69,10 @@ class SetupService {
   }
 
   /// Loads worker data using the secret code
-  static Future<WorkerData?> loadWorkerData(String workerCode, {Function(String)? onLog}) async {
-    final log = onLog ?? (String message) => print('SetupService: $message');
+  static Future<WorkerData?> loadWorkerData(String workerCode,
+      {Function(String)? onLog}) async {
+    final log =
+        onLog ?? (String message) => {}; // Reemplazar print con función vacía
 
     try {
       // Preferir la URL temporal durante el asistente, pero si no existe
@@ -79,24 +83,24 @@ class SetupService {
       }
 
       if (serverUrl == null) {
-  log('❌ No server URL configured');
-  throw SetupException('Server URL not configured');
+        log('❌ No server URL configured');
+        throw SetupException('Server URL not configured');
       }
 
       log('🔄 Iniciando carga de datos del trabajador...');
-  log('👤 Worker code: $workerCode');
-  log('📝 Server URL: $serverUrl');
+      log('👤 Worker code: $workerCode');
+      log('📝 Server URL: $serverUrl');
 
-  final normalizedUrl = _normalizeUrl(serverUrl);
-  final url = Uri.parse('$normalizedUrl/api/v1/mobile/worker/$workerCode');
-  log('🌐 URL completa: $url');
+      final normalizedUrl = _normalizeUrl(serverUrl);
+      final url = Uri.parse('$normalizedUrl/api/v1/mobile/worker/$workerCode');
+      log('🌐 URL completa: $url');
 
       log('📡 Enviando petición GET...');
       final response = await http.get(url).timeout(const Duration(seconds: 30));
 
-  log('📡 Server response - Code: ${response.statusCode}');
+      log('📡 Server response - Code: ${response.statusCode}');
 
-        if (response.statusCode == 200) {
+      if (response.statusCode == 200) {
         log('✅ Respuesta exitosa, procesando datos...');
         final decoded = json.decode(response.body);
         log('📦 Datos recibidos (raw): ${decoded.runtimeType}');
@@ -105,7 +109,8 @@ class SetupService {
         // Asegurarnos de extraer el mapa correcto con los campos esperados
         Map<String, dynamic>? payload;
         if (decoded is Map<String, dynamic>) {
-          if (decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>) {
+          if (decoded.containsKey('data') &&
+              decoded['data'] is Map<String, dynamic>) {
             payload = decoded['data'] as Map<String, dynamic>;
           } else {
             payload = decoded as Map<String, dynamic>;
@@ -126,33 +131,33 @@ class SetupService {
 
         final workerData = WorkerData.fromJson(payload);
         log('✅ Datos del trabajador procesados exitosamente');
-  log('👤 Name: ${workerData.user.name}');
-  log('🏢 Work center: ${workerData.workCenter.name}');
-  log('📅 Schedules: ${workerData.schedule.length} slots');
-  log('🎉 Holidays: ${workerData.holidays.length} days');
+        log('👤 Name: ${workerData.user.name}');
+        log('🏢 Work center: ${workerData.workCenter.name}');
+        log('📅 Schedules: ${workerData.schedule.length} slots');
+        log('🎉 Holidays: ${workerData.holidays.length} days');
 
         return workerData;
       } else if (response.statusCode == 404) {
         log('❌ Trabajador no encontrado (404)');
         return null; // Trabajador no encontrado
       } else {
-  log('❌ Server error: ${response.statusCode} - ${response.body}');
+        log('❌ Server error: ${response.statusCode} - ${response.body}');
         throw APIException(
           'Server error: ${response.statusCode}',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
-  log('💥 Error loading data: ${e.toString()}');
+      log('💥 Error loading data: ${e.toString()}');
       if (e is APIException) rethrow;
-  throw SetupException('Connection error: ${e.toString()}');
+      throw SetupException('Connection error: ${e.toString()}');
     }
   }
 
   /// Saves all worker data and marks setup as complete
   static Future<void> saveWorkerData(WorkerData workerData) async {
     try {
-  // Save server URL permanently
+      // Save server URL permanently
       final serverUrl = await getTempServerUrl();
       if (serverUrl != null) {
         await StorageService.setString('server_url', serverUrl);
@@ -162,31 +167,27 @@ class SetupService {
       final workerDataJson = json.encode(workerData.toJson());
       await StorageService.setString(_workerDataKey, workerDataJson);
 
-  // DEBUG: check that the full JSON was saved
+      // DEBUG: check that the full JSON was saved
       try {
         final saved = await StorageService.getString(_workerDataKey);
-  print('DEBUG: worker_data saved: $saved');
-      } catch (e) {
-  print('DEBUG: error reading worker_data after save: $e');
-      }
+      } catch (e) {}
 
-  // Save individual data for compatibility with existing code
+      // Save individual data for compatibility with existing code
       await StorageService.saveUser(workerData.user);
       await StorageService.saveWorkCenter(workerData.workCenter);
 
-  // Save schedule and holidays
+      // Save schedule and holidays
       await _saveSchedule(workerData.schedule);
       await _saveHolidays(workerData.holidays);
 
-  // Mark setup as complete
+      // Mark setup as complete
       await StorageService.setBool(_setupCompletedKey, true);
 
       // Limpiar datos temporales
       await StorageService.remove(_tempServerUrlKey);
-
     } catch (e) {
-  print('Error saving worker data: $e'); // Already in English
-  throw SetupException('Error saving setup: ${e.toString()}');
+      print('Error saving worker data: $e'); // Already in English
+      throw SetupException('Error saving setup: ${e.toString()}');
     }
   }
 
@@ -199,7 +200,8 @@ class SetupService {
       final decoded = json.decode(workerDataJson);
       Map<String, dynamic>? payload;
       if (decoded is Map<String, dynamic>) {
-        if (decoded.containsKey('data') && decoded['data'] is Map<String, dynamic>) {
+        if (decoded.containsKey('data') &&
+            decoded['data'] is Map<String, dynamic>) {
           payload = decoded['data'] as Map<String, dynamic>;
         } else {
           payload = decoded as Map<String, dynamic>;
@@ -209,7 +211,7 @@ class SetupService {
       if (payload == null) return null;
       return WorkerData.fromJson(payload);
     } catch (e) {
-  print('Error getting saved worker data: $e'); // Already in English
+      print('Error getting saved worker data: $e'); // Already in English
       return null;
     }
   }
@@ -225,7 +227,7 @@ class SetupService {
       final workerData = await getSavedWorkerData();
       return workerData?.schedule ?? [];
     } catch (e) {
-  print('Error getting saved schedule: $e'); // Already in English
+      print('Error getting saved schedule: $e'); // Already in English
       return [];
     }
   }
@@ -236,7 +238,7 @@ class SetupService {
       final workerData = await getSavedWorkerData();
       return workerData?.holidays ?? [];
     } catch (e) {
-  print('Error getting saved holidays: $e'); // Already in English
+      print('Error getting saved holidays: $e'); // Already in English
       return [];
     }
   }
@@ -253,7 +255,9 @@ class SetupService {
     final schedule = await getSavedSchedule();
     try {
       return schedule.firstWhere(
-        (entry) => entry.dayOfWeek.toLowerCase() == dayOfWeek.toLowerCase() && entry.isActive,
+        (entry) =>
+            entry.dayOfWeek.toLowerCase() == dayOfWeek.toLowerCase() &&
+            entry.isActive,
       );
     } catch (e) {
       return null; // No schedule found for this day
@@ -279,10 +283,7 @@ class SetupService {
       // DEBUG: comprobar que se ha guardado el JSON completo tras update
       try {
         final saved = await StorageService.getString(_workerDataKey);
-        print('DEBUG: worker_data actualizado: $saved');
-      } catch (e) {
-        print('DEBUG: error leyendo worker_data tras update: $e');
-      }
+      } catch (e) {}
 
       // Guardar datos individuales para compatibilidad con el código existente
       await StorageService.saveUser(workerData.user);
@@ -300,10 +301,12 @@ class SetupService {
         print('SetupService: warning saving worker last update: $e');
       }
 
-      print('SetupService: updateSavedWorkerData -> datos actualizados localmente');
+      print(
+          'SetupService: updateSavedWorkerData -> datos actualizados localmente');
     } catch (e) {
       print('SetupService: Error updateSavedWorkerData: $e');
-      throw SetupException('Error al actualizar datos del trabajador: ${e.toString()}');
+      throw SetupException(
+          'Error al actualizar datos del trabajador: ${e.toString()}');
     }
   }
 
@@ -319,8 +322,11 @@ class SetupService {
   ///   actualizados antes de proceder. Si false (por defecto), el refresh se
   ///   lanza en background y no bloqueará al llamador.
   /// - [timeout]: duración máxima a esperar cuando [blocking] es true.
-  static Future<void> refreshSavedWorkerData({Function(String)? onLog, bool blocking = false, Duration timeout = const Duration(seconds: 3)}) async {
-    final log = onLog ?? (String m) => print('SetupService: $m');
+  static Future<void> refreshSavedWorkerData(
+      {Function(String)? onLog,
+      bool blocking = false,
+      Duration timeout = const Duration(seconds: 3)}) async {
+    final log = onLog ?? (String m) => {}; // Reemplazar print con función vacía
 
     try {
       final savedUser = await StorageService.getUser();

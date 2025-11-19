@@ -12,7 +12,7 @@ class AppConstants {
 
   // Configuración de la app
   static const String appName = 'CTH Mobile';
-  static const String appVersion = '0.0.1';
+  static const String appVersion = '0.1.1';
   static const String buildDate = '2025-11-08 22:50:53'; // Fecha de compilación
   static const bool isProduction = bool.fromEnvironment('PRODUCTION');
 

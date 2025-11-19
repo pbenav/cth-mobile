@@ -1,15 +1,16 @@
-import '../services/storage_service.dart';
-import '../i18n/i18n_service.dart';
 import 'package:flutter/material.dart';
+import '../i18n/i18n_service.dart';
 import '../models/work_center.dart';
 import '../models/user.dart';
 import '../models/clock_status.dart';
 import '../services/clock_service.dart';
-import '../services/webview_service.dart';
+import '../services/storage_service.dart';
 import '../services/nfc_service.dart';
+import '../utils/constants.dart';
 import 'settings_screen.dart';
 import 'profile_screen.dart';
-import '../utils/constants.dart';
+
+final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
 class ClockScreen extends StatefulWidget {
   final WorkCenter workCenter;
@@ -27,32 +28,57 @@ class ClockScreen extends StatefulWidget {
   _ClockScreenState createState() => _ClockScreenState();
 }
 
-class _ClockScreenState extends State<ClockScreen> {
-    // --- DIÁLOGOS DE CONFIRMACIÓN ---
-    void _showExceptionalClockInDialog() {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Fichaje excepcional'),
-          content: const Text('Estás fuera de tu horario laboral. ¿Confirmas el fichaje excepcional?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.pop(context);
-                await _performClockWithAction('exceptional_clock_in');
-              },
-              child: const Text('Confirmar'),
-            ),
-          ],
-        ),
-      );
-    }
+class _ClockScreenState extends State<ClockScreen> with RouteAware {
+  // RouteAware: refresca NFC al volver de otra pantalla
+  @override
+  void didPopNext() {
+    _loadNFCEnabled();
+  }
 
-    void _showClockOutDialog() {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      routeObserver.subscribe(this, route);
+    }
+    _loadNFCEnabled();
+  }
+
+  @override
+  void dispose() {
+    // Desregistrar RouteObserver
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  // --- DIÁLOGOS DE CONFIRMACIÓN ---
+  void _showExceptionalClockInDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Fichaje excepcional'),
+        content: const Text(
+            'Estás fuera de tu horario laboral. ¿Confirmas el fichaje excepcional?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _performClockWithAction('exceptional_clock_in');
+            },
+            child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showClockOutDialog() {
+    if (_nfcEnabled) {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -66,22 +92,23 @@ class _ClockScreenState extends State<ClockScreen> {
             TextButton(
               onPressed: () async {
                 Navigator.pop(context);
-                if (_nfcEnabled) {
-                  await _performClockWithNFC(action: 'clock_out');
-                } else {
-                  await _performClockWithAction('clock_out');
-                }
+                await _performClockWithNFC(action: 'clock_out');
               },
               child: const Text('Confirmar'),
             ),
           ],
         ),
       );
+    } else {
+      _performClockWithAction('clock_out');
     }
+  }
+
   ClockStatus? clockStatus;
   bool isLoading = false;
   bool isPerformingClock = false;
   bool _nfcEnabled = true;
+  bool _nfcAvailable = true;
 
   Future<void> _loadStatus() async {
     setState(() => isLoading = true);
@@ -119,10 +146,31 @@ class _ClockScreenState extends State<ClockScreen> {
   }
 
   // ...resto de la clase y métodos...
+  @override
   void initState() {
     super.initState();
     _loadStatus();
+    _checkNFCAvailability();
     _loadNFCEnabled();
+  }
+
+  Future<void> _checkNFCAvailability() async {
+    // Simulación: aquí deberías usar un paquete como 'flutter_nfc_kit' para comprobar si el dispositivo soporta NFC
+    // Por ahora, asumimos que existe un método NFCService.isAvailable()
+    try {
+      final available = await NFCService.isNFCAvailable();
+      setState(() {
+        _nfcAvailable = available;
+        if (!available) {
+          _nfcEnabled = false;
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _nfcAvailable = false;
+        _nfcEnabled = false;
+      });
+    }
   }
 
   Future<void> _loadNFCEnabled() async {
@@ -146,9 +194,8 @@ class _ClockScreenState extends State<ClockScreen> {
         : (await StorageService.getWorkCenter())?.code ?? '';
   }
 
-  Future<void> _performClockWithAction(String action) async {
+  Future<void> _performClockWithAction([String? action]) async {
     if (isPerformingClock) return;
-
     setState(() => isPerformingClock = true);
     try {
       final userCode = await _getEffectiveUserCode();
@@ -159,8 +206,50 @@ class _ClockScreenState extends State<ClockScreen> {
         return;
       }
 
+      // Solo NFC si preferencia activada Y disponible
+      if ((action == 'clock_in' || action == 'clock_out')) {
+        if (_nfcEnabled && _nfcAvailable) {
+          await _performClockWithNFC(action: action);
+          return;
+        } else {
+          // Si NFC está desactivado o no disponible, mostrar confirmación antes de fichar
+          final confirmed = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text(I18n.of('clock.clock_in')),
+              content: Text(
+                  '¿Seguro que quieres fichar el inicio/cierre de jornada?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: Text(I18n.of('dialog.cancel')),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: Text('Confirmar'),
+                ),
+              ],
+            ),
+          );
+          if (confirmed != true) {
+            setState(() => isPerformingClock = false);
+            return;
+          }
+        }
+      }
+
       if (action == 'resume_workday') {
-        final pauseEventId = clockStatus?.pauseEventId;
+        int? pauseEventId;
+        const int pauseEventTypeId =
+            285; // Actualiza este valor según tu backend
+        if (clockStatus != null && clockStatus!.todayRecords.isNotEmpty) {
+          for (final event in clockStatus!.todayRecords) {
+            if (event.eventTypeId == pauseEventTypeId && _isOpenStatus(event)) {
+              pauseEventId = event.id;
+              break;
+            }
+          }
+        }
         if (pauseEventId == null) {
           if (mounted) {
             _showError(
@@ -168,47 +257,49 @@ class _ClockScreenState extends State<ClockScreen> {
           }
           return;
         }
-        await ClockService.performClock(
+        final resp = await ClockService.performClock(
           workCenterCode: workCenterCode,
           userCode: userCode,
           action: action,
           pauseEventId: pauseEventId,
         );
-      } else if (action == 'clock_in') {
-        final eventTypeId = clockStatus?.eventTypeId;
-        if (eventTypeId == null) {
-          if (mounted) {
-            _showError('No se puede fichar entrada: falta el tipo de evento.');
-          }
-          return;
-        }
-        await ClockService.performClock(
-          workCenterCode: workCenterCode,
-          userCode: userCode,
-          action: action,
-          eventTypeId: eventTypeId,
-        );
       } else {
-        await ClockService.performClock(
-          workCenterCode: workCenterCode,
-          userCode: userCode,
-          action: action,
-        );
+        // Si el dispositivo no soporta NFC, añade observación
+        String? observations;
+        if ((action == 'clock_in' || action == 'clock_out') && !_nfcAvailable) {
+          observations = 'Evento creado sin comprobación/autorización NFC.';
+        }
+        // Para inicio de jornada (clock_in) nunca se debe enviar 'action'
+        if (action == 'clock_in') {
+          await ClockService.performClock(
+            workCenterCode: workCenterCode,
+            userCode: userCode,
+            observations: observations,
+          );
+        } else {
+          await ClockService.performClock(
+            workCenterCode: workCenterCode,
+            userCode: userCode,
+            action: (action == 'clock_in') ? null : action,
+            observations: observations,
+          );
+        }
       }
 
       if (mounted) {
-        print('[ClockScreen][_performClockWithAction] SUCCESS');
         String actionText = action == 'pause'
             ? I18n.of('clock.pause')
-            : I18n.of('clock.clock_out');
+            : (action == 'resume_workday'
+                ? I18n.of('clock.resume_workday')
+                : (action == 'clock_in'
+                    ? I18n.of('clock.clock_in')
+                    : I18n.of('clock.clock_out')));
         _showSuccess(I18n.of('clock.fichaje_success', {'action': actionText}));
-        // Forzar recarga de estado para actualizar contadores
         await _loadStatus();
+        // Si se reanuda jornada, puedes agregar aquí un log si lo necesitas
       }
-    } catch (e, stack) {
+    } catch (e) {
       if (mounted) {
-        print(
-            '[ClockScreen][_performClockWithAction] ERROR: ${e.toString()} | ${stack.toString().split('\n')[0]}');
         _showError(I18n.of('clock.fichaje_error', {'error': e.toString()}));
       }
     } finally {
@@ -216,6 +307,15 @@ class _ClockScreenState extends State<ClockScreen> {
         setState(() => isPerformingClock = false);
       }
     }
+  }
+
+  // --- MÉTODOS DE COMPARACIÓN DE EVENTOS LOCALIZADOS ---
+
+  bool _isOpenStatus(dynamic event) {
+    if (event == null) return false;
+    if (event.isOpen != null) return event.isOpen == true;
+    final status = (event.status ?? '').toString().toLowerCase();
+    return status == 'open' || status == 'true' || status == 'abierto';
   }
 
   Future<void> _performClockWithNFC({String? action}) async {
@@ -228,31 +328,72 @@ class _ClockScreenState extends State<ClockScreen> {
         if (mounted) _showError(I18n.of('clock.no_user'));
         return;
       }
-      // Solicitar NFC
-      _showSuccess('Acerque el lector a la tarjeta');
-      final nfcWorkCenter = await NFCService.scanWorkCenter();
-      if (nfcWorkCenter == null || nfcWorkCenter.code != workCenterCode) {
-        if (mounted) _showError(I18n.of('clock.nfc_invalid'));
-        return;
+      // Validación NFC: preferencia y disponibilidad
+      if (_nfcEnabled) {
+        if (!_nfcAvailable) {
+          // Mostrar mensaje de que NFC no está disponible
+          if (mounted) _showError(I18n.of('nfc.not_available'));
+          // Pedir confirmación antes de fichar
+          final confirmed = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text(I18n.of('clock.clock_in')),
+              content:
+                  Text('El dispositivo no soporta NFC. ¿Confirmas el fichaje?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: Text(I18n.of('dialog.cancel')),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: Text('Confirmar'),
+                ),
+              ],
+            ),
+          );
+          if (confirmed != true) {
+            setState(() => isPerformingClock = false);
+            return;
+          }
+        } else {
+          _showSuccess(I18n.of('clock.nfc_prompt'));
+          final nfcWorkCenter = await NFCService.scanWorkCenter();
+          if (nfcWorkCenter == null || nfcWorkCenter.code != workCenterCode) {
+            if (mounted) _showError(I18n.of('clock.nfc_invalid'));
+            return;
+          }
+        }
       }
       await _ensureScheduleLoaded(userCode);
-      await ClockService.performClock(
-        workCenterCode: workCenterCode,
-        userCode: userCode,
-        action: action,
-      );
+      // Para inicio de jornada (clock_in) nunca se debe enviar 'action'
+      if (action == 'clock_in') {
+        await ClockService.performClock(
+          workCenterCode: workCenterCode,
+          userCode: userCode,
+          observations: _nfcEnabled
+              ? 'Evento creado con comprobación/autorización NFC.'
+              : 'Evento creado sin comprobación/autorización NFC.',
+        );
+      } else {
+        await ClockService.performClock(
+          workCenterCode: workCenterCode,
+          userCode: userCode,
+          action: action,
+          observations: _nfcEnabled
+              ? 'Evento creado con comprobación/autorización NFC.'
+              : 'Evento creado sin comprobación/autorización NFC.',
+        );
+      }
       if (mounted) {
-        print('[ClockScreen][_performClockWithNFC] SUCCESS');
         String actionText = (action == 'clock_in')
             ? I18n.of('clock.clock_in')
             : I18n.of('clock.clock_out');
         _showSuccess(I18n.of('clock.fichaje_success', {'action': actionText}));
         await _loadStatus();
       }
-    } catch (e, stack) {
+    } catch (e) {
       if (mounted) {
-        print(
-            '[ClockScreen][_performClockWithNFC] ERROR: ${e.toString()} | ${stack.toString().split('\n')[0]}');
         _showError(I18n.of('clock.fichaje_error', {'error': e.toString()}));
       }
     } finally {
@@ -273,48 +414,6 @@ class _ClockScreenState extends State<ClockScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
-          IconButton(
-            tooltip: I18n.of('clock.open_web'),
-            icon: const Icon(Icons.open_in_browser),
-            onPressed: () async {
-              await WebViewService.openAuthenticatedWebView(
-                context: context,
-                workCenter: widget.workCenter,
-                user: widget.user,
-                path: AppConstants.webViewHome,
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: isLoading ? null : _loadStatus,
-          ),
-          IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () async {
-              final result = await Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const ProfileScreen(),
-                ),
-              );
-              if (result == true) {
-                await _loadStatus();
-              }
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () async {
-              final result = await Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const SettingsScreen(),
-                ),
-              );
-              if (result == true) {
-                await _loadStatus();
-              }
-            },
-          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => _showLogoutDialog(),
@@ -544,33 +643,107 @@ class _ClockScreenState extends State<ClockScreen> {
                                     final status =
                                         clockStatus!.todayStats.currentStatus;
                                     if (status == 'INICIAR JORNADA' ||
-                                        status == 'INICIAR REGISTRO EXCEPCIONAL') {
-                                      final isExceptional = status == 'INICIAR REGISTRO EXCEPCIONAL';
+                                        status ==
+                                            'INICIAR REGISTRO EXCEPCIONAL') {
+                                      final isExceptional = status ==
+                                          'INICIAR REGISTRO EXCEPCIONAL';
                                       return SizedBox(
                                         width: double.infinity,
                                         height: AppConstants.buttonHeight * 1.2,
                                         child: ElevatedButton(
-                                          onPressed: (isPerformingClock ||
-                                                  (status != 'INICIAR REGISTRO EXCEPCIONAL' && !clockStatus!.canClock))
+                                          onPressed: (isPerformingClock)
                                               ? null
-                                              : () {
-                                                  if (status == 'INICIAR REGISTRO EXCEPCIONAL') {
+                                              : () async {
+                                                  if (isExceptional) {
                                                     _showExceptionalClockInDialog();
                                                   } else {
+                                                    // Lógica corregida para preferencia NFC
                                                     if (_nfcEnabled) {
-                                                      _performClockWithNFC(action: 'clock_in');
+                                                      if (_nfcAvailable) {
+                                                        await _performClockWithNFC(
+                                                            action: 'clock_in');
+                                                      } else {
+                                                        // NFC habilitado pero no disponible: mostrar confirmación
+                                                        final confirmed =
+                                                            await showDialog<
+                                                                bool>(
+                                                          context: context,
+                                                          builder: (context) =>
+                                                              AlertDialog(
+                                                            title: Text(I18n.of(
+                                                                'clock.clock_in')),
+                                                            content: Text(
+                                                                'El dispositivo no soporta NFC. ¿Confirmas el fichaje?'),
+                                                            actions: [
+                                                              TextButton(
+                                                                onPressed: () =>
+                                                                    Navigator.pop(
+                                                                        context,
+                                                                        false),
+                                                                child: Text(I18n.of(
+                                                                    'dialog.cancel')),
+                                                              ),
+                                                              TextButton(
+                                                                onPressed: () =>
+                                                                    Navigator.pop(
+                                                                        context,
+                                                                        true),
+                                                                child: Text(
+                                                                    'Confirmar'),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        );
+                                                        if (confirmed == true) {
+                                                          await _performClockWithAction(
+                                                              null);
+                                                        }
+                                                      }
                                                     } else {
-                                                      _performClockWithAction('clock_in');
+                                                      // NFC deshabilitado: siempre pedir confirmación
+                                                      final confirmed =
+                                                          await showDialog<
+                                                              bool>(
+                                                        context: context,
+                                                        builder: (context) =>
+                                                            AlertDialog(
+                                                          title: Text(I18n.of(
+                                                              'clock.clock_in')),
+                                                          content: Text(
+                                                              '¿Seguro que quieres fichar el inicio de jornada?'),
+                                                          actions: [
+                                                            TextButton(
+                                                              onPressed: () =>
+                                                                  Navigator.pop(
+                                                                      context,
+                                                                      false),
+                                                              child: Text(I18n.of(
+                                                                  'dialog.cancel')),
+                                                            ),
+                                                            TextButton(
+                                                              onPressed: () =>
+                                                                  Navigator.pop(
+                                                                      context,
+                                                                      true),
+                                                              child: Text(
+                                                                  'Confirmar'),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      );
+                                                      if (confirmed == true) {
+                                                        await _performClockWithAction(
+                                                            null);
+                                                      }
                                                     }
                                                   }
                                                 },
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: isExceptional
-                                                ? const Color(AppConstants.warningColorValue)
-                                                : const Color(AppConstants.successColorValue),
+                                            backgroundColor: Colors.green,
                                             foregroundColor: Colors.white,
                                             shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(12),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
                                             ),
                                             elevation: 6,
                                           ),
@@ -578,64 +751,85 @@ class _ClockScreenState extends State<ClockScreen> {
                                               ? const SizedBox(
                                                   width: 24,
                                                   height: 24,
-                                                  child: CircularProgressIndicator(
+                                                  child:
+                                                      CircularProgressIndicator(
                                                     color: Colors.white,
                                                     strokeWidth: 2,
                                                   ),
                                                 )
                                               : Row(
-                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
                                                   children: [
-                                                    const Icon(Icons.login, size: 24),
+                                                    const Icon(Icons.play_arrow,
+                                                        size: 24),
                                                     const SizedBox(width: 8),
                                                     Text(
-                                                      status ?? '',
+                                                      isExceptional
+                                                          ? I18n.of(
+                                                              'clock.exceptional_start')
+                                                          : I18n.of(
+                                                              'clock.start_workday'),
                                                       style: const TextStyle(
                                                         fontSize: 18,
-                                                        fontWeight: FontWeight.bold,
+                                                        fontWeight:
+                                                            FontWeight.bold,
                                                       ),
                                                     ),
                                                   ],
                                                 ),
                                         ),
                                       );
-                                    }
-                                    if (status == 'TRABAJANDO') {
+                                    } else if (status == 'TRABAJANDO') {
                                       return Row(
                                         children: [
                                           Expanded(
                                             child: ElevatedButton(
                                               onPressed: isPerformingClock
                                                   ? null
-                                                  : () => _performClockWithAction('pause'),
+                                                  : () =>
+                                                      _performClockWithAction(
+                                                          'pause'),
                                               style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(AppConstants.warningColorValue),
+                                                backgroundColor: const Color(
+                                                    AppConstants
+                                                        .warningColorValue),
                                                 foregroundColor: Colors.white,
                                                 shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(12),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
                                                 ),
                                                 elevation: 6,
-                                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 16),
                                               ),
                                               child: isPerformingClock
                                                   ? const SizedBox(
                                                       width: 20,
                                                       height: 20,
-                                                      child: CircularProgressIndicator(
+                                                      child:
+                                                          CircularProgressIndicator(
                                                         color: Colors.white,
                                                         strokeWidth: 2,
                                                       ),
                                                     )
                                                   : Column(
-                                                      mainAxisSize: MainAxisSize.min,
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
                                                       children: [
-                                                        const Icon(Icons.pause, size: 20),
-                                                        const SizedBox(height: 4),
+                                                        const Icon(Icons.pause,
+                                                            size: 20),
+                                                        const SizedBox(
+                                                            height: 4),
                                                         Text(
-                                                          I18n.of('clock.pause'),
-                                                          style: const TextStyle(
+                                                          I18n.of(
+                                                              'clock.pause'),
+                                                          style:
+                                                              const TextStyle(
                                                             fontSize: 12,
-                                                            fontWeight: FontWeight.bold,
+                                                            fontWeight:
+                                                                FontWeight.bold,
                                                           ),
                                                         ),
                                                       ],
@@ -647,35 +841,55 @@ class _ClockScreenState extends State<ClockScreen> {
                                             child: ElevatedButton(
                                               onPressed: isPerformingClock
                                                   ? null
-                                                  : () => _showClockOutDialog(),
+                                                  : () {
+                                                      if (_nfcEnabled) {
+                                                        _performClockWithNFC(
+                                                            action:
+                                                                'clock_out');
+                                                      } else {
+                                                        _showClockOutDialog();
+                                                      }
+                                                    },
                                               style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(AppConstants.errorColorValue),
+                                                backgroundColor: const Color(
+                                                    AppConstants
+                                                        .errorColorValue),
                                                 foregroundColor: Colors.white,
                                                 shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(12),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
                                                 ),
                                                 elevation: 6,
-                                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 16),
                                               ),
                                               child: isPerformingClock
                                                   ? const SizedBox(
                                                       width: 20,
                                                       height: 20,
-                                                      child: CircularProgressIndicator(
+                                                      child:
+                                                          CircularProgressIndicator(
                                                         color: Colors.white,
                                                         strokeWidth: 2,
                                                       ),
                                                     )
                                                   : Column(
-                                                      mainAxisSize: MainAxisSize.min,
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
                                                       children: [
-                                                        const Icon(Icons.logout, size: 20),
-                                                        const SizedBox(height: 4),
+                                                        const Icon(Icons.logout,
+                                                            size: 20),
+                                                        const SizedBox(
+                                                            height: 4),
                                                         Text(
-                                                          I18n.of('clock.clock_out'),
-                                                          style: const TextStyle(
+                                                          I18n.of(
+                                                              'clock.clock_out'),
+                                                          style:
+                                                              const TextStyle(
                                                             fontSize: 12,
-                                                            fontWeight: FontWeight.bold,
+                                                            fontWeight:
+                                                                FontWeight.bold,
                                                           ),
                                                         ),
                                                       ],
@@ -684,8 +898,7 @@ class _ClockScreenState extends State<ClockScreen> {
                                           ),
                                         ],
                                       );
-                                    }
-                                    if (status == 'EN PAUSA') {
+                                    } else if (status == 'EN PAUSA') {
                                       return SizedBox(
                                         width: double.infinity,
                                         height: AppConstants.buttonHeight * 1.2,
@@ -734,12 +947,12 @@ class _ClockScreenState extends State<ClockScreen> {
                                                 ),
                                         ),
                                       );
+                                    } else {
+                                      return SizedBox.shrink();
                                     }
-                                    return const SizedBox.shrink();
                                   },
                                 ),
-                                const SizedBox(
-                                    height: AppConstants.spacing * 2),
+                                SizedBox(height: AppConstants.spacing * 2),
                                 // WebView Navigation
                                 Card(
                                   elevation: 4,
@@ -799,7 +1012,7 @@ class _ClockScreenState extends State<ClockScreen> {
                                 ),
                               ],
                             )
-                          : const SizedBox.shrink(),
+                          : SizedBox.shrink(),
                 ], // Cierre de la lista 'children' de la Column principal
               ),
             ),
@@ -846,16 +1059,7 @@ class _ClockScreenState extends State<ClockScreen> {
     return Column(
       children: [
         IconButton(
-          onPressed: () {
-            WebViewService.openAuthenticatedWebView(
-              context: context,
-              workCenter: path == AppConstants.webViewHistory
-                  ? null
-                  : widget.workCenter,
-              user: widget.user,
-              path: path,
-            );
-          },
+          onPressed: () {},
           icon: Icon(icon, size: 28),
           style: IconButton.styleFrom(
             backgroundColor:
