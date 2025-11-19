@@ -28,6 +28,56 @@ class ClockScreen extends StatefulWidget {
 }
 
 class _ClockScreenState extends State<ClockScreen> {
+    // --- DIÁLOGOS DE CONFIRMACIÓN ---
+    void _showExceptionalClockInDialog() {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Fichaje excepcional'),
+          content: const Text('Estás fuera de tu horario laboral. ¿Confirmas el fichaje excepcional?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _performClockWithAction('exceptional_clock_in');
+              },
+              child: const Text('Confirmar'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    void _showClockOutDialog() {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Confirmar salida'),
+          content: const Text('¿Seguro que quieres fichar la salida?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                if (_nfcEnabled) {
+                  await _performClockWithNFC(action: 'clock_out');
+                } else {
+                  await _performClockWithAction('clock_out');
+                }
+              },
+              child: const Text('Confirmar'),
+            ),
+          ],
+        ),
+      );
+    }
   ClockStatus? clockStatus;
   bool isLoading = false;
   bool isPerformingClock = false;
@@ -494,44 +544,33 @@ class _ClockScreenState extends State<ClockScreen> {
                                     final status =
                                         clockStatus!.todayStats.currentStatus;
                                     if (status == 'INICIAR JORNADA' ||
-                                        status ==
-                                            'INICIAR REGISTRO EXCEPCIONAL') {
-                                      final isExceptional = status ==
-                                          'INICIAR REGISTRO EXCEPCIONAL';
+                                        status == 'INICIAR REGISTRO EXCEPCIONAL') {
+                                      final isExceptional = status == 'INICIAR REGISTRO EXCEPCIONAL';
                                       return SizedBox(
                                         width: double.infinity,
                                         height: AppConstants.buttonHeight * 1.2,
                                         child: ElevatedButton(
                                           onPressed: (isPerformingClock ||
-                                                  (status !=
-                                                          'INICIAR REGISTRO EXCEPCIONAL' &&
-                                                      !clockStatus!.canClock))
+                                                  (status != 'INICIAR REGISTRO EXCEPCIONAL' && !clockStatus!.canClock))
                                               ? null
                                               : () {
-                                                  if (status ==
-                                                      'INICIAR REGISTRO EXCEPCIONAL') {
-                                                    _performClockWithAction(
-                                                        'exceptional_clock_in');
+                                                  if (status == 'INICIAR REGISTRO EXCEPCIONAL') {
+                                                    _showExceptionalClockInDialog();
                                                   } else {
                                                     if (_nfcEnabled) {
-                                                      _performClockWithNFC(
-                                                          action: 'clock_in');
+                                                      _performClockWithNFC(action: 'clock_in');
                                                     } else {
-                                                      _performClockWithAction(
-                                                          'clock_in');
+                                                      _performClockWithAction('clock_in');
                                                     }
                                                   }
                                                 },
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: isExceptional
-                                                ? const Color(AppConstants
-                                                    .warningColorValue)
-                                                : const Color(AppConstants
-                                                    .successColorValue),
+                                                ? const Color(AppConstants.warningColorValue)
+                                                : const Color(AppConstants.successColorValue),
                                             foregroundColor: Colors.white,
                                             shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
+                                              borderRadius: BorderRadius.circular(12),
                                             ),
                                             elevation: 6,
                                           ),
@@ -539,25 +578,21 @@ class _ClockScreenState extends State<ClockScreen> {
                                               ? const SizedBox(
                                                   width: 24,
                                                   height: 24,
-                                                  child:
-                                                      CircularProgressIndicator(
+                                                  child: CircularProgressIndicator(
                                                     color: Colors.white,
                                                     strokeWidth: 2,
                                                   ),
                                                 )
                                               : Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
+                                                  mainAxisAlignment: MainAxisAlignment.center,
                                                   children: [
-                                                    const Icon(Icons.login,
-                                                        size: 24),
+                                                    const Icon(Icons.login, size: 24),
                                                     const SizedBox(width: 8),
                                                     Text(
                                                       status ?? '',
                                                       style: const TextStyle(
                                                         fontSize: 18,
-                                                        fontWeight:
-                                                            FontWeight.bold,
+                                                        fontWeight: FontWeight.bold,
                                                       ),
                                                     ),
                                                   ],
@@ -572,49 +607,35 @@ class _ClockScreenState extends State<ClockScreen> {
                                             child: ElevatedButton(
                                               onPressed: isPerformingClock
                                                   ? null
-                                                  : () =>
-                                                      _performClockWithAction(
-                                                          'pause'),
+                                                  : () => _performClockWithAction('pause'),
                                               style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(
-                                                    AppConstants
-                                                        .warningColorValue),
+                                                backgroundColor: const Color(AppConstants.warningColorValue),
                                                 foregroundColor: Colors.white,
                                                 shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
+                                                  borderRadius: BorderRadius.circular(12),
                                                 ),
                                                 elevation: 6,
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        vertical: 16),
+                                                padding: const EdgeInsets.symmetric(vertical: 16),
                                               ),
                                               child: isPerformingClock
                                                   ? const SizedBox(
                                                       width: 20,
                                                       height: 20,
-                                                      child:
-                                                          CircularProgressIndicator(
+                                                      child: CircularProgressIndicator(
                                                         color: Colors.white,
                                                         strokeWidth: 2,
                                                       ),
                                                     )
                                                   : Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
+                                                      mainAxisSize: MainAxisSize.min,
                                                       children: [
-                                                        const Icon(Icons.pause,
-                                                            size: 20),
-                                                        const SizedBox(
-                                                            height: 4),
+                                                        const Icon(Icons.pause, size: 20),
+                                                        const SizedBox(height: 4),
                                                         Text(
-                                                          I18n.of(
-                                                              'clock.pause'),
-                                                          style:
-                                                              const TextStyle(
+                                                          I18n.of('clock.pause'),
+                                                          style: const TextStyle(
                                                             fontSize: 12,
-                                                            fontWeight:
-                                                                FontWeight.bold,
+                                                            fontWeight: FontWeight.bold,
                                                           ),
                                                         ),
                                                       ],
@@ -626,55 +647,35 @@ class _ClockScreenState extends State<ClockScreen> {
                                             child: ElevatedButton(
                                               onPressed: isPerformingClock
                                                   ? null
-                                                  : () {
-                                                      if (_nfcEnabled) {
-                                                        _performClockWithNFC(
-                                                            action: 'clock_out');
-                                                      } else {
-                                                        _performClockWithAction(
-                                                            'clock_out');
-                                                      }
-                                                    },
+                                                  : () => _showClockOutDialog(),
                                               style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(
-                                                    AppConstants
-                                                        .errorColorValue),
+                                                backgroundColor: const Color(AppConstants.errorColorValue),
                                                 foregroundColor: Colors.white,
                                                 shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
+                                                  borderRadius: BorderRadius.circular(12),
                                                 ),
                                                 elevation: 6,
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        vertical: 16),
+                                                padding: const EdgeInsets.symmetric(vertical: 16),
                                               ),
                                               child: isPerformingClock
                                                   ? const SizedBox(
                                                       width: 20,
                                                       height: 20,
-                                                      child:
-                                                          CircularProgressIndicator(
+                                                      child: CircularProgressIndicator(
                                                         color: Colors.white,
                                                         strokeWidth: 2,
                                                       ),
                                                     )
                                                   : Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
+                                                      mainAxisSize: MainAxisSize.min,
                                                       children: [
-                                                        const Icon(Icons.logout,
-                                                            size: 20),
-                                                        const SizedBox(
-                                                            height: 4),
+                                                        const Icon(Icons.logout, size: 20),
+                                                        const SizedBox(height: 4),
                                                         Text(
-                                                          I18n.of(
-                                                              'clock.clock_out'),
-                                                          style:
-                                                              const TextStyle(
+                                                          I18n.of('clock.clock_out'),
+                                                          style: const TextStyle(
                                                             fontSize: 12,
-                                                            fontWeight:
-                                                                FontWeight.bold,
+                                                            fontWeight: FontWeight.bold,
                                                           ),
                                                         ),
                                                       ],

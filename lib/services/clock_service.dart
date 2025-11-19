@@ -68,9 +68,9 @@ class ClockService {
       final body = {
         'work_center_code': workCenterCode,
         'user_code': userCode,
-        if (action != null) 'action': action,
-        if (pauseEventId != null) 'pause_event_id': pauseEventId,
-        if (eventTypeId != null) 'event_type_id': eventTypeId,
+        // Solo incluir 'action' y 'pause_event_id' si es pausa o continuar
+        if (action == 'pause' || action == 'resume_workday') 'action': action,
+        if (action == 'resume_workday' && pauseEventId != null) 'pause_event_id': pauseEventId,
       };
       print('[ClockService][performClock] Body enviado: ' + body.toString());
       final response = await http
