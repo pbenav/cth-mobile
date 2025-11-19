@@ -402,6 +402,7 @@ class _ClockScreenState extends State<ClockScreen> {
                                             fontWeight: FontWeight.bold,
                                             color: Colors.white,
                                           ),
+                                          textAlign: TextAlign.center,
                                         ),
                                       ),
                                       const SizedBox(height: 16),
