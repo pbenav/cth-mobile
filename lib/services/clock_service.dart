@@ -40,6 +40,7 @@ class ClockService {
     required String userCode,
     String? action, // 'pause', 'resume_workday', 'clock_out', etc.
     int? pauseEventId, // Nuevo parámetro opcional
+    int? eventTypeId, // Nuevo parámetro para clock_in
   }) async {
     try {
       // Intentar refrescar datos del trabajador guardado antes de cualquier
@@ -69,6 +70,7 @@ class ClockService {
         'user_code': userCode,
         if (action != null) 'action': action,
         if (pauseEventId != null) 'pause_event_id': pauseEventId,
+        if (eventTypeId != null) 'event_type_id': eventTypeId,
       };
       print('[ClockService][performClock] Body enviado: ' + body.toString());
       final response = await http

@@ -5,8 +5,12 @@ import 'dart:convert';
 import 'package:nfc_manager/nfc_manager.dart';
 import 'package:nfc_manager_ndef/nfc_manager_ndef.dart';
 import '../models/work_center.dart';
+import '../models/clock_status.dart';
+import '../models/api_response.dart';
 import '../services/setup_service.dart';
 import '../services/config_service.dart';
+import '../services/clock_service.dart';
+import '../services/storage_service.dart';
 import '../utils/exceptions.dart';
 
 enum NFCPayloadType { simple, autoConfig }
@@ -427,5 +431,59 @@ class NFCService {
     
     // Agregar comillas para strings
     return '"$value"';
+  }
+
+  /// Realiza el fichaje usando NFC, consultando el estado y enviando la acción correcta
+  static Future<Map<String, dynamic>?> scanAndPerformClock({Function(String, Map<String, dynamic>?)? onDebug}) async {
+    try {
+      final workCenter = await scanWorkCenter(onNFCDebug: onDebug);
+      if (workCenter == null) {
+        print('NFC: No se obtuvo workCenter del scan');
+        return null;
+      }
+
+      final user = await StorageService.getUser();
+      if (user == null) {
+        print('NFC: No hay usuario guardado para realizar fichaje');
+        throw const NFCException('Usuario no autenticado');
+      }
+
+      print('NFC: Consultando estado actual para user=[200C{user.code} workCenter=[200C{workCenter.code}');
+      // Consultar el estado actual para obtener la acción correcta
+      ApiResponse<ClockStatus>? statusResponse;
+      try {
+        statusResponse = await ClockService.getStatus(
+          userCode: user.code,
+        );
+      } catch (e) {
+        print('NFC: Error consultando estado: $e');
+      }
+
+      String? actionToSend;
+      if (statusResponse != null && statusResponse.data != null) {
+        actionToSend = statusResponse.data!.action;
+        print('NFC: Acción obtenida del estado: $actionToSend');
+      } else {
+        print('NFC: No se pudo obtener acción, se enviará null');
+      }
+
+      print('NFC: Realizando llamada a ClockService.performClock para user=[200C{user.code} workCenter=[200C{workCenter.code} action=$actionToSend');
+
+      final response = await ClockService.performClock(
+        workCenterCode: workCenter.code,
+        userCode: user.code,
+        action: actionToSend,
+      );
+
+      print('NFC: performClock returned ApiResponse success=${response.success} message=${response.message}');
+
+      return {
+        'workCenter': workCenter,
+        'response': response,
+      };
+    } catch (e) {
+      print('NFC: Error en scanAndPerformClock: $e');
+      return null;
+    }
   }
 }

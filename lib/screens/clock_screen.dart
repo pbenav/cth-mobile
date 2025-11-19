@@ -124,6 +124,20 @@ class _ClockScreenState extends State<ClockScreen> {
           action: action,
           pauseEventId: pauseEventId,
         );
+      } else if (action == 'clock_in') {
+        final eventTypeId = clockStatus?.eventTypeId;
+        if (eventTypeId == null) {
+          if (mounted) {
+            _showError('No se puede fichar entrada: falta el tipo de evento.');
+          }
+          return;
+        }
+        await ClockService.performClock(
+          workCenterCode: workCenterCode,
+          userCode: userCode,
+          action: action,
+          eventTypeId: eventTypeId,
+        );
       } else {
         await ClockService.performClock(
           workCenterCode: workCenterCode,
