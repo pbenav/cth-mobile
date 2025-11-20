@@ -385,18 +385,28 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
       if (action == 'resume_workday') {
         int? pauseEventId = clockStatus?.pauseEventId;
         
+        print('[DEBUG] Resume workday - pauseEventId from clockStatus: $pauseEventId');
+        print('[DEBUG] clockStatus object: ${clockStatus?.toJson()}');
+        
         // Si no viene del backend, intentamos buscarlo localmente (fallback)
         if (pauseEventId == null) {
+          print('[DEBUG] pauseEventId is null, searching in todayRecords...');
           const int pauseEventTypeId = 285; // Actualiza este valor según tu backend
           if (clockStatus != null && clockStatus!.todayRecords.isNotEmpty) {
+            print('[DEBUG] Today records count: ${clockStatus!.todayRecords.length}');
             for (final event in clockStatus!.todayRecords) {
+              print('[DEBUG] Event: id=${event.id}, eventTypeId=${event.eventTypeId}, isOpen=${event.isOpen}');
               if (event.eventTypeId == pauseEventTypeId && _isOpenStatus(event)) {
                 pauseEventId = event.id;
+                print('[DEBUG] Found pause event ID from records: $pauseEventId');
                 break;
               }
             }
           }
         }
+        
+        print('[DEBUG] Final pauseEventId to use: $pauseEventId');
+        
         if (pauseEventId == null) {
           if (mounted) {
             _showError(

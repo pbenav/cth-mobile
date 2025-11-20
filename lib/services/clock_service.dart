@@ -123,12 +123,18 @@ class ClockService {
           .timeout(const Duration(seconds: 15));
 
       final jsonData = jsonDecode(response.body);
+      
+      print('[DEBUG] getStatus response: $jsonData');
 
       if (response.statusCode == 200) {
-        return ApiResponse<ClockStatus>.fromJson(
+        final apiResponse = ApiResponse<ClockStatus>.fromJson(
           jsonData,
           (data) => ClockStatus.fromJson(data),
         );
+        
+        print('[DEBUG] Parsed ClockStatus - pauseEventId: ${apiResponse.data?.pauseEventId}');
+        
+        return apiResponse;
       } else {
         // Asegura que el mensaje sea siempre String
         final msg = jsonData['message'];

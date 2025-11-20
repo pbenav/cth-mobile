@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'services/storage_service.dart';
-import 'screens/nfc_start_screen.dart';
 import 'screens/clock_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/settings_screen.dart';
@@ -72,7 +71,7 @@ class CTHMobileApp extends StatelessWidget {
       initialRoute: AppConstants.routeStart,
       routes: {
         AppConstants.routeStart: (context) => SplashScreen(),
-        AppConstants.routeLogin: (context) => NFCStartScreen(),
+        AppConstants.routeLogin: (context) => const SetupWorkerScreen(),
         AppConstants.routeClock: (context) {
           // Esta ruta debería usarse solo cuando ya hay sesión válida
           // En caso contrario, redirigir al inicio
@@ -100,11 +99,11 @@ class CTHMobileApp extends StatelessWidget {
                         user: user,
                       );
                     }
-                    return NFCStartScreen();
+                    return const SetupWorkerScreen();
                   },
                 );
               }
-              return NFCStartScreen();
+              return const SetupWorkerScreen();
             },
           );
         },
@@ -116,7 +115,7 @@ class CTHMobileApp extends StatelessWidget {
       },
       onUnknownRoute: (settings) {
         return MaterialPageRoute(
-          builder: (context) => NFCStartScreen(),
+          builder: (context) => const SetupWorkerScreen(),
         );
       },
     );
