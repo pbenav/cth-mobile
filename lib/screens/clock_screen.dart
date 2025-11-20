@@ -225,6 +225,8 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
       return;
     }
 
+    print('[DEBUG] Calculating worked hours from ${clockStatus!.todayRecords.length} events');
+
     // Calcular las horas trabajadas basándose en los eventos del día
     Duration totalWorked = Duration.zero;
 
@@ -233,6 +235,19 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
       ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
     for (final event in sortedEvents) {
+      print('[DEBUG] Event: type=${event.type}, start=${event.start}, end=${event.end}, isOpen=${event.isOpen}');
+      
+      // IMPORTANTE: Solo contar eventos de trabajo, NO pausas
+      // Las pausas suelen tener nombres como "Pausa", "Break", "Descanso", etc.
+      final isBreakEvent = event.type.toLowerCase().contains('pausa') || 
+                          event.type.toLowerCase().contains('break') ||
+                          event.type.toLowerCase().contains('descanso');
+      
+      if (isBreakEvent) {
+        print('[DEBUG] Skipping break event: ${event.type}');
+        continue;
+      }
+      
       // IMPORTANTE: Usar los campos start y end para calcular las horas trabajadas
       // NO usar timestamp (que es la fecha de creación del evento)
       
@@ -241,14 +256,18 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
         if (event.end != null) {
           // Evento cerrado: tiene start y end
           final duration = event.end!.difference(event.start!);
+          print('[DEBUG] Adding closed event duration: ${duration.inSeconds}s');
           totalWorked += duration;
         } else if (event.isOpen == true) {
           // Evento abierto: tiene start pero no end, usar hora actual
           final duration = DateTime.now().difference(event.start!);
+          print('[DEBUG] Adding open event duration: ${duration.inSeconds}s');
           totalWorked += duration;
         }
       }
     }
+
+    print('[DEBUG] Total worked seconds: ${totalWorked.inSeconds}');
 
     // Si el cálculo da 0 pero el servidor tiene un valor, usar el del servidor
     if (totalWorked.inSeconds == 0 && clockStatus!.todayStats.workedHours != null) {
@@ -265,6 +284,8 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
         _calculatedWorkedHours = '${hours.toString().padLeft(1, '0')}:${minutes.toString().padLeft(2, '0')}';
       }
     }
+    
+    print('[DEBUG] Final calculated hours: $_calculatedWorkedHours');
   }
 
   Future<void> _ensureScheduleLoaded(String userCode) async {
