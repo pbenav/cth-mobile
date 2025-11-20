@@ -208,7 +208,10 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
       }
 
       // Solo NFC si preferencia activada Y disponible
-      if ((action == 'clock_in' || action == 'clock_out')) {
+      // Validar también el caso de fichaje excepcional con NFC
+      if ((action == 'clock_in' ||
+          action == 'clock_out' ||
+          action == 'exceptional_clock_in')) {
         if (_nfcEnabled && _nfcAvailable) {
           await _performClockWithNFC(action: action);
           return;
@@ -288,9 +291,10 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
       }
 
       if (mounted) {
-        String actionText = (action == 'clock_in' || action == 'exceptional_clock_in')
-            ? I18n.of('clock.clock_in')
-            : I18n.of('clock.clock_out');
+        String actionText =
+            (action == 'clock_in' || action == 'exceptional_clock_in')
+                ? I18n.of('clock.clock_in')
+                : I18n.of('clock.clock_out');
         _showSuccess(I18n.of('clock.fichaje_success', {'action': actionText}));
         await _loadStatus();
         // Si se reanuda jornada, puedes agregar aquí un log si lo necesitas
@@ -383,9 +387,10 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
         );
       }
       if (mounted) {
-        String actionText = (action == 'clock_in' || action == 'exceptional_clock_in')
-            ? I18n.of('clock.clock_in')
-            : I18n.of('clock.clock_out');
+        String actionText =
+            (action == 'clock_in' || action == 'exceptional_clock_in')
+                ? I18n.of('clock.clock_in')
+                : I18n.of('clock.clock_out');
         _showSuccess(I18n.of('clock.fichaje_success', {'action': actionText}));
         await _loadStatus();
       }
@@ -648,7 +653,8 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
                                           children: [
                                             _buildStatItem(
                                               'clock.records',
-                                              (clockStatus!.todayRecords.length).toString(),
+                                              (clockStatus!.todayRecords.length)
+                                                  .toString(),
                                               Icons.list,
                                             ),
                                             _buildStatItem(
@@ -683,88 +689,17 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
                                           onPressed: (isPerformingClock)
                                               ? null
                                               : () async {
-                                                  if (isExceptional) {
-                                                    _showExceptionalClockInDialog();
+                                                  if (_nfcEnabled &&
+                                                      _nfcAvailable) {
+                                                    await _performClockWithNFC(
+                                                        action: isExceptional
+                                                            ? 'exceptional_clock_in'
+                                                            : 'clock_in');
                                                   } else {
-                                                    // Lógica corregida para preferencia NFC
-                                                    if (_nfcEnabled) {
-                                                      if (_nfcAvailable) {
-                                                        await _performClockWithNFC(
-                                                            action: 'clock_in');
-                                                      } else {
-                                                        // NFC habilitado pero no disponible: mostrar confirmación
-                                                        final confirmed =
-                                                            await showDialog<
-                                                                bool>(
-                                                          context: context,
-                                                          builder: (context) =>
-                                                              AlertDialog(
-                                                            title: Text(I18n.of(
-                                                                'clock.clock_in')),
-                                                            content: Text(
-                                                                'El dispositivo no soporta NFC. ¿Confirmas el fichaje?'),
-                                                            actions: [
-                                                              TextButton(
-                                                                onPressed: () =>
-                                                                    Navigator.pop(
-                                                                        context,
-                                                                        false),
-                                                                child: Text(I18n.of(
-                                                                    'dialog.cancel')),
-                                                              ),
-                                                              TextButton(
-                                                                onPressed: () =>
-                                                                    Navigator.pop(
-                                                                        context,
-                                                                        true),
-                                                                child: Text(
-                                                                    'Confirmar'),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        );
-                                                        if (confirmed == true) {
-                                                          await _performClockWithAction(
-                                                              null);
-                                                        }
-                                                      }
-                                                    } else {
-                                                      // NFC deshabilitado: siempre pedir confirmación
-                                                      final confirmed =
-                                                          await showDialog<
-                                                              bool>(
-                                                        context: context,
-                                                        builder: (context) =>
-                                                            AlertDialog(
-                                                          title: Text(I18n.of(
-                                                              'clock.clock_in')),
-                                                          content: Text(
-                                                              '¿Seguro que quieres fichar el inicio de jornada?'),
-                                                          actions: [
-                                                            TextButton(
-                                                              onPressed: () =>
-                                                                  Navigator.pop(
-                                                                      context,
-                                                                      false),
-                                                              child: Text(I18n.of(
-                                                                  'dialog.cancel')),
-                                                            ),
-                                                            TextButton(
-                                                              onPressed: () =>
-                                                                  Navigator.pop(
-                                                                      context,
-                                                                      true),
-                                                              child: Text(
-                                                                  'Confirmar'),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      );
-                                                      if (confirmed == true) {
-                                                        await _performClockWithAction(
-                                                            null);
-                                                      }
-                                                    }
+                                                    await _performClockWithAction(
+                                                        isExceptional
+                                                            ? 'exceptional_clock_in'
+                                                            : 'clock_in');
                                                   }
                                                 },
                                           style: ElevatedButton.styleFrom(
