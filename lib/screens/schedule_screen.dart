@@ -79,10 +79,13 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         _isSaving = false;
       });
       
+      if (!mounted) return;
+      
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(I18n.of('schedule.save_success') ?? 'Horario guardado correctamente')),
+        SnackBar(content: Text(I18n.of('schedule.save_success'))),
       );
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isSaving = false;
       });
@@ -166,15 +169,19 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(I18n.of('schedule.title') ?? 'Horario'),
+        title: Text(I18n.of('schedule.title')),
         actions: [
           if (!_isLoading && _schedule != null)
-            if (_isEditing)
+            if (_isEditing) ...[
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: _isSaving ? null : _cancelEditing,
+              ),
               IconButton(
                 icon: const Icon(Icons.save),
                 onPressed: _isSaving ? null : _saveSchedule,
-              )
-            else
+              ),
+            ] else
               IconButton(
                 icon: const Icon(Icons.edit),
                 onPressed: _startEditing,
@@ -199,7 +206,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _loadSchedule,
-              child: Text(I18n.of('retry') ?? 'Reintentar'),
+              child: Text(I18n.of('retry')),
             ),
           ],
         ),
