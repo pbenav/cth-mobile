@@ -7,7 +7,7 @@ import '../models/clock_status.dart';
 import '../services/clock_service.dart';
 import '../services/storage_service.dart';
 import '../services/nfc_service.dart';
-import '../services/webview_service.dart';
+
 import '../services/setup_service.dart';
 import 'settings_screen.dart';
 import 'profile_screen.dart';
@@ -705,18 +705,7 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
-          IconButton(
-            tooltip: I18n.of('clock.open_web'),
-            icon: const Icon(Icons.open_in_browser),
-            onPressed: () async {
-              await WebViewService.openAuthenticatedWebView(
-                context: context,
-                workCenter: widget.workCenter,
-                user: widget.user,
-                path: AppConstants.webViewHome,
-              );
-            },
-          ),
+
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: isLoading ? null : _loadStatus,
@@ -1255,12 +1244,7 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
                                                 );
                                               },
                                             ),
-                                            _buildWebViewButton(
-                                              icon: Icons.assessment,
-                                              label: I18n.of(
-                                                  'clock.reports_title'),
-                                              path: AppConstants.webViewReports,
-                                            ),
+
                                             _buildNativeButton(
                                               icon: Icons.person,
                                               label: I18n.of(
@@ -1317,51 +1301,6 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
           style: TextStyle(
             fontSize: 12,
             color: Colors.grey[600],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildWebViewButton({
-    required IconData icon,
-    required String label,
-    required String path,
-  }) {
-    return Column(
-      children: [
-        IconButton(
-          onPressed: () async {
-            // Navigate to native screen for history, otherwise use WebView
-            if (path == AppConstants.webViewHistory) {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => HistoryScreen(user: widget.user),
-                ),
-              );
-            } else {
-              await WebViewService.openAuthenticatedWebView(
-                context: context,
-                workCenter: widget.workCenter,
-                user: widget.user,
-                path: path,
-              );
-            }
-          },
-          icon: Icon(icon, size: 28),
-          style: IconButton.styleFrom(
-            backgroundColor:
-                const Color(AppConstants.primaryColorValue).withOpacity(0.1),
-            padding: const EdgeInsets.all(12),
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
           ),
         ),
       ],

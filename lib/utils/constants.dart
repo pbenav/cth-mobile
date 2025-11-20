@@ -56,15 +56,7 @@ class AppConstants {
   static const String routeStart = '/';
   static const String routeLogin = '/login';
   static const String routeClock = '/clock';
-  static const String routeWebView = '/webview';
   static const String routeManualEntry = '/manual';
   static const String routeProfile = '/profile';
   static const String routeSettings = '/settings';
-
-  // WebView páginas
-  static const String webViewHome = '/home';
-  static const String webViewHistory = '/history';
-  static const String webViewSchedule = '/schedule';
-  static const String webViewProfile = '/profile';
-  static const String webViewReports = '/reports';
 }

@@ -19,8 +19,6 @@ dependencies:
   nfc_manager_ndef: any
   ndef: ^0.4.0
   
-  # WebView para vistas complejas
-  webview_flutter: ^4.4.2
   
   # State management
   provider: ^6.1.1
