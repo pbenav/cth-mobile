@@ -1236,11 +1236,19 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceEvenly,
                                           children: [
-                                            _buildWebViewButton(
+                                            _buildNativeButton(
                                               icon: Icons.history,
                                               label: I18n.of(
                                                   'clock.history_title'),
-                                              path: AppConstants.webViewHistory,
+                                              onTap: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        const HistoryScreen(),
+                                                  ),
+                                                );
+                                              },
                                             ),
                                             _buildWebViewButton(
                                               icon: Icons.schedule,
