@@ -4,6 +4,7 @@ import '../models/user.dart';
 import '../models/work_center.dart';
 import '../services/storage_service.dart';
 import '../services/setup_service.dart';
+import '../services/profile_service.dart';
 import '../models/worker_data.dart';
 import '../services/refresh_service.dart';
 import '../utils/constants.dart';
@@ -124,10 +125,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _isSaving = true);
 
     try {
-      // Crear objetos actualizados
-      final updatedUser = User(
-        id: _currentUser?.id ?? 0,
-        code: _userCodeController.text.trim(),
+      // First, update on the server
+      final success = await ProfileService.updateProfile(
+        userCode: _userCodeController.text.trim(),
         name: _nameController.text.trim(),
         familyName1: _familyName1Controller.text.trim().isNotEmpty
             ? _familyName1Controller.text.trim()
@@ -137,26 +137,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
             : null,
       );
 
-      final updatedWorkCenter = WorkCenter(
-        id: _currentWorkCenter?.id ?? 0,
-        code: _workCenterCodeController.text.trim(),
-        name: _workCenterNameController.text.trim(),
-      );
-
-      // Guardar en almacenamiento local
-      await StorageService.saveUser(updatedUser);
-      await StorageService.saveWorkCenter(updatedWorkCenter);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Perfil actualizado correctamente')),
+      if (success) {
+        // Also update work center locally (not sent to server)
+        final updatedWorkCenter = WorkCenter(
+          id: _currentWorkCenter?.id ?? 0,
+          code: _workCenterCodeController.text.trim(),
+          name: _workCenterNameController.text.trim(),
         );
-        Navigator.of(context).pop(true);
+        await StorageService.saveWorkCenter(updatedWorkCenter);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Perfil actualizado correctamente'),
+              backgroundColor: Color(AppConstants.successColorValue),
+            ),
+          );
+          Navigator.of(context).pop(true);
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error guardando perfil: $e')),
+          SnackBar(
+            content: Text('Error guardando perfil: $e'),
+            backgroundColor: Color(AppConstants.errorColorValue),
+          ),
         );
       }
     } finally {
