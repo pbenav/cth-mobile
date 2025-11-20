@@ -16,6 +16,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  bool _obscureUserCode = true;
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _familyName1Controller = TextEditingController();
@@ -272,20 +273,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 16),
 
-              TextFormField(
-                controller: _userCodeController,
-                decoration: const InputDecoration(
-                  labelText: 'Código de usuario',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.badge),
+                TextFormField(
+                  controller: _userCodeController,
+                  obscureText: _obscureUserCode,
+                  decoration: InputDecoration(
+                    labelText: 'Código de usuario',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.badge),
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscureUserCode ? Icons.visibility : Icons.visibility_off),
+                      onPressed: () {
+                        setState(() => _obscureUserCode = !_obscureUserCode);
+                      },
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'El código de usuario es obligatorio';
+                    }
+                    return null;
+                  },
                 ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'El código de usuario es obligatorio';
-                  }
-                  return null;
-                },
-              ),
 
               const SizedBox(height: 32),
 
