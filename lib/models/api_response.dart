@@ -35,62 +35,34 @@ class ApiResponse<T> {
       };
 }
 
-class ClockResponse {
-  final String action;
-  final DateTime timestamp;
-  final String workCenterCode;
-  final String userCode;
-  final String message;
-
-  const ClockResponse({
-    required this.action,
-    required this.timestamp,
-    required this.workCenterCode,
-    required this.userCode,
-    required this.message,
-  });
-
-  factory ClockResponse.fromJson(Map<String, dynamic> json) => ClockResponse(
-        action: json['action'] as String,
-        timestamp: DateTime.parse(json['timestamp'] as String),
-        workCenterCode: json['work_center_code'] as String,
-        userCode: json['user_code'] as String,
-        message: json['message'] as String,
-      );
-
-  Map<String, dynamic> toJson() => {
-        'action': action,
-        'timestamp': timestamp.toIso8601String(),
-        'work_center_code': workCenterCode,
-        'user_code': userCode,
-        'message': message,
-      };
-}
-
 class SyncResponse {
-  final int processedEvents;
-  final int failedEvents;
-  final List<String> errors;
+  final int totalEvents;
+  final int successfulSyncs;
+  final int failedSyncs;
+  final List<dynamic> syncResults;
   final DateTime syncTimestamp;
 
   const SyncResponse({
-    required this.processedEvents,
-    required this.failedEvents,
-    required this.errors,
+    required this.totalEvents,
+    required this.successfulSyncs,
+    required this.failedSyncs,
+    required this.syncResults,
     required this.syncTimestamp,
   });
 
   factory SyncResponse.fromJson(Map<String, dynamic> json) => SyncResponse(
-        processedEvents: json['processed_events'] as int,
-        failedEvents: json['failed_events'] as int,
-        errors: List<String>.from(json['errors'] as List),
+        totalEvents: json['total_events'] as int? ?? 0,
+        successfulSyncs: json['successful_syncs'] as int? ?? 0,
+        failedSyncs: json['failed_syncs'] as int? ?? 0,
+        syncResults: json['sync_results'] is List ? json['sync_results'] : [],
         syncTimestamp: DateTime.parse(json['sync_timestamp'] as String),
       );
 
   Map<String, dynamic> toJson() => {
-        'processed_events': processedEvents,
-        'failed_events': failedEvents,
-        'errors': errors,
+        'total_events': totalEvents,
+        'successful_syncs': successfulSyncs,
+        'failed_syncs': failedSyncs,
+        'sync_results': syncResults,
         'sync_timestamp': syncTimestamp.toIso8601String(),
       };
 }

@@ -35,7 +35,7 @@ class ClockService {
   }
 
   // Realizar fichaje
-  static Future<ApiResponse<ClockResponse>> performClock({
+  static Future<ApiResponse<ClockStatus>> performClock({
     required String workCenterCode,
     required String userCode,
     String? action, // 'pause', 'resume_workday', 'clock_out', etc.
@@ -79,9 +79,9 @@ class ClockService {
       final jsonData = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        return ApiResponse<ClockResponse>.fromJson(
+        return ApiResponse<ClockStatus>.fromJson(
           jsonData,
-          (data) => ClockResponse.fromJson(data),
+          (data) => ClockStatus.fromJson(data),
         );
       } else {
         // Asegura que el mensaje sea siempre String

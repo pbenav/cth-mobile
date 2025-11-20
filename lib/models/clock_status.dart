@@ -1,6 +1,5 @@
 class ClockStatus {
-  final String
-      action; // 'clock_in', 'working_options', 'resume_workday', 'confirm_exceptional_clock_in', 'clock_out'
+  final String action;
   final bool canClock;
   final String? message;
   final bool? overtime;
@@ -8,10 +7,9 @@ class ClockStatus {
   final NextSlot? nextSlot;
   final TodayStats todayStats;
   final DateTime currentTime;
-  final String? workCenterCode;
-  final String? workCenterName; // Nombre del centro de trabajo
-  final int? pauseEventId; // Nuevo campo para reanudar desde pausa
-  final List<ClockEvent> todayRecords; // Nuevo campo para eventos del día
+  final int? pauseEventId;
+  final List<ClockEvent> todayRecords;
+  final Map<String, dynamic>? user; // Added user info
 
   const ClockStatus({
     required this.action,
@@ -22,10 +20,9 @@ class ClockStatus {
     this.nextSlot,
     required this.todayStats,
     required this.currentTime,
-    this.workCenterCode,
-    this.workCenterName,
     this.pauseEventId,
     this.todayRecords = const [],
+    this.user,
   });
 
   Map<String, dynamic> toJson() => {
@@ -37,10 +34,9 @@ class ClockStatus {
         'next_slot': nextSlot?.toJson(),
         'today_stats': todayStats.toJson(),
         'current_time': currentTime.toIso8601String(),
-        'work_center_code': workCenterCode,
-        'work_center_name': workCenterName,
         'pause_event_id': pauseEventId,
         'today_records': todayRecords.map((e) => e.toJson()).toList(),
+        'user': user,
       };
 
   static ClockStatus fromJson(Map<String, dynamic> json) {
@@ -59,6 +55,7 @@ class ClockStatus {
             .map((e) => ClockEvent.fromJson(e as Map<String, dynamic>))
             .toList()
         : [];
+    
     return ClockStatus(
       action: action,
       canClock: json['can_clock'] is bool ? json['can_clock'] as bool : false,
@@ -76,16 +73,15 @@ class ClockStatus {
           ? TodayStats.fromJson(json['today_stats'])
           : TodayStats(totalEntries: 0, totalExits: 0),
       currentTime: DateTime.now(),
-      workCenterCode: json['work_center_code'] is String
-          ? json['work_center_code'] as String
-          : null,
-      workCenterName: json['work_center_name'] is String
-          ? json['work_center_name'] as String
-          : null,
       pauseEventId: pauseEventId,
       todayRecords: todayRecords,
+      user: json['user'] as Map<String, dynamic>?,
     );
   }
+  
+  // Helper getters for compatibility
+  String? get workCenterName => null;
+  String? get workCenterCode => null;
 }
 
 // Modelo para los eventos del día
@@ -93,23 +89,23 @@ class ClockEvent {
   final int id;
   final int? eventTypeId;
   final String type;
-  final String status;
   final DateTime timestamp;
   final int? pauseEventId;
   final bool? isOpen;
-  final DateTime? start;  // Hora de inicio del evento
-  final DateTime? end;    // Hora de fin del evento (null si está abierto)
+  final DateTime? start;
+  final DateTime? end;
+  final String? observations;
 
   ClockEvent({
     required this.id,
     this.eventTypeId,
     required this.type,
-    required this.status,
     required this.timestamp,
     this.pauseEventId,
     this.isOpen,
     this.start,
     this.end,
+    this.observations,
   });
 
   factory ClockEvent.fromJson(Map<String, dynamic> json) {
@@ -121,8 +117,7 @@ class ClockEvent {
           ? json['event_type_id']
           : int.tryParse(json['event_type_id']?.toString() ?? ''),
       type: json['type']?.toString() ?? '',
-      status: json['status']?.toString() ?? '',
-      timestamp: DateTime.tryParse(json['timestamp']?.toString() ?? '') ??
+      timestamp: DateTime.tryParse(json['created_at']?.toString() ?? json['timestamp']?.toString() ?? '') ??
           DateTime.now(),
       pauseEventId: json['pause_event_id'] is int
           ? json['pause_event_id']
@@ -134,6 +129,7 @@ class ClockEvent {
       end: json['end'] != null
           ? DateTime.tryParse(json['end']?.toString() ?? '')
           : null,
+      observations: json['observations']?.toString(),
     );
   }
 
@@ -141,13 +137,16 @@ class ClockEvent {
         'id': id,
         'event_type_id': eventTypeId,
         'type': type,
-        'status': status,
-        'timestamp': timestamp.toIso8601String(),
+        'created_at': timestamp.toIso8601String(),
         'pause_event_id': pauseEventId,
         'is_open': isOpen,
         'start': start?.toIso8601String(),
         'end': end?.toIso8601String(),
+        'observations': observations,
       };
+      
+  // Helper for compatibility
+  String get status => isOpen == true ? 'open' : 'closed';
 }
 
 class NextSlot {
