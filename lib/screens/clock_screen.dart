@@ -199,6 +199,58 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
     }
   }
 
+  Future<bool> _isWithinSchedule() async {
+    try {
+      final now = DateTime.now();
+      final currentDayISO = now.weekday;
+      final allSchedule = await SetupService.getSavedSchedule();
+      
+      for (var entry in allSchedule) {
+        if (!entry.isActive) continue;
+        
+        final daysParts = entry.dayOfWeek.split(',').map((d) => d.trim()).toList();
+        bool isToday = false;
+        for (var dayPart in daysParts) {
+          if (_normalizeDayToISO(dayPart) == currentDayISO) {
+            isToday = true;
+            break;
+          }
+        }
+        
+        if (isToday) {
+          if (_isTimeInSlot(now, entry.startTime, entry.endTime)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  bool _isTimeInSlot(DateTime now, String startStr, String endStr) {
+    try {
+      final nowMinutes = now.hour * 60 + now.minute;
+      
+      final startParts = startStr.split(':');
+      final startMinutes = int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
+      
+      final endParts = endStr.split(':');
+      final endMinutes = int.parse(endParts[0]) * 60 + int.parse(endParts[1]);
+      
+      if (endMinutes < startMinutes) {
+        // Crosses midnight (e.g. 22:00 to 06:00 -> 1320 to 360)
+        return nowMinutes >= startMinutes || nowMinutes <= endMinutes;
+      } else {
+        // Normal (e.g. 08:00 to 15:00 -> 480 to 900)
+        return nowMinutes >= startMinutes && nowMinutes <= endMinutes;
+      }
+    } catch (e) {
+      return false;
+    }
+  }
+
   void _startHoursUpdateTimer() {
     _hoursUpdateTimer?.cancel();
     if (clockStatus?.todayStats.currentStatus == 'TRABAJANDO') {
@@ -548,23 +600,32 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
         }
       }
       await _ensureScheduleLoaded(userCode);
+      
+      // Determinar observaciones según horario y NFC
+      String? observations;
+      if (_nfcEnabled) {
+        final isWithinSchedule = await _isWithinSchedule();
+        if (!isWithinSchedule) {
+          observations = 'Evento creado con comprobación/autorización NFC.';
+        }
+        // Si está dentro del horario, observations se mantiene null (sin excepcionalidad)
+      } else {
+        observations = 'Evento creado sin comprobación/autorización NFC.';
+      }
+
       // Para inicio de jornada (clock_in) nunca se debe enviar 'action'
       if (action == 'clock_in') {
         await ClockService.performClock(
           workCenterCode: workCenterCode,
           userCode: userCode,
-          observations: _nfcEnabled
-              ? 'Evento creado con comprobación/autorización NFC.'
-              : 'Evento creado sin comprobación/autorización NFC.',
+          observations: observations,
         );
       } else {
         await ClockService.performClock(
           workCenterCode: workCenterCode,
           userCode: userCode,
           action: action,
-          observations: _nfcEnabled
-              ? 'Evento creado con comprobación/autorización NFC.'
-              : 'Evento creado sin comprobación/autorización NFC.',
+          observations: observations,
         );
       }
       if (mounted) {
