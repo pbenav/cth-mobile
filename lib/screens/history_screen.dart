@@ -27,10 +27,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
   String? _errorMessage;
   HistoryPagination? _pagination;
 
+import 'package:intl/date_symbol_data_local.dart';
+
   @override
   void initState() {
     super.initState();
-    _loadHistory();
+    initializeDateFormatting('es', null).then((_) {
+      _loadHistory();
+    });
   }
 
   Future<void> _loadHistory() async {
