@@ -203,41 +203,69 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
     try {
       final now = DateTime.now();
       final currentDayISO = now.weekday;
+      print('[DEBUG] _isWithinSchedule: Now=$now, DayISO=$currentDayISO');
+      
       final allSchedule = await SetupService.getSavedSchedule();
+      print('[DEBUG] _isWithinSchedule: Found ${allSchedule.length} schedule entries');
       
       for (var entry in allSchedule) {
+        print('[DEBUG] Checking entry: id=${entry.id}, days=${entry.dayOfWeek}, time=${entry.startTime}-${entry.endTime}, active=${entry.isActive}');
+        
         if (!entry.isActive) continue;
         
         final daysParts = entry.dayOfWeek.split(',').map((d) => d.trim()).toList();
         bool isToday = false;
         for (var dayPart in daysParts) {
-          if (_normalizeDayToISO(dayPart) == currentDayISO) {
+          final normalized = _normalizeDayToISO(dayPart);
+          print('[DEBUG]   - Day part "$dayPart" normalized to $normalized');
+          if (normalized == currentDayISO) {
             isToday = true;
             break;
           }
         }
         
         if (isToday) {
-          if (_isTimeInSlot(now, entry.startTime, entry.endTime)) {
+          final inSlot = _isTimeInSlot(now, entry.startTime, entry.endTime);
+          print('[DEBUG]   - Is today! Time in slot? $inSlot');
+          if (inSlot) {
             return true;
           }
+        } else {
+          print('[DEBUG]   - Not today');
         }
       }
+      print('[DEBUG] _isWithinSchedule: No matching slot found');
       return false;
     } catch (e) {
+      print('[DEBUG] _isWithinSchedule error: $e');
       return false;
     }
   }
 
   bool _isTimeInSlot(DateTime now, String startStr, String endStr) {
     try {
+      if (startStr.isEmpty || endStr.isEmpty) return false;
+
       final nowMinutes = now.hour * 60 + now.minute;
       
-      final startParts = startStr.split(':');
-      final startMinutes = int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
-      
-      final endParts = endStr.split(':');
-      final endMinutes = int.parse(endParts[0]) * 60 + int.parse(endParts[1]);
+      int parseTime(String timeStr) {
+        String cleanTime = timeStr.trim();
+        // Handle "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DDTHH:MM:SS"
+        if (cleanTime.contains('T')) {
+          cleanTime = cleanTime.split('T')[1];
+        } else if (cleanTime.contains(' ')) {
+          cleanTime = cleanTime.split(' ').last;
+        }
+        
+        final parts = cleanTime.split(':');
+        if (parts.isEmpty) throw FormatException('Empty time string');
+        final h = int.parse(parts[0]);
+        final m = parts.length > 1 ? int.parse(parts[1]) : 0;
+        return h * 60 + m;
+      }
+
+      final startMinutes = parseTime(startStr);
+      final endMinutes = parseTime(endStr);
       
       if (endMinutes < startMinutes) {
         // Crosses midnight (e.g. 22:00 to 06:00 -> 1320 to 360)
@@ -247,6 +275,7 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
         return nowMinutes >= startMinutes && nowMinutes <= endMinutes;
       }
     } catch (e) {
+      print('[DEBUG] Error parsing time slot: $startStr - $endStr: $e');
       return false;
     }
   }
@@ -348,8 +377,18 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
   }
 
   Future<void> _ensureScheduleLoaded(String userCode) async {
-    // Stub: Aquí se puede agregar lógica para cargar el horario si es necesario
-    return;
+    try {
+      print('[DEBUG] Ensuring schedule is loaded for user $userCode...');
+      // Forzar actualización de datos del trabajador (incluyendo horario)
+      await SetupService.refreshSavedWorkerData(
+        blocking: true,
+        timeout: const Duration(seconds: 5),
+        onLog: (msg) => print('[DEBUG] Refresh: $msg'),
+      );
+      print('[DEBUG] Schedule refresh completed.');
+    } catch (e) {
+      print('[DEBUG] Error refreshing schedule: $e');
+    }
   }
 
   Color _getStatusBackgroundColor(String? status) {
