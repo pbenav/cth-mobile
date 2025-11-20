@@ -383,14 +383,17 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
       }
 
       if (action == 'resume_workday') {
-        int? pauseEventId;
-        const int pauseEventTypeId =
-            285; // Actualiza este valor según tu backend
-        if (clockStatus != null && clockStatus!.todayRecords.isNotEmpty) {
-          for (final event in clockStatus!.todayRecords) {
-            if (event.eventTypeId == pauseEventTypeId && _isOpenStatus(event)) {
-              pauseEventId = event.id;
-              break;
+        int? pauseEventId = clockStatus?.pauseEventId;
+        
+        // Si no viene del backend, intentamos buscarlo localmente (fallback)
+        if (pauseEventId == null) {
+          const int pauseEventTypeId = 285; // Actualiza este valor según tu backend
+          if (clockStatus != null && clockStatus!.todayRecords.isNotEmpty) {
+            for (final event in clockStatus!.todayRecords) {
+              if (event.eventTypeId == pauseEventTypeId && _isOpenStatus(event)) {
+                pauseEventId = event.id;
+                break;
+              }
             }
           }
         }
