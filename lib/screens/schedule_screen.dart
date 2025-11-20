@@ -177,6 +177,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(I18n.of('schedule.title')),
+        backgroundColor: const Color(AppConstants.primaryColorValue),
+        foregroundColor: Colors.white,
         actions: [
           if (!_isLoading && _schedule != null)
             if (_isEditing) ...[
