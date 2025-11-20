@@ -1,15 +1,31 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/history_event.dart';
-import '../services/storage_service.dart';
+import '../services/setup_service.dart';
+import '../services/config_service.dart';
+import '../utils/constants.dart';
 
 class HistoryService {
   static Future<String> _getBaseUrl() async {
-    final serverUrl = await StorageService.getServerUrl();
-    if (serverUrl == null || serverUrl.isEmpty) {
-      throw Exception('Server URL not configured');
+    // First try to get the configured URL from setup
+    final setupUrl = await SetupService.getConfiguredServerUrl();
+    if (setupUrl != null) {
+      return _normalizeUrl(setupUrl);
     }
-    return '$serverUrl/api/v1/mobile';
+
+    // If no setup URL, use previous configuration
+    final configuredUrl = await ConfigService.getCurrentServerUrl();
+    final baseUrl = configuredUrl ?? AppConstants.apiBaseUrl;
+
+    return _normalizeUrl(baseUrl);
+  }
+
+  static String _normalizeUrl(String url) {
+    // Remove trailing slash if present
+    if (url.endsWith('/')) {
+      url = url.substring(0, url.length - 1);
+    }
+    return '$url/api/v1/mobile';
   }
 
   /// Get user's event history
