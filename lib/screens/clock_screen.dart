@@ -11,6 +11,7 @@ import '../services/webview_service.dart';
 import '../services/setup_service.dart';
 import 'settings_screen.dart';
 import 'profile_screen.dart';
+import 'history_screen.dart';
 import '../utils/constants.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
@@ -1209,12 +1210,22 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
       children: [
         IconButton(
           onPressed: () async {
-            await WebViewService.openAuthenticatedWebView(
-              context: context,
-              workCenter: widget.workCenter,
-              user: widget.user,
-              path: path,
-            );
+            // Navigate to native screen for history, otherwise use WebView
+            if (path == AppConstants.webViewHistory) {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => HistoryScreen(user: widget.user),
+                ),
+              );
+            } else {
+              await WebViewService.openAuthenticatedWebView(
+                context: context,
+                workCenter: widget.workCenter,
+                user: widget.user,
+                path: path,
+              );
+            }
           },
           icon: Icon(icon, size: 28),
           style: IconButton.styleFrom(

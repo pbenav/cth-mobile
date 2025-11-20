@@ -44,5 +44,17 @@
   "dialog.logout_content": "¿Estás seguro de que deseas cerrar sesión?",
   "dialog.cancel": "Cancelar",
   "dialog.logout": "Cerrar sesión",
-  "clock.exceptional_start": "Inicio excepcional"
+  "clock.exceptional_start": "Inicio excepcional",
+  "history.title": "Historial",
+  "history.filter.today": "Hoy",
+  "history.filter.week": "Esta semana",
+  "history.filter.month": "Este mes",
+  "history.error": "Error al cargar historial",
+  "history.empty": "No hay eventos en este período",
+  "history.today": "Hoy",
+  "history.yesterday": "Ayer",
+  "history.status.open": "Abierto",
+  "history.status.authorized": "Autorizado",
+  "history.status.exceptional": "Excepcional",
+  "common.retry": "Reintentar"
 }
