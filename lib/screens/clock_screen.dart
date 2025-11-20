@@ -230,8 +230,9 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
     // Calcular las horas trabajadas basándose en los eventos del día
     Duration totalWorked = Duration.zero;
     
-    // Usar hora actual en UTC para comparar con los timestamps del servidor
-    final now = DateTime.now().toUtc();
+    // IMPORTANTE: El servidor envía timestamps en hora local pero marcados como UTC
+    // Por eso usamos hora local para el cálculo
+    final now = DateTime.now();
 
     // Ordenar eventos por timestamp
     final sortedEvents = List<ClockEvent>.from(clockStatus!.todayRecords)
@@ -255,16 +256,20 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
       // NO usar timestamp (que es la fecha de creación del evento)
       
       if (event.start != null) {
+        // Convertir start/end de UTC a local ya que el servidor los envía en hora local marcados como UTC
+        final startLocal = event.start!.toLocal();
+        
         // Si el evento tiene start, es un evento de trabajo
         if (event.end != null) {
           // Evento cerrado: tiene start y end
-          final duration = event.end!.difference(event.start!);
+          final endLocal = event.end!.toLocal();
+          final duration = endLocal.difference(startLocal);
           print('[DEBUG] Adding closed event duration: ${duration.inSeconds}s');
           totalWorked += duration;
         } else if (event.isOpen == true) {
-          // Evento abierto: tiene start pero no end, usar hora actual en UTC
-          final duration = now.difference(event.start!);
-          print('[DEBUG] Adding open event duration: ${duration.inSeconds}s (now: $now, start: ${event.start})');
+          // Evento abierto: tiene start pero no end, usar hora actual
+          final duration = now.difference(startLocal);
+          print('[DEBUG] Adding open event duration: ${duration.inSeconds}s (now: $now, startLocal: $startLocal)');
           totalWorked += duration;
         }
       }
