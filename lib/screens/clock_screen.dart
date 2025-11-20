@@ -114,6 +114,7 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
   bool isPerformingClock = false;
   bool _nfcEnabled = true;
   bool _nfcAvailable = true;
+  bool _isLocallyWithinSchedule = false;
   Timer? _hoursUpdateTimer;
   String? _calculatedWorkedHours;
 
@@ -123,8 +124,10 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
       final response = await ClockService.getStatus(
         userCode: widget.user.code,
       );
+      final isWithin = await _isWithinSchedule();
       setState(() {
         clockStatus = response.data;
+        _isLocallyWithinSchedule = isWithin;
         _updateCalculatedHours();
       });
       
@@ -400,6 +403,10 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
     if (upper == 'INICIAR REGISTRO EXCEPCIONAL' ||
         upper.contains('EXCEPCIONAL') ||
         upper.contains('FUERA DE HORARIO')) {
+      // Si localmente estamos en horario, mostramos verde (éxito) en lugar de naranja
+      if (_isLocallyWithinSchedule) {
+        return const Color(AppConstants.successColorValue);
+      }
       return const Color(AppConstants.warningColorValue);
     }
     return Colors.grey;
@@ -966,8 +973,10 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
                                     if (status == 'INICIAR JORNADA' ||
                                         status ==
                                             'INICIAR REGISTRO EXCEPCIONAL') {
+                                      // Override exceptional status if we are locally within schedule
                                       final isExceptional = status ==
-                                          'INICIAR REGISTRO EXCEPCIONAL';
+                                              'INICIAR REGISTRO EXCEPCIONAL' &&
+                                          !_isLocallyWithinSchedule;
                                       return SizedBox(
                                         width: double.infinity,
                                         height: AppConstants.buttonHeight * 1.2,
