@@ -200,6 +200,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Color _getHolidayTypeColor(String type) {
+    switch (type.toLowerCase()) {
+      case 'national':
+        return Colors.red[700]!;
+      case 'regional':
+        return Colors.orange[700]!;
+      case 'company':
+        return Colors.blue[700]!;
+      default:
+        return Colors.grey[700]!;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -451,26 +464,104 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-                if (_holidays.isEmpty)
-                  const Text('No hay festivos guardados')
-                else
-                  SizedBox(
-                    height: 150, // Adjust height as needed
-                    child: ListView.builder(
-                      itemCount: _holidays.length,
-                      physics: const BouncingScrollPhysics(),
-                      itemBuilder: (context, index) {
-                        final h = _holidays[index];
-                        return Card(
-                          child: ListTile(
-                            leading: const Icon(Icons.calendar_today),
-                            title: Text(h.name.isNotEmpty ? h.name : h.date),
-                            subtitle: Text(h.date),
-                          ),
-                        );
-                      },
+              if (_holidays.isEmpty)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.info_outline, color: Colors.grey),
+                      SizedBox(width: 12),
+                      Text(
+                        'No hay festivos guardados',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Container(
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(AppConstants.primaryColorValue).withOpacity(0.2),
+                      width: 1,
                     ),
                   ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.all(8),
+                    itemCount: _holidays.length,
+                    physics: const BouncingScrollPhysics(),
+                    separatorBuilder: (context, index) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final h = _holidays[index];
+                      return Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(AppConstants.primaryColorValue).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.calendar_today,
+                                size: 20,
+                                color: Color(AppConstants.primaryColorValue),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    h.name.isNotEmpty ? h.name : 'Festivo',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    h.date,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: _getHolidayTypeColor(h.type),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                h.typeName,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
 
               const SizedBox(height: 32),
 
