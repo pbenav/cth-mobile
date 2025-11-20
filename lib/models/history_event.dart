@@ -30,6 +30,13 @@ class HistoryEvent {
   });
 
   factory HistoryEvent.fromJson(Map<String, dynamic> json) {
+    bool parseBool(dynamic value) {
+      if (value is bool) return value;
+      if (value is int) return value == 1;
+      if (value is String) return value == '1' || value.toLowerCase() == 'true';
+      return false;
+    }
+
     return HistoryEvent(
       id: json['id'] as int,
       type: json['type'] as String,
@@ -38,9 +45,9 @@ class HistoryEvent {
       end: json['end'] != null ? DateTime.parse(json['end']) : null,
       durationSeconds: json['duration_seconds'] as int?,
       durationFormatted: json['duration_formatted'] as String?,
-      isOpen: json['is_open'] as bool? ?? false,
-      isAuthorized: json['is_authorized'] as bool? ?? false,
-      isExceptional: json['is_exceptional'] as bool? ?? false,
+      isOpen: parseBool(json['is_open']),
+      isAuthorized: parseBool(json['is_authorized']),
+      isExceptional: parseBool(json['is_exceptional']),
       observations: json['observations'] as String?,
       description: json['description'] as String?,
       createdAt: json['created_at'] != null 
