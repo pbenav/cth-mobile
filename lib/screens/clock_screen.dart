@@ -721,17 +721,7 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
             icon: const Icon(Icons.refresh),
             onPressed: isLoading ? null : _loadStatus,
           ),
-          IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () async {
-              await Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const ProfileScreen(),
-                ),
-              );
-              await _loadStatus();
-            },
-          ),
+
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () async {
@@ -1271,11 +1261,20 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
                                                   'clock.reports_title'),
                                               path: AppConstants.webViewReports,
                                             ),
-                                            _buildWebViewButton(
+                                            _buildNativeButton(
                                               icon: Icons.person,
                                               label: I18n.of(
                                                   'clock.profile_title'),
-                                              path: AppConstants.webViewProfile,
+                                              onTap: () async {
+                                                await Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        const ProfileScreen(),
+                                                  ),
+                                                );
+                                                await _loadStatus();
+                                              },
                                             ),
                                           ],
                                         ),
