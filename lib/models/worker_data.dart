@@ -199,16 +199,43 @@ class ScheduleEntry {
   }
 
   String get dayName {
-    switch (dayOfWeek.toLowerCase()) {
-      case 'monday': return 'Lunes';
-      case 'tuesday': return 'Martes';
-      case 'wednesday': return 'Miércoles';
-      case 'thursday': return 'Jueves';
-      case 'friday': return 'Viernes';
-      case 'saturday': return 'Sábado';
-      case 'sunday': return 'Domingo';
-      default: return dayOfWeek;
+    if (dayOfWeek.isEmpty) return '';
+    
+    final parts = dayOfWeek.split(',').map((e) => e.trim()).toList();
+    final List<String> names = [];
+    
+    for (final part in parts) {
+      String name = part;
+      final lower = part.toLowerCase();
+      
+      // Try to parse as ISO number
+      final num = int.tryParse(part);
+      if (num != null) {
+        switch (num) {
+          case 1: name = 'Lunes'; break;
+          case 2: name = 'Martes'; break;
+          case 3: name = 'Miércoles'; break;
+          case 4: name = 'Jueves'; break;
+          case 5: name = 'Viernes'; break;
+          case 6: name = 'Sábado'; break;
+          case 7: name = 'Domingo'; break;
+        }
+      } else {
+        // Try to map from abbreviations or English names
+        switch (lower) {
+          case 'monday': case 'mon': case 'l': case 'lunes': name = 'Lunes'; break;
+          case 'tuesday': case 'tue': case 'm': case 'martes': name = 'Martes'; break;
+          case 'wednesday': case 'wed': case 'x': case 'miércoles': case 'miercoles': name = 'Miércoles'; break;
+          case 'thursday': case 'thu': case 'j': case 'jueves': name = 'Jueves'; break;
+          case 'friday': case 'fri': case 'v': case 'viernes': name = 'Viernes'; break;
+          case 'saturday': case 'sat': case 's': case 'sábado': case 'sabado': name = 'Sábado'; break;
+          case 'sunday': case 'sun': case 'd': case 'domingo': name = 'Domingo'; break;
+        }
+      }
+      names.add(name);
     }
+    
+    return names.join(', ');
   }
 }
 
