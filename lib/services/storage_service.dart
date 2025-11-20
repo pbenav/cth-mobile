@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/work_center.dart';
 import '../models/user.dart';
 import '../models/api_response.dart';
@@ -7,16 +8,16 @@ import '../utils/constants.dart';
 import '../utils/exceptions.dart';
 
 class StorageService {
+  static const _secureStorage = FlutterSecureStorage();
+
   // Guardar cookie de sesión
   static Future<void> saveLaravelSessionCookie(String value) async {
-    final prefs = await _preferences;
-    await prefs.setString('laravel_session', value);
+    await _secureStorage.write(key: 'laravel_session', value: value);
   }
 
   // Obtener cookie de sesión
   static Future<String?> getLaravelSessionCookie() async {
-    final prefs = await _preferences;
-    return prefs.getString('laravel_session');
+    return await _secureStorage.read(key: 'laravel_session');
   }
 
   static SharedPreferences? _prefs;
@@ -37,7 +38,7 @@ class StorageService {
     return await _preferences;
   }
 
-  // Métodos genéricos para almacenamiento
+  // Métodos genéricos para almacenamiento (Preferencias no sensibles)
   static Future<void> setString(String key, String value) async {
     final prefs = await _preferences;
     await prefs.setString(key, value);
@@ -63,12 +64,11 @@ class StorageService {
     await prefs.remove(key);
   }
 
-  // WorkCenter operations
+  // WorkCenter operations (Sensitive - Secure Storage)
   static Future<void> saveWorkCenter(WorkCenter workCenter) async {
     try {
-      final prefs = await _preferences;
       final jsonData = jsonEncode(workCenter.toJson());
-      await prefs.setString(AppConstants.keyWorkCenter, jsonData);
+      await _secureStorage.write(key: AppConstants.keyWorkCenter, value: jsonData);
     } catch (e) {
       throw StorageException('Error guardando centro de trabajo: $e');
     }
@@ -76,8 +76,7 @@ class StorageService {
 
   static Future<WorkCenter?> getWorkCenter() async {
     try {
-      final prefs = await _preferences;
-      final data = prefs.getString(AppConstants.keyWorkCenter);
+      final data = await _secureStorage.read(key: AppConstants.keyWorkCenter);
       if (data != null) {
         final workCenter =
             WorkCenter.fromJson(jsonDecode(data) as Map<String, dynamic>);
@@ -85,26 +84,24 @@ class StorageService {
       }
       return null;
     } catch (e) {
-      print('DEBUG: Error cargando WorkCenter: $e');
+      // print('DEBUG: Error cargando WorkCenter: $e');
       throw StorageException('Error cargando centro de trabajo: $e');
     }
   }
 
   static Future<void> clearWorkCenter() async {
     try {
-      final prefs = await _preferences;
-      await prefs.remove(AppConstants.keyWorkCenter);
+      await _secureStorage.delete(key: AppConstants.keyWorkCenter);
     } catch (e) {
       throw StorageException('Error limpiando centro de trabajo: $e');
     }
   }
 
-  // User operations
+  // User operations (Sensitive - Secure Storage)
   static Future<void> saveUser(User user) async {
     try {
-      final prefs = await _preferences;
       final jsonData = jsonEncode(user.toJson());
-      await prefs.setString(AppConstants.keyUser, jsonData);
+      await _secureStorage.write(key: AppConstants.keyUser, value: jsonData);
     } catch (e) {
       throw StorageException('Error guardando usuario: $e');
     }
@@ -112,24 +109,28 @@ class StorageService {
 
   // Obtener usuario almacenado
   static Future<User?> getUser() async {
-    final prefs = await _preferences;
-    final userJson = prefs.getString('user');
-    if (userJson != null) {
-      return User.fromJson(jsonDecode(userJson));
+    try {
+      final userJson = await _secureStorage.read(key: AppConstants.keyUser);
+      if (userJson != null) {
+        return User.fromJson(jsonDecode(userJson));
+      }
+      return null;
+    } catch (e) {
+       // Fallback for migration or error
+       return null;
     }
-    return null;
   }
 
   static Future<void> clearUser() async {
     try {
-      final prefs = await _preferences;
-      await prefs.remove(AppConstants.keyUser);
+      await _secureStorage.delete(key: AppConstants.keyUser);
     } catch (e) {
       throw StorageException('Error limpiando usuario: $e');
     }
   }
 
-  // Offline events operations
+  // Offline events operations (Can be large, keep in SharedPreferences or File, but SharedPreferences is fine for now as it's not strictly credentials)
+  // However, if it contains sensitive data, it should be encrypted. For now, we keep it in SharedPreferences for performance/size reasons unless specified otherwise.
   static Future<void> saveOfflineEvents(List<OfflineClockEvent> events) async {
     try {
       final prefs = await _preferences;

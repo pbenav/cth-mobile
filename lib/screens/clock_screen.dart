@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../i18n/i18n_service.dart';
 import '../models/work_center.dart';
 import '../models/user.dart';
@@ -7,6 +8,7 @@ import '../services/clock_service.dart';
 import '../services/storage_service.dart';
 import '../services/nfc_service.dart';
 import '../services/webview_service.dart';
+import '../services/setup_service.dart';
 import 'settings_screen.dart';
 import 'profile_screen.dart';
 import '../utils/constants.dart';
@@ -50,6 +52,7 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
   void dispose() {
     // Desregistrar RouteObserver
     routeObserver.unsubscribe(this);
+    _hoursUpdateTimer?.cancel();
     super.dispose();
   }
 
@@ -110,6 +113,8 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
   bool isPerformingClock = false;
   bool _nfcEnabled = true;
   bool _nfcAvailable = true;
+  Timer? _hoursUpdateTimer;
+  String? _calculatedWorkedHours;
 
   Future<void> _loadStatus() async {
     setState(() => isLoading = true);
@@ -119,11 +124,145 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
       );
       setState(() {
         clockStatus = response.data;
+        _updateCalculatedHours();
       });
+      
+      _startHoursUpdateTimer();
     } catch (e) {
       _showError(I18n.of('clock.loading_error', {'error': e.toString()}));
     } finally {
       setState(() => isLoading = false);
+    }
+  }
+
+  /// Normaliza un día a su número ISO (1=Monday, 7=Sunday)
+  /// Soporta: inglés completo, español completo, abreviaturas ES, números ISO
+  int? _normalizeDayToISO(String day) {
+    final normalized = day.trim().toLowerCase();
+    
+    // Mapeo completo de todos los formatos posibles
+    final dayMap = {
+      // Inglés completo
+      'monday': 1, 'tuesday': 2, 'wednesday': 3, 'thursday': 4,
+      'friday': 5, 'saturday': 6, 'sunday': 7,
+      // Español completo
+      'lunes': 1, 'martes': 2, 'miércoles': 3, 'miercoles': 3,
+      'jueves': 4, 'viernes': 5, 'sábado': 6, 'sabado': 6, 'domingo': 7,
+      // Abreviaturas españolas
+      'l': 1, 'm': 2, 'x': 3, 'j': 4, 'v': 5, 's': 6, 'd': 7,
+      // Abreviaturas inglesas
+      'mon': 1, 'tue': 2, 'wed': 3, 'thu': 4, 'fri': 5, 'sat': 6, 'sun': 7,
+    };
+    
+    // Intentar mapeo directo
+    if (dayMap.containsKey(normalized)) {
+      return dayMap[normalized];
+    }
+    
+    // Intentar parsear como número ISO (1-7)
+    final num = int.tryParse(normalized);
+    if (num != null && num >= 1 && num <= 7) {
+      return num;
+    }
+    
+    return null;
+  }
+
+  Future<String> _getCurrentTimeSlot() async {
+    try {
+      final now = DateTime.now();
+      final currentDayISO = now.weekday; // 1=Monday, 7=Sunday
+      
+      // Obtener todo el schedule guardado
+      final allSchedule = await SetupService.getSavedSchedule();
+      
+      // Buscar una entrada que contenga el día actual
+      for (var entry in allSchedule) {
+        if (!entry.isActive) continue;
+        
+        // El campo dayOfWeek puede contener múltiples días separados por comas
+        final daysParts = entry.dayOfWeek.split(',').map((d) => d.trim()).toList();
+        
+        // Normalizar cada día a número ISO y verificar si coincide
+        for (var dayPart in daysParts) {
+          final dayISO = _normalizeDayToISO(dayPart);
+          if (dayISO == currentDayISO) {
+            return '${entry.startTime} - ${entry.endTime}';
+          }
+        }
+      }
+      
+      return 'Sin tramo horario';
+    } catch (e) {
+      return 'Sin tramo horario';
+    }
+  }
+
+  void _startHoursUpdateTimer() {
+    _hoursUpdateTimer?.cancel();
+    if (clockStatus?.todayStats.currentStatus == 'TRABAJANDO') {
+      // Actualizar cada 10 segundos para que sea más responsive
+      _hoursUpdateTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+        if (mounted) {
+          setState(() {
+            _updateCalculatedHours();
+          });
+        }
+      });
+    }
+  }
+
+  void _updateCalculatedHours() {
+    if (clockStatus == null) {
+      _calculatedWorkedHours = null;
+      return;
+    }
+
+    // Si no hay eventos del día, usar el valor del servidor
+    if (clockStatus!.todayRecords.isEmpty) {
+      _calculatedWorkedHours = clockStatus!.todayStats.workedHours;
+      return;
+    }
+
+    // Calcular las horas trabajadas basándose en los eventos del día
+    Duration totalWorked = Duration.zero;
+
+    // Ordenar eventos por timestamp
+    final sortedEvents = List<ClockEvent>.from(clockStatus!.todayRecords)
+      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+
+    for (final event in sortedEvents) {
+      // IMPORTANTE: Usar los campos start y end para calcular las horas trabajadas
+      // NO usar timestamp (que es la fecha de creación del evento)
+      
+      if (event.start != null) {
+        // Si el evento tiene start, es un evento de trabajo
+        if (event.end != null) {
+          // Evento cerrado: tiene start y end
+          final duration = event.end!.difference(event.start!);
+          totalWorked += duration;
+        } else if (event.isOpen == true) {
+          // Evento abierto: tiene start pero no end, usar hora actual
+          final duration = DateTime.now().difference(event.start!);
+          totalWorked += duration;
+        }
+      }
+    }
+
+    // Si el cálculo da 0 pero el servidor tiene un valor, usar el del servidor
+    if (totalWorked.inSeconds == 0 && clockStatus!.todayStats.workedHours != null) {
+      _calculatedWorkedHours = clockStatus!.todayStats.workedHours;
+    } else {
+      final hours = totalWorked.inHours;
+      final minutes = totalWorked.inMinutes.remainder(60);
+      final seconds = totalWorked.inSeconds.remainder(60);
+      
+      // Si es menos de 1 minuto, mostrar segundos
+      if (totalWorked.inMinutes == 0) {
+        _calculatedWorkedHours = '0:00:${seconds.toString().padLeft(2, '0')}';
+      } else {
+        _calculatedWorkedHours = '${hours.toString().padLeft(1, '0')}:${minutes.toString().padLeft(2, '0')}';
+      }
     }
   }
 
@@ -572,14 +711,18 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                Text(
-                                  (clockStatus?.nextSlot != null)
-                                      ? '${clockStatus!.nextSlot!.start} - ${clockStatus!.nextSlot!.end}'
-                                      : 'Sin tramo horario',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[600],
-                                  ),
+                                FutureBuilder<String>(
+                                  future: _getCurrentTimeSlot(),
+                                  builder: (context, snapshot) {
+                                    final timeSlot = snapshot.data ?? 'Cargando...';
+                                    return Text(
+                                      'Tramo actual: $timeSlot',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[600],
+                                      ),
+                                    );
+                                  },
                                 ),
                               ],
                             ),
@@ -659,7 +802,8 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
                                             ),
                                             _buildStatItem(
                                               'clock.hours',
-                                              clockStatus!
+                                              _calculatedWorkedHours ??
+                                                  clockStatus!
                                                       .todayStats.workedHours ??
                                                   '0:00',
                                               Icons.access_time,
@@ -1021,7 +1165,14 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
     return Column(
       children: [
         IconButton(
-          onPressed: () {},
+          onPressed: () async {
+            await WebViewService.openAuthenticatedWebView(
+              context: context,
+              workCenter: widget.workCenter,
+              user: widget.user,
+              path: path,
+            );
+          },
           icon: Icon(icon, size: 28),
           style: IconButton.styleFrom(
             backgroundColor:

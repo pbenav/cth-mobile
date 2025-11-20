@@ -139,6 +139,7 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
+          tooltip: 'Volver atrás',
         ),
       ),
       body: Container(
@@ -158,67 +159,70 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
             child: Column(
               children: [
                 // Info del centro de trabajo
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(AppConstants.spacing),
-                  margin:
-                      const EdgeInsets.only(bottom: AppConstants.spacing * 2),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius:
-                        BorderRadius.circular(AppConstants.cardBorderRadius),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 5,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(AppConstants.primaryColorValue)
-                              .withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
+                Semantics(
+                  label: 'Información del centro de trabajo',
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(AppConstants.spacing),
+                    margin:
+                        const EdgeInsets.only(bottom: AppConstants.spacing * 2),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius:
+                          BorderRadius.circular(AppConstants.cardBorderRadius),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 5,
+                          offset: const Offset(0, 2),
                         ),
-                        child: const Icon(
-                          Icons.business,
-                          color: Color(AppConstants.primaryColorValue),
-                          size: 24,
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(AppConstants.primaryColorValue)
+                                .withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.business,
+                            color: Color(AppConstants.primaryColorValue),
+                            size: 24,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Centro de Trabajo',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Centro de Trabajo',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${widget.workCenter.code} - ${widget.workCenter.name}',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                              const SizedBox(height: 2),
+                              Text(
+                                '${widget.workCenter.code} - ${widget.workCenter.name}',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      const Icon(
-                        Icons.check_circle,
-                        color: Color(AppConstants.successColorValue),
-                        size: 20,
-                      ),
-                    ],
+                        const Icon(
+                          Icons.check_circle,
+                          color: Color(AppConstants.successColorValue),
+                          size: 20,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
 
@@ -286,75 +290,93 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
                               const SizedBox(height: AppConstants.spacing * 2),
 
                               // Código del usuario (obligatorio)
-                              Text(
-                                'Código de Empleado *',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.grey[800],
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              TextFormField(
-                                controller: _codeController,
-                                decoration: InputDecoration(
-                                  hintText: 'Ej: 1234567',
-                                  prefixIcon: const Icon(Icons.badge),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(
-                                      color:
-                                          Color(AppConstants.primaryColorValue),
+                              Semantics(
+                                label: 'Campo de texto para código de empleado',
+                                hint: 'Introduce tu código de empleado',
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Código de Empleado *',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey[800],
+                                      ),
                                     ),
-                                  ),
+                                    const SizedBox(height: 8),
+                                    TextFormField(
+                                      controller: _codeController,
+                                      decoration: InputDecoration(
+                                        hintText: 'Ej: 1234567',
+                                        prefixIcon: const Icon(Icons.badge),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: const BorderSide(
+                                            color:
+                                                Color(AppConstants.primaryColorValue),
+                                          ),
+                                        ),
+                                      ),
+                                      keyboardType: TextInputType.text,
+                                      textCapitalization:
+                                          TextCapitalization.characters,
+                                      validator: (value) {
+                                        if (value == null || value.trim().isEmpty) {
+                                          return 'El código de empleado es obligatorio';
+                                        }
+                                        if (value.trim().length < 3) {
+                                          return 'El código debe tener al menos 3 caracteres';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ],
                                 ),
-                                keyboardType: TextInputType.text,
-                                textCapitalization:
-                                    TextCapitalization.characters,
-                                validator: (value) {
-                                  if (value == null || value.trim().isEmpty) {
-                                    return 'El código de empleado es obligatorio';
-                                  }
-                                  if (value.trim().length < 3) {
-                                    return 'El código debe tener al menos 3 caracteres';
-                                  }
-                                  return null;
-                                },
                               ),
 
                               const SizedBox(
                                   height: AppConstants.spacing * 1.5),
 
                               // Nombre del usuario (opcional)
-                              Text(
-                                'Nombre (opcional)',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.grey[800],
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              TextFormField(
-                                controller: _nameController,
-                                decoration: InputDecoration(
-                                  hintText: 'Ej: Juan Pérez',
-                                  prefixIcon: const Icon(Icons.person_outline),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(
-                                      color:
-                                          Color(AppConstants.primaryColorValue),
+                              Semantics(
+                                label: 'Campo de texto para nombre',
+                                hint: 'Introduce tu nombre (opcional)',
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Nombre (opcional)',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey[800],
+                                      ),
                                     ),
-                                  ),
+                                    const SizedBox(height: 8),
+                                    TextFormField(
+                                      controller: _nameController,
+                                      decoration: InputDecoration(
+                                        hintText: 'Ej: Juan Pérez',
+                                        prefixIcon: const Icon(Icons.person_outline),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: const BorderSide(
+                                            color:
+                                                Color(AppConstants.primaryColorValue),
+                                          ),
+                                        ),
+                                      ),
+                                      textCapitalization: TextCapitalization.words,
+                                    ),
+                                  ],
                                 ),
-                                textCapitalization: TextCapitalization.words,
                               ),
 
                               const SizedBox(height: AppConstants.spacing * 2),

@@ -69,7 +69,9 @@ class ClockStatus {
           : (json['event_type_id'] is String
               ? int.tryParse(json['event_type_id'])
               : null),
-      nextSlot: null,
+      nextSlot: json['next_slot'] is Map<String, dynamic>
+          ? NextSlot.fromJson(json['next_slot'])
+          : null,
       todayStats: json['today_stats'] is Map<String, dynamic>
           ? TodayStats.fromJson(json['today_stats'])
           : TodayStats(totalEntries: 0, totalExits: 0),
@@ -95,6 +97,8 @@ class ClockEvent {
   final DateTime timestamp;
   final int? pauseEventId;
   final bool? isOpen;
+  final DateTime? start;  // Hora de inicio del evento
+  final DateTime? end;    // Hora de fin del evento (null si está abierto)
 
   ClockEvent({
     required this.id,
@@ -104,6 +108,8 @@ class ClockEvent {
     required this.timestamp,
     this.pauseEventId,
     this.isOpen,
+    this.start,
+    this.end,
   });
 
   factory ClockEvent.fromJson(Map<String, dynamic> json) {
@@ -122,6 +128,12 @@ class ClockEvent {
           ? json['pause_event_id']
           : int.tryParse(json['pause_event_id']?.toString() ?? ''),
       isOpen: json['is_open'] == true || json['is_open']?.toString() == 'true',
+      start: json['start'] != null 
+          ? DateTime.tryParse(json['start']?.toString() ?? '')
+          : null,
+      end: json['end'] != null
+          ? DateTime.tryParse(json['end']?.toString() ?? '')
+          : null,
     );
   }
 
@@ -133,6 +145,8 @@ class ClockEvent {
         'timestamp': timestamp.toIso8601String(),
         'pause_event_id': pauseEventId,
         'is_open': isOpen,
+        'start': start?.toIso8601String(),
+        'end': end?.toIso8601String(),
       };
 }
 
