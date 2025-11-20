@@ -4,7 +4,7 @@ import '../models/history_event.dart';
 import '../models/user.dart';
 import '../services/history_service.dart';
 import '../utils/constants.dart';
-import '../utils/i18n.dart';
+import '../i18n/i18n_service.dart';
 
 enum HistoryFilter { today, week, month, custom }
 
@@ -456,7 +456,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       child: Text(
         label,
         style: TextStyle(
-          color: color[700],
+          color: color.withOpacity(1.0),
           fontSize: 11,
           fontWeight: FontWeight.bold,
         ),
