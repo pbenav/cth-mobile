@@ -248,31 +248,29 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
                           event.type.toLowerCase().contains('break') ||
                           event.type.toLowerCase().contains('descanso');
       
-      if (isBreakEvent) {
-        print('[DEBUG] Skipping break event: ${event.type}');
-        continue;
-      }
-      
-      // IMPORTANTE: Usar los campos start y end para calcular las horas trabajadas
-      // NO usar timestamp (que es la fecha de creación del evento)
+      // Calcular duración del evento
+      Duration eventDuration = Duration.zero;
       
       if (event.start != null) {
-        // Convertir start/end de UTC a local ya que el servidor los envía en hora local marcados como UTC
+        // Convertir start/end de UTC a local
         final startLocal = event.start!.toLocal();
         
-        // Si el evento tiene start, es un evento de trabajo
         if (event.end != null) {
-          // Evento cerrado: tiene start y end
+          // Evento cerrado
           final endLocal = event.end!.toLocal();
-          final duration = endLocal.difference(startLocal);
-          print('[DEBUG] Adding closed event duration: ${duration.inSeconds}s');
-          totalWorked += duration;
+          eventDuration = endLocal.difference(startLocal);
         } else if (event.isOpen == true) {
-          // Evento abierto: tiene start pero no end, usar hora actual
-          final duration = now.difference(startLocal);
-          print('[DEBUG] Adding open event duration: ${duration.inSeconds}s (now: $now, startLocal: $startLocal)');
-          totalWorked += duration;
+          // Evento abierto
+          eventDuration = now.difference(startLocal);
         }
+      }
+
+      if (isBreakEvent) {
+        print('[DEBUG] Subtracting break duration: ${eventDuration.inSeconds}s');
+        totalWorked -= eventDuration;
+      } else {
+        print('[DEBUG] Adding work duration: ${eventDuration.inSeconds}s');
+        totalWorked += eventDuration;
       }
     }
 
