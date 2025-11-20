@@ -20,16 +20,16 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   WorkSchedule? _schedule;
   
   // Temporary schedule for editing
-  Map<String, List<String>> _editedSchedule = {};
+  List<ScheduleEntry> _editedSchedule = [];
 
-  final List<String> _days = [
-    'monday',
-    'tuesday',
-    'wednesday',
-    'thursday',
-    'friday',
-    'saturday',
-    'sunday'
+  final List<Map<String, String>> _days = [
+    {'id': '1', 'label': 'L', 'full': 'Lunes'},
+    {'id': '2', 'label': 'M', 'full': 'Martes'},
+    {'id': '3', 'label': 'X', 'full': 'Miércoles'},
+    {'id': '4', 'label': 'J', 'full': 'Jueves'},
+    {'id': '5', 'label': 'V', 'full': 'Viernes'},
+    {'id': '6', 'label': 'S', 'full': 'Sábado'},
+    {'id': '7', 'label': 'D', 'full': 'Domingo'},
   ];
 
   @override
@@ -99,36 +99,40 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     setState(() {
       _isEditing = true;
       // Deep copy of the schedule
-      _editedSchedule = {};
-      _schedule!.schedule.forEach((key, value) {
-        _editedSchedule[key] = List.from(value);
-      });
+      _editedSchedule = _schedule!.schedule.map((e) => ScheduleEntry(
+        days: List.from(e.days),
+        start: e.start,
+        end: e.end,
+      )).toList();
     });
   }
 
   void _cancelEditing() {
     setState(() {
       _isEditing = false;
-      _editedSchedule = {};
+      _editedSchedule = [];
     });
   }
 
-  void _addSlot(String day) {
+  void _addSlot() {
     setState(() {
-      _editedSchedule[day] = [...(_editedSchedule[day] ?? []), "09:00-14:00"];
+      _editedSchedule.add(ScheduleEntry(
+        days: ['1', '2', '3', '4', '5'], // Default Mon-Fri
+        start: '09:00',
+        end: '17:00',
+      ));
     });
   }
 
-  void _removeSlot(String day, int index) {
+  void _removeSlot(int index) {
     setState(() {
-      _editedSchedule[day]?.removeAt(index);
+      _editedSchedule.removeAt(index);
     });
   }
 
-  Future<void> _editTime(String day, int index, bool isStart) async {
-    final currentSlot = _editedSchedule[day]![index];
-    final parts = currentSlot.split('-');
-    final timeStr = isStart ? parts[0] : parts[1];
+  Future<void> _editTime(int index, bool isStart) async {
+    final entry = _editedSchedule[index];
+    final timeStr = isStart ? entry.start : entry.end;
     final timeParts = timeStr.split(':');
     
     final TimeOfDay? picked = await showTimePicker(
@@ -142,27 +146,30 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     if (picked != null) {
       setState(() {
         final newTime = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
-        if (isStart) {
-          _editedSchedule[day]![index] = '$newTime-${parts[1]}';
-        } else {
-          _editedSchedule[day]![index] = '${parts[0]}-$newTime';
-        }
+        _editedSchedule[index] = ScheduleEntry(
+          days: entry.days,
+          start: isStart ? newTime : entry.start,
+          end: !isStart ? newTime : entry.end,
+        );
       });
     }
   }
 
-  String _getDayName(String dayKey) {
-    // Simple translation map, ideally use I18n
-    const map = {
-      'monday': 'Lunes',
-      'tuesday': 'Martes',
-      'wednesday': 'Miércoles',
-      'thursday': 'Jueves',
-      'friday': 'Viernes',
-      'saturday': 'Sábado',
-      'sunday': 'Domingo',
-    };
-    return map[dayKey] ?? dayKey;
+  void _toggleDay(int index, String dayId) {
+    setState(() {
+      final entry = _editedSchedule[index];
+      final days = List<String>.from(entry.days);
+      if (days.contains(dayId)) {
+        days.remove(dayId);
+      } else {
+        days.add(dayId);
+      }
+      _editedSchedule[index] = ScheduleEntry(
+        days: days,
+        start: entry.start,
+        end: entry.end,
+      );
+    });
   }
 
   @override
@@ -189,6 +196,13 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         ],
       ),
       body: _buildBody(),
+      floatingActionButton: _isEditing
+          ? FloatingActionButton(
+              onPressed: _addSlot,
+              child: const Icon(Icons.add),
+              backgroundColor: const Color(AppConstants.primaryColorValue),
+            )
+          : null,
     );
   }
 
@@ -215,19 +229,28 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
     final currentSchedule = _isEditing ? _editedSchedule : _schedule!.schedule;
 
+    if (currentSchedule.isEmpty) {
+      return Center(
+        child: Text(
+          'Sin horario configurado',
+          style: TextStyle(color: Colors.grey[600], fontSize: 16),
+        ),
+      );
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: _days.length + 1, // +1 for bottom padding
+      itemCount: currentSchedule.length + 1,
       itemBuilder: (context, index) {
-        if (index == _days.length) {
-          return const SizedBox(height: 80); // Space for FAB if needed
+        if (index == currentSchedule.length) {
+          return const SizedBox(height: 80);
         }
 
-        final day = _days[index];
-        final slots = currentSchedule[day] ?? [];
-
+        final entry = currentSchedule[index];
         return Card(
           margin: const EdgeInsets.only(bottom: 16),
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -236,79 +259,119 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      _getDayName(day),
-                      style: const TextStyle(
-                        fontSize: 18,
+                    const Text(
+                      'Tramo Horario',
+                      style: TextStyle(
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
+                        color: Color(AppConstants.primaryColorValue),
                       ),
                     ),
                     if (_isEditing)
                       IconButton(
-                        icon: const Icon(Icons.add_circle_outline, color: Colors.blue),
-                        onPressed: () => _addSlot(day),
+                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                        onPressed: () => _removeSlot(index),
                       ),
                   ],
                 ),
-                const Divider(),
-                if (slots.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: Text(
-                      'Sin horario',
-                      style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
-                    ),
-                  )
-                else
-                  ...slots.asMap().entries.map((entry) {
-                    final i = entry.key;
-                    final slot = entry.value;
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.access_time, size: 16, color: Colors.grey),
-                          const SizedBox(width: 8),
-                          if (_isEditing) ...[
-                            _buildTimeButton(day, i, slot.split('-')[0], true),
-                            const Text(' - '),
-                            _buildTimeButton(day, i, slot.split('-')[1], false),
-                            const Spacer(),
-                            IconButton(
-                              icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
-                              onPressed: () => _removeSlot(day, i),
-                            ),
-                          ] else
-                            Text(
-                              slot,
-                              style: const TextStyle(fontSize: 16),
-                            ),
+                          const Text('Inicio', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                          const SizedBox(height: 4),
+                          _isEditing
+                              ? InkWell(
+                                  onTap: () => _editTime(index, true),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: Colors.grey.shade300),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.access_time, size: 16),
+                                        const SizedBox(width: 8),
+                                        Text(entry.start, style: const TextStyle(fontSize: 16)),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              : Text(entry.start, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
                         ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Fin', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                          const SizedBox(height: 4),
+                          _isEditing
+                              ? InkWell(
+                                  onTap: () => _editTime(index, false),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: Colors.grey.shade300),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.access_time, size: 16),
+                                        const SizedBox(width: 8),
+                                        Text(entry.end, style: const TextStyle(fontSize: 16)),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              : Text(entry.end, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Text('Días activos', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _days.map((day) {
+                    final isSelected = entry.days.contains(day['id']);
+                    return InkWell(
+                      onTap: _isEditing ? () => _toggleDay(index, day['id']!) : null,
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? const Color(AppConstants.primaryColorValue)
+                              : Colors.grey[200],
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          day['label']!,
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : Colors.grey[600],
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     );
                   }).toList(),
+                ),
               ],
             ),
           ),
         );
       },
-    );
-  }
-
-  Widget _buildTimeButton(String day, int index, String time, bool isStart) {
-    return InkWell(
-      onTap: () => _editTime(day, index, isStart),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300),
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: Text(
-          time,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-        ),
-      ),
     );
   }
 }

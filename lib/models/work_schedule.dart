@@ -1,5 +1,33 @@
+class ScheduleEntry {
+  final List<String> days;
+  final String start;
+  final String end;
+
+  ScheduleEntry({
+    required this.days,
+    required this.start,
+    required this.end,
+  });
+
+  factory ScheduleEntry.fromJson(Map<String, dynamic> json) {
+    return ScheduleEntry(
+      days: (json['days'] as List?)?.map((e) => e.toString()).toList() ?? [],
+      start: json['start'] as String? ?? '',
+      end: json['end'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'days': days,
+      'start': start,
+      'end': end,
+    };
+  }
+}
+
 class WorkSchedule {
-  final Map<String, List<String>> schedule;
+  final List<ScheduleEntry> schedule;
   final String timezone;
 
   WorkSchedule({
@@ -8,14 +36,16 @@ class WorkSchedule {
   });
 
   factory WorkSchedule.fromJson(Map<String, dynamic> json) {
-    final scheduleData = json['schedule'] as Map<String, dynamic>? ?? {};
-    final Map<String, List<String>> parsedSchedule = {};
+    final scheduleData = json['schedule'] as List?;
+    final List<ScheduleEntry> parsedSchedule = [];
 
-    scheduleData.forEach((key, value) {
-      if (value is List) {
-        parsedSchedule[key] = value.map((e) => e.toString()).toList();
+    if (scheduleData != null) {
+      for (var item in scheduleData) {
+        if (item is Map<String, dynamic>) {
+          parsedSchedule.add(ScheduleEntry.fromJson(item));
+        }
       }
-    });
+    }
 
     return WorkSchedule(
       schedule: parsedSchedule,
@@ -25,12 +55,8 @@ class WorkSchedule {
 
   Map<String, dynamic> toJson() {
     return {
-      'schedule': schedule,
+      'schedule': schedule.map((e) => e.toJson()).toList(),
       'timezone': timezone,
     };
-  }
-
-  List<String> getForDay(String day) {
-    return schedule[day.toLowerCase()] ?? [];
   }
 }
