@@ -5,6 +5,7 @@ import '../models/user.dart';
 import '../services/history_service.dart';
 import '../utils/constants.dart';
 import '../i18n/i18n_service.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 enum HistoryFilter { today, week, month, custom }
 
@@ -26,8 +27,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
   bool _isLoading = false;
   String? _errorMessage;
   HistoryPagination? _pagination;
-
-import 'package:intl/date_symbol_data_local.dart';
 
   @override
   void initState() {
