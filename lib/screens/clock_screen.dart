@@ -1246,7 +1246,7 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
                                                   context,
                                                   MaterialPageRoute(
                                                     builder: (context) =>
-                                                        const HistoryScreen(),
+                                                        HistoryScreen(user: widget.user),
                                                   ),
                                                 );
                                               },
@@ -1350,6 +1350,34 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
               );
             }
           },
+          icon: Icon(icon, size: 28),
+          style: IconButton.styleFrom(
+            backgroundColor:
+                const Color(AppConstants.primaryColorValue).withOpacity(0.1),
+            padding: const EdgeInsets.all(12),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNativeButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Column(
+      children: [
+        IconButton(
+          onPressed: onTap,
           icon: Icon(icon, size: 28),
           style: IconButton.styleFrom(
             backgroundColor:

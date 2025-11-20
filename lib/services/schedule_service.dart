@@ -10,7 +10,11 @@ class ScheduleService {
   static Future<String> _getBaseUrl() async {
     final configuredUrl = await SetupService.getConfiguredServerUrl();
     if (configuredUrl != null) return configuredUrl;
-    return await ConfigService.getCurrentServerUrl();
+    final currentUrl = await ConfigService.getCurrentServerUrl();
+    if (currentUrl == null) {
+      throw Exception('Server URL not configured');
+    }
+    return currentUrl;
   }
 
   static Future<WorkSchedule> getSchedule() async {
