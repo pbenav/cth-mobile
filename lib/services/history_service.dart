@@ -94,12 +94,20 @@ class HistoryService {
     required String userCode,
   }) async {
     final now = DateTime.now();
+    // weekday: 1 = Monday, 7 = Sunday
+    // Calculate start of week (Monday at 00:00)
     final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
     final startDate = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
+    
+    // End date is today at 23:59:59
+    final endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    
+    print('[HistoryService] Week range: ${startDate.toIso8601String()} to ${endDate.toIso8601String()}');
     
     return getHistory(
       userCode: userCode,
       startDate: startDate.toIso8601String().split('T')[0],
+      endDate: endDate.toIso8601String().split('T')[0],
     );
   }
 
