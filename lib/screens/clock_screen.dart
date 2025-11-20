@@ -201,8 +201,9 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
   void _startHoursUpdateTimer() {
     _hoursUpdateTimer?.cancel();
     if (clockStatus?.todayStats.currentStatus == 'TRABAJANDO') {
-      // Actualizar cada 10 segundos para que sea más responsive
-      _hoursUpdateTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      // Actualizar cada 2 minutos (120 segundos)
+      // NOTA: Esta actualización es puramente local (UI) y NO genera tráfico de red.
+      _hoursUpdateTimer = Timer.periodic(const Duration(seconds: 120), (timer) {
         if (mounted) {
           setState(() {
             _updateCalculatedHours();
