@@ -12,6 +12,7 @@ import '../services/setup_service.dart';
 import 'settings_screen.dart';
 import 'profile_screen.dart';
 import 'history_screen.dart';
+import 'schedule_screen.dart';
 import '../utils/constants.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
@@ -1250,12 +1251,19 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
                                                 );
                                               },
                                             ),
-                                            _buildWebViewButton(
+                                            _buildNativeButton(
                                               icon: Icons.schedule,
                                               label: I18n.of(
                                                   'clock.schedule_title'),
-                                              path:
-                                                  AppConstants.webViewSchedule,
+                                              onTap: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        const ScheduleScreen(),
+                                                  ),
+                                                );
+                                              },
                                             ),
                                             _buildWebViewButton(
                                               icon: Icons.assessment,
