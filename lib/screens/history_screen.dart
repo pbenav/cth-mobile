@@ -28,15 +28,24 @@ class _HistoryScreenState extends State<HistoryScreen> {
   String? _errorMessage;
   HistoryPagination? _pagination;
 
+  bool _isLocaleInitialized = false;
+
   @override
   void initState() {
     super.initState();
     initializeDateFormatting('es', null).then((_) {
-      _loadHistory();
+      if (mounted) {
+        setState(() {
+          _isLocaleInitialized = true;
+        });
+        _loadHistory();
+      }
     });
   }
 
   Future<void> _loadHistory() async {
+    if (!_isLocaleInitialized) return;
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -104,6 +113,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_isLocaleInitialized) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(I18n.of('history.title')),
