@@ -437,24 +437,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              if (_holidays.isEmpty)
-                const Text('No hay festivos guardados')
-              else
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _holidays.length,
-                  itemBuilder: (context, index) {
-                    final h = _holidays[index];
-                    return Card(
-                      child: ListTile(
-                        leading: const Icon(Icons.calendar_today),
-                        title: Text(h.name.isNotEmpty ? h.name : h.date),
-                        subtitle: Text(h.date),
-                      ),
-                    );
-                  },
-                ),
+                if (_holidays.isEmpty)
+                  const Text('No hay festivos guardados')
+                else
+                  SizedBox(
+                    height: 150, // Adjust height as needed
+                    child: ListView.builder(
+                      itemCount: _holidays.length,
+                      physics: const BouncingScrollPhysics(),
+                      itemBuilder: (context, index) {
+                        final h = _holidays[index];
+                        return Card(
+                          child: ListTile(
+                            leading: const Icon(Icons.calendar_today),
+                            title: Text(h.name.isNotEmpty ? h.name : h.date),
+                            subtitle: Text(h.date),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
 
               const SizedBox(height: 32),
 
