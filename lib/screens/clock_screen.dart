@@ -7,6 +7,8 @@ import '../models/clock_status.dart';
 import '../services/clock_service.dart';
 import '../services/storage_service.dart';
 import '../services/nfc_service.dart';
+import '../utils/clock_messages.dart';
+import '../utils/exceptions.dart';
 
 import '../services/setup_service.dart';
 import 'settings_screen.dart';
@@ -134,7 +136,11 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
       
       _startHoursUpdateTimer();
     } catch (e) {
-      _showError(I18n.of('clock.loading_error', {'error': e.toString()}));
+      String errorMessage = e.toString();
+      if (e is ClockException && e.apiStatusCode != null) {
+        errorMessage = ClockMessages.getMessage(e.apiStatusCode, fallbackMessage: e.message);
+      }
+      _showError(I18n.of('clock.loading_error', {'error': errorMessage}));
     } finally {
       setState(() => isLoading = false);
     }
@@ -581,7 +587,11 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
       }
     } catch (e) {
       if (mounted) {
-        _showError(I18n.of('clock.fichaje_error', {'error': e.toString()}));
+        String errorMessage = e.toString();
+        if (e is ClockException && e.apiStatusCode != null) {
+          errorMessage = ClockMessages.getMessage(e.apiStatusCode, fallbackMessage: e.message);
+        }
+        _showError(I18n.of('clock.fichaje_error', {'error': errorMessage}));
       }
     } finally {
       if (mounted) {
@@ -685,7 +695,11 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
       }
     } catch (e) {
       if (mounted) {
-        _showError(I18n.of('clock.fichaje_error', {'error': e.toString()}));
+        String errorMessage = e.toString();
+        if (e is ClockException && e.apiStatusCode != null) {
+          errorMessage = ClockMessages.getMessage(e.apiStatusCode, fallbackMessage: e.message);
+        }
+        _showError(I18n.of('clock.fichaje_error', {'error': errorMessage}));
       }
     } finally {
       if (mounted) {
@@ -905,10 +919,18 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
                                                 BorderRadius.circular(20),
                                           ),
                                           child: Text(
-                                            (clockStatus?.message ??
-                                                    clockStatus!.todayStats
+                                            (ClockMessages.getMessage(
+                                                        clockStatus?.statusCode,
+                                                        fallbackMessage:
+                                                            clockStatus?.message)
+                                                    .isEmpty
+                                                ? (clockStatus?.todayStats
                                                         .currentStatus ??
                                                     'DESCONOCIDO')
+                                                : ClockMessages.getMessage(
+                                                    clockStatus?.statusCode,
+                                                    fallbackMessage:
+                                                        clockStatus?.message))
                                                 .toUpperCase(),
                                             style: const TextStyle(
                                               fontSize: 20,

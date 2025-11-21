@@ -42,5 +42,19 @@
   "dialog.logout_content": "Are you sure you want to log out?",
   "dialog.cancel": "Cancel",
   "dialog.logout": "Log out",
-  "clock.exceptional_start": "Exceptional start"
+  "clock.exceptional_start": "Exceptional start",
+  "status.USER_OR_TEAM_NOT_FOUND": "User or team not found",
+  "status.NO_SCHEDULE": "No schedule configured. Please configure your schedule.",
+  "status.NO_WORKDAY_TYPE": "No workday type configured",
+  "status.RESUME_WORKDAY": "Resume workday from break",
+  "status.WORKING": "Currently working",
+  "status.CLOCK_OUT": "Clock out",
+  "status.OUTSIDE_SCHEDULE_CONFIRM": "You are outside your schedule. Do you want to perform an exceptional clock-in?",
+  "status.CAN_CLOCK_IN": "Clock in",
+  "status.CLOCK_IN_SUCCESS": "Clock in registered successfully",
+  "status.CLOCK_OUT_SUCCESS": "Clock out registered successfully",
+  "status.PAUSE_SUCCESS": "Workday paused successfully",
+  "status.RESUME_SUCCESS": "Workday resumed successfully",
+  "status.EXCEPTIONAL_REQUEST_CREATED": "Exceptional request created. Please complete the process.",
+  "status.ERROR": "An error occurred"
 }

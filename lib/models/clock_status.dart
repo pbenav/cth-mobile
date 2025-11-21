@@ -9,12 +9,14 @@ class ClockStatus {
   final DateTime currentTime;
   final int? pauseEventId;
   final List<ClockEvent> todayRecords;
+  final String? statusCode; // Added status code for i18n
   final Map<String, dynamic>? user; // Added user info
 
   const ClockStatus({
     required this.action,
     required this.canClock,
     this.message,
+    this.statusCode,
     this.overtime,
     this.eventTypeId,
     this.nextSlot,
@@ -29,6 +31,7 @@ class ClockStatus {
         'action': action,
         'can_clock': canClock,
         'message': message,
+        'status_code': statusCode,
         'overtime': overtime,
         'event_type_id': eventTypeId,
         'next_slot': nextSlot?.toJson(),
@@ -60,6 +63,7 @@ class ClockStatus {
       action: action,
       canClock: json['can_clock'] is bool ? json['can_clock'] as bool : false,
       message: json['message'] is String ? json['message'] as String : null,
+      statusCode: json['status_code'] is String ? json['status_code'] as String : null,
       overtime: json['overtime'] as bool?,
       eventTypeId: json['event_type_id'] is int
           ? json['event_type_id'] as int

@@ -58,5 +58,19 @@
   "history.status.open": "Abierto",
   "history.status.authorized": "Autorizado",
   "history.status.exceptional": "Excepcional",
-  "common.retry": "Reintentar"
+  "common.retry": "Reintentar",
+  "status.USER_OR_TEAM_NOT_FOUND": "Usuario o equipo no encontrado",
+  "status.NO_SCHEDULE": "No hay horario configurado. Configura tu horario para fichar.",
+  "status.NO_WORKDAY_TYPE": "No hay tipo de jornada configurado",
+  "status.RESUME_WORKDAY": "Reanudar jornada desde pausa",
+  "status.WORKING": "Trabajando actualmente",
+  "status.CLOCK_OUT": "Salir del trabajo",
+  "status.OUTSIDE_SCHEDULE_CONFIRM": "Estás fuera de tu horario. ¿Quieres realizar un fichaje excepcional?",
+  "status.CAN_CLOCK_IN": "Entrar a trabajar",
+  "status.CLOCK_IN_SUCCESS": "Entrada registrada correctamente",
+  "status.CLOCK_OUT_SUCCESS": "Salida registrada correctamente",
+  "status.PAUSE_SUCCESS": "Jornada pausada correctamente",
+  "status.RESUME_SUCCESS": "Jornada reanudada correctamente",
+  "status.EXCEPTIONAL_REQUEST_CREATED": "Solicitud de fichaje excepcional creada. Por favor completa el proceso.",
+  "status.ERROR": "Ha ocurrido un error"
 }

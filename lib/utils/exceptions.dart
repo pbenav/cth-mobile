@@ -27,16 +27,17 @@ class NFCWriteException extends NFCException {
 // Excepciones de API
 class ApiException extends CTHException {
   final int? statusCode;
+  final String? apiStatusCode;
 
-  const ApiException(super.message, {this.statusCode});
+  const ApiException(super.message, {this.statusCode, this.apiStatusCode});
 }
 
 class ClockException extends ApiException {
-  const ClockException(super.message, {super.statusCode});
+  const ClockException(super.message, {super.statusCode, super.apiStatusCode});
 }
 
 class AuthException extends ApiException {
-  const AuthException(super.message, {super.statusCode});
+  const AuthException(super.message, {super.statusCode, super.apiStatusCode});
 }
 
 class NetworkException extends ApiException {

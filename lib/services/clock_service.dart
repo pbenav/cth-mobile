@@ -86,9 +86,11 @@ class ClockService {
       } else {
         // Asegura que el mensaje sea siempre String
         final msg = jsonData['message'];
+        final apiStatusCode = jsonData['status_code'];
         throw ClockException(
           msg is String ? msg : (msg?.toString() ?? 'Clock error'),
           statusCode: response.statusCode,
+          apiStatusCode: apiStatusCode is String ? apiStatusCode : null,
         );
       }
     } catch (e) {
@@ -138,9 +140,11 @@ class ClockService {
       } else {
         // Asegura que el mensaje sea siempre String
         final msg = jsonData['message'];
+        final apiStatusCode = jsonData['status_code'];
         throw ClockException(
           msg is String ? msg : (msg?.toString() ?? 'Status error'),
           statusCode: response.statusCode,
+          apiStatusCode: apiStatusCode is String ? apiStatusCode : null,
         );
       }
     } catch (e) {
