@@ -126,7 +126,7 @@ class ClockService {
 
       final jsonData = jsonDecode(response.body);
       
-      print('[DEBUG] getStatus response: $jsonData');
+
 
       if (response.statusCode == 200) {
         final apiResponse = ApiResponse<ClockStatus>.fromJson(
@@ -134,7 +134,7 @@ class ClockService {
           (data) => ClockStatus.fromJson(data),
         );
         
-        print('[DEBUG] Parsed ClockStatus - pauseEventId: ${apiResponse.data?.pauseEventId}');
+
         
         return apiResponse;
       } else {

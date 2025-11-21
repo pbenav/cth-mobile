@@ -213,13 +213,13 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
     try {
       final now = DateTime.now();
       final currentDayISO = now.weekday;
-      print('[DEBUG] _isWithinSchedule: Now=$now, DayISO=$currentDayISO');
+
       
       final allSchedule = await SetupService.getSavedSchedule();
-      print('[DEBUG] _isWithinSchedule: Found ${allSchedule.length} schedule entries');
+
       
       for (var entry in allSchedule) {
-        print('[DEBUG] Checking entry: id=${entry.id}, days=${entry.dayOfWeek}, time=${entry.startTime}-${entry.endTime}, active=${entry.isActive}');
+
         
         if (!entry.isActive) continue;
         
@@ -227,7 +227,7 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
         bool isToday = false;
         for (var dayPart in daysParts) {
           final normalized = _normalizeDayToISO(dayPart);
-          print('[DEBUG]   - Day part "$dayPart" normalized to $normalized');
+
           if (normalized == currentDayISO) {
             isToday = true;
             break;
@@ -236,18 +236,18 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
         
         if (isToday) {
           final inSlot = _isTimeInSlot(now, entry.startTime, entry.endTime);
-          print('[DEBUG]   - Is today! Time in slot? $inSlot');
+
           if (inSlot) {
             return true;
           }
         } else {
-          print('[DEBUG]   - Not today');
+
         }
       }
-      print('[DEBUG] _isWithinSchedule: No matching slot found');
+
       return false;
     } catch (e) {
-      print('[DEBUG] _isWithinSchedule error: $e');
+
       return false;
     }
   }
@@ -285,7 +285,7 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
         return nowMinutes >= startMinutes && nowMinutes <= endMinutes;
       }
     } catch (e) {
-      print('[DEBUG] Error parsing time slot: $startStr - $endStr: $e');
+
       return false;
     }
   }
@@ -317,8 +317,6 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
       return;
     }
 
-    print('[DEBUG] Calculating worked hours from ${clockStatus!.todayRecords.length} events');
-
     // Calcular las horas trabajadas basándose en los eventos del día
     Duration totalWorked = Duration.zero;
     
@@ -331,7 +329,6 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
       ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
     for (final event in sortedEvents) {
-      print('[DEBUG] Event: type=${event.type}, start=${event.start}, end=${event.end}, isOpen=${event.isOpen}');
       
       // IMPORTANTE: Solo contar eventos de trabajo, NO pausas
       // Las pausas suelen tener nombres como "Pausa", "Break", "Descanso", etc.
@@ -357,15 +354,13 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
       }
 
       if (isBreakEvent) {
-        print('[DEBUG] Subtracting break duration: ${eventDuration.inSeconds}s');
+
         totalWorked -= eventDuration;
       } else {
-        print('[DEBUG] Adding work duration: ${eventDuration.inSeconds}s');
+
         totalWorked += eventDuration;
       }
     }
-
-    print('[DEBUG] Total worked seconds: ${totalWorked.inSeconds}');
 
     // Si el cálculo da 0 pero el servidor tiene un valor, usar el del servidor
     if (totalWorked.inSeconds == 0 && clockStatus!.todayStats.workedHours != null) {
@@ -383,21 +378,21 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
       }
     }
     
-    print('[DEBUG] Final calculated hours: $_calculatedWorkedHours');
+
   }
 
   Future<void> _ensureScheduleLoaded(String userCode) async {
     try {
-      print('[DEBUG] Ensuring schedule is loaded for user $userCode...');
+
       // Forzar actualización de datos del trabajador (incluyendo horario)
       await SetupService.refreshSavedWorkerData(
         blocking: true,
         timeout: const Duration(seconds: 5),
-        onLog: (msg) => print('[DEBUG] Refresh: $msg'),
+
       );
-      print('[DEBUG] Schedule refresh completed.');
+
     } catch (e) {
-      print('[DEBUG] Error refreshing schedule: $e');
+
     }
   }
 
@@ -518,27 +513,27 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
       if (action == 'resume_workday') {
         int? pauseEventId = clockStatus?.pauseEventId;
         
-        print('[DEBUG] Resume workday - pauseEventId from clockStatus: $pauseEventId');
-        print('[DEBUG] clockStatus object: ${clockStatus?.toJson()}');
+
+
         
         // Si no viene del backend, intentamos buscarlo localmente (fallback)
         if (pauseEventId == null) {
-          print('[DEBUG] pauseEventId is null, searching in todayRecords...');
+
           const int pauseEventTypeId = 285; // Actualiza este valor según tu backend
           if (clockStatus != null && clockStatus!.todayRecords.isNotEmpty) {
-            print('[DEBUG] Today records count: ${clockStatus!.todayRecords.length}');
+
             for (final event in clockStatus!.todayRecords) {
-              print('[DEBUG] Event: id=${event.id}, eventTypeId=${event.eventTypeId}, isOpen=${event.isOpen}');
+
               if (event.eventTypeId == pauseEventTypeId && _isOpenStatus(event)) {
                 pauseEventId = event.id;
-                print('[DEBUG] Found pause event ID from records: $pauseEventId');
+
                 break;
               }
             }
           }
         }
         
-        print('[DEBUG] Final pauseEventId to use: $pauseEventId');
+
         
         if (pauseEventId == null) {
           if (mounted) {

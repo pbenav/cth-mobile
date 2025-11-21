@@ -47,7 +47,7 @@ class HistoryService {
         'per_page': perPage.toString(),
       };
 
-      print('[HistoryService] Fetching history: $body');
+
 
       final response = await http
           .post(
@@ -63,14 +63,14 @@ class HistoryService {
       final jsonData = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        print('[HistoryService] Success: ${jsonData['data']['events'].length} events');
+
         return HistoryResponse.fromJson(jsonData);
       } else {
         final message = jsonData['message'] ?? 'Error fetching history';
         throw Exception(message);
       }
     } catch (e) {
-      print('[HistoryService] Error: $e');
+
       rethrow;
     }
   }
@@ -102,7 +102,7 @@ class HistoryService {
     // End date is today at 23:59:59
     final endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
     
-    print('[HistoryService] Week range: ${startDate.toIso8601String()} to ${endDate.toIso8601String()}');
+
     
     return getHistory(
       userCode: userCode,
