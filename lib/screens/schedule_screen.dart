@@ -6,7 +6,7 @@ import '../i18n/i18n_service.dart';
 import '../utils/constants.dart';
 
 class ScheduleScreen extends StatefulWidget {
-  const ScheduleScreen({Key? key}) : super(key: key);
+  const ScheduleScreen({super.key});
 
   @override
   _ScheduleScreenState createState() => _ScheduleScreenState();
@@ -201,8 +201,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       floatingActionButton: _isEditing
           ? FloatingActionButton(
               onPressed: _addSlot,
-              child: const Icon(Icons.add),
               backgroundColor: const Color(AppConstants.primaryColorValue),
+              child: const Icon(Icons.add),
             )
           : null,
     );

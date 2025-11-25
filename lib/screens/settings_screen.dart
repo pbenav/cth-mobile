@@ -195,7 +195,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             title: const Text('Fichaje por NFC'),
                             subtitle: const Text('Requiere etiqueta NFC para fichar'),
                             value: _nfcEnabled,
-                            activeColor: const Color(AppConstants.primaryColorValue),
+                            activeThumbColor: const Color(AppConstants.primaryColorValue),
                             onChanged: (value) async {
                               setState(() {
                                 _nfcEnabled = value;

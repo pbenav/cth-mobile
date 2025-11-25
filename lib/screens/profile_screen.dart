@@ -237,12 +237,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: const Text('Perfil'),
         backgroundColor: const Color(AppConstants.primaryColorValue),
         foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _isSaving ? null : _saveProfile,
-          ),
-        ],
+        // Save button temporarily disabled - backend API not yet implemented
+        // actions: [
+        //   IconButton(
+        //     icon: const Icon(Icons.save),
+        //     onPressed: _isSaving ? null : _saveProfile,
+        //   ),
+        // ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -571,30 +572,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               const SizedBox(height: 32),
 
-              // Botón de guardar
-              SizedBox(
-                width: double.infinity,
-                height: AppConstants.buttonHeight,
-                child: ElevatedButton(
-                  onPressed: _isSaving ? null : _saveProfile,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        const Color(AppConstants.primaryColorValue),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppConstants.cardBorderRadius),
-                    ),
-                  ),
-                  child: _isSaving
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                          'Guardar Cambios',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
+              // Info message - editing temporarily disabled
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(AppConstants.cardBorderRadius),
+                  border: Border.all(color: Colors.blue[200]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.blue[700]),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'La edición del perfil estará disponible próximamente',
+                        style: TextStyle(
+                          color: Colors.blue[900],
+                          fontSize: 14,
                         ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
+
+              // Save button temporarily disabled - backend API not yet implemented
+              // SizedBox(
+              //   width: double.infinity,
+              //   height: AppConstants.buttonHeight,
+              //   child: ElevatedButton(
+              //     onPressed: _isSaving ? null : _saveProfile,
+              //     style: ElevatedButton.styleFrom(
+              //       backgroundColor:
+              //           const Color(AppConstants.primaryColorValue),
+              //       foregroundColor: Colors.white,
+              //       shape: RoundedRectangleBorder(
+              //         borderRadius:
+              //             BorderRadius.circular(AppConstants.cardBorderRadius),
+              //       ),
+              //     ),
+              //     child: _isSaving
+              //         ? const CircularProgressIndicator(color: Colors.white)
+              //         : const Text(
+              //             'Guardar Cambios',
+              //             style: TextStyle(
+              //                 fontSize: 16, fontWeight: FontWeight.bold),
+              //           ),
+              //   ),
+              // ),
             ],
           ),
         ),
