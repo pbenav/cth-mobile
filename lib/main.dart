@@ -26,12 +26,18 @@ void main() async {
     DeviceOrientation.portraitUp,
   ]);
   
+  // Configurar modo inmersivo para ocultar botones de navegación del sistema
+  SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.immersiveSticky,
+    overlays: [SystemUiOverlay.top],
+  );
+  
   // Configurar barra de estado
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Color(AppConstants.primaryColorValue),
       statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Colors.white,
+      systemNavigationBarColor: Colors.transparent,
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
