@@ -78,7 +78,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Configuración'),
+        title: Row(
+          children: [
+            Opacity(
+              opacity: 0.8,
+              child: Image.asset(
+                'assets/images/cth-logo.png',
+                height: 28,
+                width: 28,
+                fit: BoxFit.contain,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text('Configuración'),
+          ],
+        ),
         backgroundColor: const Color(AppConstants.primaryColorValue),
         foregroundColor: Colors.white,
       ),

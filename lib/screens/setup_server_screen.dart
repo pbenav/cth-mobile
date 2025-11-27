@@ -98,232 +98,252 @@ class _SetupServerScreenState extends State<SetupServerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              const Color(AppConstants.primaryColorValue),
-              const Color(AppConstants.primaryColorValue).withOpacity(0.8),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(AppConstants.spacing * 1.5),
-            child: Column(
-              children: [
-                // Indicador de progreso
-                Row(
+      body: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  const Color(AppConstants.primaryColorValue),
+                  const Color(AppConstants.primaryColorValue).withOpacity(0.8),
+                ],
+              ),
+            ),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(AppConstants.spacing * 1.5),
+                child: Column(
                   children: [
-                    Container(
-                      width: 30,
-                      height: 30,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: Text(
-                          '1',
-                          style: TextStyle(
-                            color: Color(AppConstants.primaryColorValue),
-                            fontWeight: FontWeight.bold,
+                    // Indicador de progreso
+                    Row(
+                      children: [
+                        Container(
+                          width: 30,
+                          height: 30,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Center(
+                            child: Text(
+                              '1',
+                              style: TextStyle(
+                                color: Color(AppConstants.primaryColorValue),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Container(
-                        height: 2,
-                        color: Colors.white.withOpacity(0.3),
-                        margin: const EdgeInsets.symmetric(horizontal: 8),
-                      ),
-                    ),
-                    Container(
-                      width: 30,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.3),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          '2',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
-                            fontWeight: FontWeight.bold,
+                        Expanded(
+                          child: Container(
+                            height: 2,
+                            color: Colors.white.withOpacity(0.3),
+                            margin: const EdgeInsets.symmetric(horizontal: 8),
                           ),
                         ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: AppConstants.spacing * 2),
-
-                // Título
-                const Text(
-                  'Configuración Inicial',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                Text(
-                  'Paso 1 de 2: Configurar servidor',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white.withOpacity(0.9),
-                  ),
-                ),
-
-                const SizedBox(height: AppConstants.spacing * 3),
-
-                // Formulario
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(AppConstants.spacing * 1.5),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius:
-                          BorderRadius.circular(AppConstants.cardBorderRadius),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
+                        Container(
+                          width: 30,
+                          height: 30,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.3),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              '2',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.7),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'URL del Servidor',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Introduce la URL del servidor CTH al que te quieres conectar.',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(height: AppConstants.spacing * 1.5),
-                          TextFormField(
-                            controller: _serverUrlController,
-                            decoration: InputDecoration(
-                              labelText: 'URL del servidor',
-                              hintText: 'https://tu-servidor.com',
-                              prefixIcon: const Icon(Icons.cloud),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              filled: true,
-                              fillColor: Colors.grey[50],
-                            ),
-                            validator: _validateUrl,
-                            keyboardType: TextInputType.url,
-                            textInputAction: TextInputAction.done,
-                            onFieldSubmitted: (_) => _testConnection(),
-                          ),
-                          if (_errorMessage != null) ...[
-                            const SizedBox(height: AppConstants.spacing),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.red[50],
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.red[200]!),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.error_outline,
-                                    color: Colors.red[600],
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      _errorMessage!,
-                                      style: TextStyle(
-                                        color: Colors.red[700],
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                          const Spacer(),
-                          SizedBox(
-                            width: double.infinity,
-                            height: AppConstants.buttonHeight,
-                            child: ElevatedButton(
-                              onPressed: _isLoading ? null : _testConnection,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    const Color(AppConstants.primaryColorValue),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: _isLoading
-                                  ? const SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Text(
-                                      'Probar Conexión',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                        ],
+
+                    const SizedBox(height: AppConstants.spacing * 2),
+
+                    // Título
+                    const Text(
+                      'Configuración Inicial',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
-                  ),
-                ),
 
-                const SizedBox(height: AppConstants.spacing),
+                    const SizedBox(height: 8),
 
-                // Información adicional
-                Text(
-                  'Esta configuración se guardará para futuras conexiones.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white.withOpacity(0.7),
-                  ),
-                  textAlign: TextAlign.center,
+                    Text(
+                      'Paso 1 de 2: Configurar servidor',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.white.withOpacity(0.9),
+                      ),
+                    ),
+
+                    const SizedBox(height: AppConstants.spacing * 3),
+
+                    // Formulario
+                    Expanded(
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(AppConstants.spacing * 1.5),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius:
+                              BorderRadius.circular(AppConstants.cardBorderRadius),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'URL del Servidor',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Introduce la URL del servidor CTH al que te quieres conectar.',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              const SizedBox(height: AppConstants.spacing * 1.5),
+                              TextFormField(
+                                controller: _serverUrlController,
+                                decoration: InputDecoration(
+                                  labelText: 'URL del servidor',
+                                  hintText: 'https://tu-servidor.com',
+                                  prefixIcon: const Icon(Icons.cloud),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.grey[50],
+                                ),
+                                validator: _validateUrl,
+                                keyboardType: TextInputType.url,
+                                textInputAction: TextInputAction.done,
+                                onFieldSubmitted: (_) => _testConnection(),
+                              ),
+                              if (_errorMessage != null) ...[
+                                const SizedBox(height: AppConstants.spacing),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red[50],
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.red[200]!),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.error_outline,
+                                        color: Colors.red[600],
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          _errorMessage!,
+                                          style: TextStyle(
+                                            color: Colors.red[700],
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              const Spacer(),
+                              SizedBox(
+                                width: double.infinity,
+                                height: AppConstants.buttonHeight,
+                                child: ElevatedButton(
+                                  onPressed: _isLoading ? null : _testConnection,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        const Color(AppConstants.primaryColorValue),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: _isLoading
+                                      ? const SizedBox(
+                                          width: 24,
+                                          height: 24,
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Probar Conexión',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: AppConstants.spacing),
+
+                    // Información adicional
+                    Text(
+                      'Esta configuración se guardará para futuras conexiones.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white.withOpacity(0.7),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
+          // Logo positioned in top-right corner
+          Positioned(
+            top: 16,
+            right: 16,
+            child: SafeArea(
+              child: Opacity(
+                opacity: 0.6,
+                child: Image.asset(
+                  'assets/images/cth-logo.png',
+                  height: 28,
+                  width: 28,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

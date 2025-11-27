@@ -109,311 +109,331 @@ class _SetupWorkerScreenState extends State<SetupWorkerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              const Color(AppConstants.primaryColorValue),
-              const Color(AppConstants.primaryColorValue).withOpacity(0.8),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(AppConstants.spacing * 1.5),
-            child: Column(
-              children: [
-                // Indicador de progreso
-                Row(
+      body: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  const Color(AppConstants.primaryColorValue),
+                  const Color(AppConstants.primaryColorValue).withOpacity(0.8),
+                ],
+              ),
+            ),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(AppConstants.spacing * 1.5),
+                child: Column(
                   children: [
-                    Container(
-                      width: 30,
-                      height: 30,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.check,
-                        color: Color(AppConstants.primaryColorValue),
-                        size: 16,
-                      ),
-                    ),
-                    Expanded(
-                      child: Container(
-                        height: 2,
-                        color: Colors.white,
-                        margin: const EdgeInsets.symmetric(horizontal: 8),
-                      ),
-                    ),
-                    Container(
-                      width: 30,
-                      height: 30,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: Text(
-                          '2',
-                          style: TextStyle(
+                    // Indicador de progreso
+                    Row(
+                      children: [
+                        Container(
+                          width: 30,
+                          height: 30,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.check,
                             color: Color(AppConstants.primaryColorValue),
-                            fontWeight: FontWeight.bold,
+                            size: 16,
                           ),
                         ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: AppConstants.spacing * 2),
-
-                // Título
-                const Text(
-                  'Configuración Inicial',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                Text(
-                  'Paso 2 de 2: Configurar trabajador',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white.withOpacity(0.9),
-                  ),
-                ),
-
-                const SizedBox(height: AppConstants.spacing * 3),
-
-                // Formulario
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(AppConstants.spacing * 1.5),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(AppConstants.cardBorderRadius),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
+                        Expanded(
+                          child: Container(
+                            height: 2,
+                            color: Colors.white,
+                            margin: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                        ),
+                        Container(
+                          width: 30,
+                          height: 30,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Center(
+                            child: Text(
+                              '2',
+                              style: TextStyle(
+                                color: Color(AppConstants.primaryColorValue),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Código del Trabajador',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+
+                    const SizedBox(height: AppConstants.spacing * 2),
+
+                    // Título
+                    const Text(
+                      'Configuración Inicial',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    Text(
+                      'Paso 2 de 2: Configurar trabajador',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.white.withOpacity(0.9),
+                      ),
+                    ),
+
+                    const SizedBox(height: AppConstants.spacing * 3),
+
+                    // Formulario
+                    Expanded(
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(AppConstants.spacing * 1.5),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(AppConstants.cardBorderRadius),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 5),
                             ),
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          Text(
-                            'Introduce tu código secreto de trabajador para cargar tus datos.',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-
-                          const SizedBox(height: AppConstants.spacing * 1.5),
-
-                          Form(
-                            key: _formKey,
-                            child: TextFormField(
-                              controller: _workerCodeController,
-                              decoration: InputDecoration(
-                                labelText: 'Código del trabajador',
-                                hintText: 'Ej: EMP001',
-                                prefixIcon: const Icon(Icons.person),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                          ],
+                        ),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Código del Trabajador',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
                                 ),
-                                filled: true,
-                                fillColor: Colors.grey[50],
                               ),
-                              validator: _validateWorkerCode,
-                              textInputAction: TextInputAction.done,
-                              onFieldSubmitted: (_) => _loadWorkerData(),
-                            ),
-                          ),
 
-                          const SizedBox(height: AppConstants.spacing * 1.5),
+                              const SizedBox(height: 8),
 
-                          if (_workerData == null) ...[
-                            SizedBox(
-                              width: double.infinity,
-                              height: AppConstants.buttonHeight,
-                              child: ElevatedButton(
-                                onPressed: _isLoading ? null : _loadWorkerData,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(AppConstants.primaryColorValue),
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                              Text(
+                                'Introduce tu código secreto de trabajador para cargar tus datos.',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+
+                              const SizedBox(height: AppConstants.spacing * 1.5),
+
+                              Form(
+                                key: _formKey,
+                                child: TextFormField(
+                                  controller: _workerCodeController,
+                                  decoration: InputDecoration(
+                                    labelText: 'Código del trabajador',
+                                    hintText: 'Ej: EMP001',
+                                    prefixIcon: const Icon(Icons.person),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.grey[50],
+                                  ),
+                                  validator: _validateWorkerCode,
+                                  textInputAction: TextInputAction.done,
+                                  onFieldSubmitted: (_) => _loadWorkerData(),
+                                ),
+                              ),
+
+                              const SizedBox(height: AppConstants.spacing * 1.5),
+
+                              if (_workerData == null) ...[
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: AppConstants.buttonHeight,
+                                  child: ElevatedButton(
+                                    onPressed: _isLoading ? null : _loadWorkerData,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(AppConstants.primaryColorValue),
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: _isLoading
+                                        ? const SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : const Text(
+                                            'Cargar Datos',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
                                   ),
                                 ),
-                                child: _isLoading
-                                    ? const SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: CircularProgressIndicator(
-                                          color: Colors.white,
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : const Text(
-                                        'Cargar Datos',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                              ] else ...[
+                                // Mostrar datos del trabajador
+                                Container(
+                                  padding: const EdgeInsets.all(AppConstants.spacing),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green[50],
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: Colors.green[200]!),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.check_circle,
+                                            color: Colors.green[600],
+                                            size: 24,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              'Datos cargados correctamente',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.green,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                              ),
-                            ),
-                          ] else ...[
-                            // Mostrar datos del trabajador
-                            Container(
-                              padding: const EdgeInsets.all(AppConstants.spacing),
-                              decoration: BoxDecoration(
-                                color: Colors.green[50],
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.green[200]!),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
+                                      const SizedBox(height: AppConstants.spacing),
+                                      _buildDataRow('Nombre', _workerData!.user.name),
+                                      _buildDataRow('Centro de trabajo', _workerData!.workCenter.name),
+                                      _buildDataRow('Horario', '${_workerData!.schedule.length} tramos configurados'),
+                                      if (_workerData!.holidays.isNotEmpty)
+                                        _buildDataRow('Festivos', '${_workerData!.holidays.length} días configurados'),
+                                    ],
+                                  ),
+                                ),
+
+                                const SizedBox(height: AppConstants.spacing * 1.5),
+
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: AppConstants.buttonHeight,
+                                  child: ElevatedButton(
+                                    onPressed: _isLoading ? null : _completeSetup,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: _isLoading
+                                        ? const SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : const Text(
+                                            'Completar Configuración',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                              ],
+
+                              if (_errorMessage != null) ...[
+                                const SizedBox(height: AppConstants.spacing),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red[50],
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.red[200]!),
+                                  ),
+                                  child: Row(
                                     children: [
                                       Icon(
-                                        Icons.check_circle,
-                                        color: Colors.green[600],
-                                        size: 24,
+                                        Icons.error_outline,
+                                        color: Colors.red[600],
+                                        size: 20,
                                       ),
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
-                                          'Datos cargados correctamente',
+                                          _errorMessage!,
                                           style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.green,
+                                            color: Colors.red[700],
+                                            fontSize: 14,
                                           ),
-                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: AppConstants.spacing),
-                                  _buildDataRow('Nombre', _workerData!.user.name),
-                                  _buildDataRow('Centro de trabajo', _workerData!.workCenter.name),
-                                  _buildDataRow('Horario', '${_workerData!.schedule.length} tramos configurados'),
-                                  if (_workerData!.holidays.isNotEmpty)
-                                    _buildDataRow('Festivos', '${_workerData!.holidays.length} días configurados'),
-                                ],
-                              ),
-                            ),
-
-                            const SizedBox(height: AppConstants.spacing * 1.5),
-
-                            SizedBox(
-                              width: double.infinity,
-                              height: AppConstants.buttonHeight,
-                              child: ElevatedButton(
-                                onPressed: _isLoading ? null : _completeSetup,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
                                 ),
-                                child: _isLoading
-                                    ? const SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: CircularProgressIndicator(
-                                          color: Colors.white,
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : const Text(
-                                        'Completar Configuración',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                              ),
-                            ),
-                          ],
-
-                          if (_errorMessage != null) ...[
-                            const SizedBox(height: AppConstants.spacing),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.red[50],
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.red[200]!),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.error_outline,
-                                    color: Colors.red[600],
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      _errorMessage!,
-                                      style: TextStyle(
-                                        color: Colors.red[700],
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ],
+                              ],
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
 
-                const SizedBox(height: AppConstants.spacing),
+                    const SizedBox(height: AppConstants.spacing),
 
-                // Información adicional
-                Text(
-                  'Estos datos se guardarán localmente para uso offline.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white.withOpacity(0.7),
-                  ),
-                  textAlign: TextAlign.center,
+                    // Información adicional
+                    Text(
+                      'Estos datos se guardarán localmente para uso offline.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white.withOpacity(0.7),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
+          // Logo positioned in top-right corner
+          Positioned(
+            top: 16,
+            right: 16,
+            child: SafeArea(
+              child: Opacity(
+                opacity: 0.6,
+                child: Image.asset(
+                  'assets/images/cth-logo.png',
+                  height: 28,
+                  width: 28,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

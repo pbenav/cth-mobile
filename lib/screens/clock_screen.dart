@@ -709,12 +709,25 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(I18n.of('app.title')),
+        title: Row(
+          children: [
+            Opacity(
+              opacity: 0.8,
+              child: Image.asset(
+                'assets/images/cth-logo.png',
+                height: 28,
+                width: 28,
+                fit: BoxFit.contain,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(I18n.of('app.title')),
+          ],
+        ),
         backgroundColor: const Color(AppConstants.primaryColorValue),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
-
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: isLoading ? null : _loadStatus,
@@ -945,6 +958,15 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
                                               (clockStatus!.todayRecords.length)
                                                   .toString(),
                                               Icons.list,
+                                              onTap: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        HistoryScreen(user: widget.user),
+                                                  ),
+                                                );
+                                              },
                                             ),
                                             _buildStatItem(
                                               'clock.hours',
@@ -1297,31 +1319,54 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
 
   // --- WIDGETS AUXILIARES ---
 
-  Widget _buildStatItem(String label, String value, IconData icon) {
-    return Column(
-      children: [
-        Icon(
-          icon,
-          color: const Color(AppConstants.primaryColorValue),
-          size: 20,
+  Widget _buildStatItem(String label, String value, IconData icon,
+      {VoidCallback? onTap}) {
+    final content = Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(AppConstants.primaryColorValue).withOpacity(0.2),
+          width: 1,
         ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+      ),
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            color: const Color(AppConstants.primaryColorValue),
+            size: 32,
           ),
-        ),
-        Text(
-          I18n.of(label),
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 4),
+          Text(
+            I18n.of(label),
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+            ),
+          ),
+        ],
+      ),
     );
+
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: content,
+      );
+    }
+
+    return content;
   }
 
   Widget _buildNativeButton({

@@ -234,7 +234,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Perfil'),
+        title: Row(
+          children: [
+            Opacity(
+              opacity: 0.8,
+              child: Image.asset(
+                'assets/images/cth-logo.png',
+                height: 28,
+                width: 28,
+                fit: BoxFit.contain,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text('Perfil'),
+          ],
+        ),
         backgroundColor: const Color(AppConstants.primaryColorValue),
         foregroundColor: Colors.white,
         // Save button temporarily disabled - backend API not yet implemented

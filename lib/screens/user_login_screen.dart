@@ -246,11 +246,25 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
                             ),
                           ],
                         ),
-                        child: Form(
+                          child: Form(
                           key: _formKey,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // CTH Logo
+                              Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(
+                                      bottom: AppConstants.spacing * 1.5),
+                                  child: Image.asset(
+                                    'assets/images/cth-logo.png',
+                                    height: 90,
+                                    width: 90,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                              ),
+                              
                               // Header
                               Row(
                                 children: [

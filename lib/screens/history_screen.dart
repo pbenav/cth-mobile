@@ -123,7 +123,21 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(I18n.of('history.title')),
+        title: Row(
+          children: [
+            Opacity(
+              opacity: 0.8,
+              child: Image.asset(
+                'assets/images/cth-logo.png',
+                height: 28,
+                width: 28,
+                fit: BoxFit.contain,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(I18n.of('history.title')),
+          ],
+        ),
         backgroundColor: const Color(AppConstants.primaryColorValue),
         foregroundColor: Colors.white,
       ),
