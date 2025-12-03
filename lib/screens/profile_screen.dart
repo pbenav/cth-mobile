@@ -393,10 +393,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               const SizedBox(height: 32),
 
-              // Selección de Centro de Trabajo (si hay varios disponibles)
+              // Selección de Equipo y Centro de Trabajo
               if (_availableWorkCenters.isNotEmpty) ...[
                 const Text(
-                  'Centros disponibles',
+                  'Equipo',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  isExpanded: true, // Fix overflow
+                  value: _currentWorkCenter?.teamName,
+                  items: _availableWorkCenters
+                      .map((wc) => wc.teamName)
+                      .where((name) => name != null)
+                      .toSet() // Unique team names
+                      .map((name) => DropdownMenuItem(
+                            value: name,
+                            child: Text(
+                              name!,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (selectedTeam) {
+                    if (selectedTeam == null) return;
+                    setState(() {
+                      // Find the first work center for this team
+                      final newWorkCenter = _availableWorkCenters.firstWhere(
+                        (wc) => wc.teamName == selectedTeam,
+                        orElse: () => _availableWorkCenters.first,
+                      );
+                      _currentWorkCenter = newWorkCenter;
+                      _workCenterCodeController.text = newWorkCenter.code;
+                      _workCenterNameController.text = newWorkCenter.name;
+                    });
+                    // Sync immediately
+                    StorageService.saveWorkCenter(_currentWorkCenter!);
+                  },
+                  decoration:
+                      const InputDecoration(border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 16),
+
+                const Text(
+                  'Centro de Trabajo',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -404,12 +447,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<WorkCenter>(
-                  initialValue: _currentWorkCenter,
+                  isExpanded: true, // Fix overflow
+                  value: _currentWorkCenter,
+                  // Filter work centers by the selected team
                   items: _availableWorkCenters
+                      .where((wc) =>
+                          wc.teamName == _currentWorkCenter?.teamName)
                       .map((wc) => DropdownMenuItem(
                             value: wc,
                             child: Text(
-                                '${wc.teamName != null ? "${wc.teamName} - " : ""}${wc.name} (${wc.code})'),
+                              '${wc.name} (${wc.code})',
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ))
                       .toList(),
                   onChanged: (val) {
@@ -420,6 +469,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         _workCenterNameController.text = val.name;
                       }
                     });
+                    // Sync immediately
+                    if (val != null) {
+                      StorageService.saveWorkCenter(val);
+                    }
                   },
                   decoration:
                       const InputDecoration(border: OutlineInputBorder()),

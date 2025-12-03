@@ -1365,9 +1365,25 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
                                                         const ProfileScreen(),
                                                   ),
                                                 );
-                                                await _loadStatus();
-                                              },
-                                            ),
+                                                  
+                                                  // Check if work center changed
+                                                  final stored = await StorageService.getWorkCenter();
+                                                  if (stored != null && stored.code != widget.workCenter.code) {
+                                                       if (mounted) {
+                                                          Navigator.of(context).pushReplacement(
+                                                            MaterialPageRoute(
+                                                              builder: (context) => ClockScreen(
+                                                                workCenter: stored,
+                                                                user: widget.user,
+                                                              ),
+                                                            ),
+                                                          );
+                                                       }
+                                                  } else {
+                                                      await _loadStatus();
+                                                  }
+                                                },
+                                              ),
                                           ],
                                         ),
                                       ],
