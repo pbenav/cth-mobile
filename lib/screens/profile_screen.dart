@@ -68,26 +68,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _currentUser = _currentWorkerData!.user;
         _schedules = _currentWorkerData!.schedule;
         _holidays = _currentWorkerData!.holidays;
-        // If API returned multiple work_centers, use them for selection
-        try {
-          // We attempted to parse a single workCenter in WorkerData; however
-          // the original payload may include multiple centers. Try to extract
-          // them from storage key 'worker_data' to offer selection.
-          final raw = await StorageService.getString('worker_data');
-          if (raw != null) {
-            final decoded = jsonDecode(raw);
-            if (decoded is Map<String, dynamic>) {
-              final wcRaw = decoded['work_centers'];
-              if (wcRaw is List<dynamic>) {
-                _availableWorkCenters = wcRaw
-                    .map((e) => WorkCenter.fromJson(e as Map<String, dynamic>))
-                    .toList();
-              }
-            }
-          }
-        } catch (_) {
-          _availableWorkCenters = [];
-        }
+        // Use the list of all work centers from the model
+        _availableWorkCenters = _currentWorkerData!.allWorkCenters;
+        
         // set current work center
         _currentWorkCenter = _currentWorkerData!.workCenter;
       } else {
@@ -425,7 +408,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   items: _availableWorkCenters
                       .map((wc) => DropdownMenuItem(
                             value: wc,
-                            child: Text('${wc.name} (${wc.code})'),
+                            child: Text(
+                                '${wc.teamName != null ? "${wc.teamName} - " : ""}${wc.name} (${wc.code})'),
                           ))
                       .toList(),
                   onChanged: (val) {

@@ -4,12 +4,14 @@ import 'work_center.dart';
 class WorkerData {
   final User user;
   final WorkCenter workCenter;
+  final List<WorkCenter> allWorkCenters;
   final List<ScheduleEntry> schedule;
   final List<Holiday> holidays;
 
   const WorkerData({
     required this.user,
     required this.workCenter,
+    required this.allWorkCenters,
     required this.schedule,
     required this.holidays,
   });
@@ -21,11 +23,26 @@ class WorkerData {
       return <String, dynamic>{};
     }
 
-    final Map<String, dynamic> userMap = ensureMap(json['user'] ?? json['worker'] ?? json['employee'] ?? json['empleado']);
+    final Map<String, dynamic> userMap = ensureMap(json['user'] ??
+        json['worker'] ??
+        json['employee'] ??
+        json['empleado']);
+
+    // Extract all available work centers
+    List<WorkCenter> allCenters = [];
+    if (json['work_centers'] is List) {
+      allCenters = (json['work_centers'] as List)
+          .map((e) => WorkCenter.fromJson(e is Map<String, dynamic> ? e : {}))
+          .toList();
+    }
 
     // The backend may return work_center as a single map or as a list under
     // the key 'work_centers'. If it's a list, take the first element.
-    Map<String, dynamic> workCenterCandidate = ensureMap(json['work_center'] ?? json['workcenter'] ?? json['workCenter'] ?? json['centro']);
+    Map<String, dynamic> workCenterCandidate = ensureMap(json['work_center'] ??
+        json['workcenter'] ??
+        json['workCenter'] ??
+        json['centro']);
+    
     if (workCenterCandidate.isEmpty) {
       final wc = json['work_centers'];
       if (wc is List<dynamic>) {
@@ -33,13 +50,18 @@ class WorkerData {
         for (final item in wc) {
           if (item is Map<String, dynamic>) {
             // sometimes item may be wrapped under 'data' or 'work_center'
-            if (item.containsKey('id') || item.containsKey('code') || item.containsKey('name')) {
+            if (item.containsKey('id') ||
+                item.containsKey('code') ||
+                item.containsKey('name')) {
               workCenterCandidate = item;
               break;
-            } else if (item.containsKey('work_center') && item['work_center'] is Map<String, dynamic>) {
-              workCenterCandidate = item['work_center'] as Map<String, dynamic>;
+            } else if (item.containsKey('work_center') &&
+                item['work_center'] is Map<String, dynamic>) {
+              workCenterCandidate =
+                  item['work_center'] as Map<String, dynamic>;
               break;
-            } else if (item.containsKey('data') && item['data'] is Map<String, dynamic>) {
+            } else if (item.containsKey('data') &&
+                item['data'] is Map<String, dynamic>) {
               final inner = item['data'] as Map<String, dynamic>;
               if (inner.containsKey('id') || inner.containsKey('code')) {
                 workCenterCandidate = inner;
@@ -54,7 +76,9 @@ class WorkerData {
           final d = wc['data'];
           if (d is Map<String, dynamic>) {
             workCenterCandidate = d;
-          } else if (d is List<dynamic> && d.isNotEmpty && d.first is Map<String, dynamic>) {
+          } else if (d is List<dynamic> &&
+              d.isNotEmpty &&
+              d.first is Map<String, dynamic>) {
             workCenterCandidate = d.first as Map<String, dynamic>;
           }
         } else {
@@ -64,60 +88,74 @@ class WorkerData {
     }
     final Map<String, dynamic> workCenterMap = ensureMap(workCenterCandidate);
 
-  // Accept various keys for schedules used by backend: 'schedule',
-  // 'schedules', or 'work_schedule'. Prefer the first one that exists.
-  List<dynamic>? scheduleList;
-  if (json['schedule'] is List<dynamic>) {
-    scheduleList = json['schedule'] as List<dynamic>;
-  } else if (json['schedules'] is List<dynamic>) {
-    scheduleList = json['schedules'] as List<dynamic>;
-  } else if (json['work_schedule'] is List<dynamic>) {
-    scheduleList = json['work_schedule'] as List<dynamic>;
-  } else if (json['work_schedule'] is Map<String, dynamic>) {
-    // Some backends wrap schedule under an object, try common keys
-    final ws = json['work_schedule'] as Map<String, dynamic>;
-    // normalize nested 'data' wrappers too
-    if (ws['data'] is List<dynamic>) {
-      scheduleList = ws['data'] as List<dynamic>;
-    } else if (ws['entries'] is List<dynamic>) {
-      scheduleList = ws['entries'] as List<dynamic>;
-    } else if (ws['items'] is List<dynamic>) {
-      scheduleList = ws['items'] as List<dynamic>;
-    } else if (ws['tramos'] is List<dynamic>) {
-      scheduleList = ws['tramos'] as List<dynamic>;
-    } else if (ws['schedule'] is List<dynamic>) {
-      scheduleList = ws['schedule'] as List<dynamic>;
+    // Accept various keys for schedules used by backend: 'schedule',
+    // 'schedules', or 'work_schedule'. Prefer the first one that exists.
+    List<dynamic>? scheduleList;
+    if (json['schedule'] is List<dynamic>) {
+      scheduleList = json['schedule'] as List<dynamic>;
+    } else if (json['schedules'] is List<dynamic>) {
+      scheduleList = json['schedules'] as List<dynamic>;
+    } else if (json['work_schedule'] is List<dynamic>) {
+      scheduleList = json['work_schedule'] as List<dynamic>;
+    } else if (json['work_schedule'] is Map<String, dynamic>) {
+      // Some backends wrap schedule under an object, try common keys
+      final ws = json['work_schedule'] as Map<String, dynamic>;
+      // normalize nested 'data' wrappers too
+      if (ws['data'] is List<dynamic>) {
+        scheduleList = ws['data'] as List<dynamic>;
+      } else if (ws['entries'] is List<dynamic>) {
+        scheduleList = ws['entries'] as List<dynamic>;
+      } else if (ws['items'] is List<dynamic>) {
+        scheduleList = ws['items'] as List<dynamic>;
+      } else if (ws['tramos'] is List<dynamic>) {
+        scheduleList = ws['tramos'] as List<dynamic>;
+      } else if (ws['schedule'] is List<dynamic>) {
+        scheduleList = ws['schedule'] as List<dynamic>;
+      } else {
+        scheduleList = null;
+      }
     } else {
       scheduleList = null;
     }
-  } else {
-    scheduleList = null;
-  }
 
-  final List<dynamic>? holidaysList = (json['holidays'] is List<dynamic>)
-    ? json['holidays'] as List<dynamic>
-    : (json['festivos'] is List<dynamic> ? json['festivos'] as List<dynamic> : null);
+    final List<dynamic>? holidaysList = (json['holidays'] is List<dynamic>)
+        ? json['holidays'] as List<dynamic>
+        : (json['festivos'] is List<dynamic>
+            ? json['festivos'] as List<dynamic>
+            : null);
 
-  // Additional possible shape: schedules wrapped under 'data' at root
-  if (scheduleList == null) {
-    if (json['data'] is Map<String, dynamic>) {
-      final rootData = json['data'] as Map<String, dynamic>;
-      if (rootData['work_schedule'] is List<dynamic>) {
-        scheduleList = rootData['work_schedule'] as List<dynamic>;
-      } else if (rootData['schedule'] is List<dynamic>) scheduleList = rootData['schedule'] as List<dynamic>;
-      else if (rootData['schedules'] is List<dynamic>) scheduleList = rootData['schedules'] as List<dynamic>;
-      else if (rootData['work_schedule'] is Map<String, dynamic>) {
-        final ws = rootData['work_schedule'] as Map<String, dynamic>;
-        if (ws['data'] is List<dynamic>) scheduleList = ws['data'] as List<dynamic>;
+    // Additional possible shape: schedules wrapped under 'data' at root
+    if (scheduleList == null) {
+      if (json['data'] is Map<String, dynamic>) {
+        final rootData = json['data'] as Map<String, dynamic>;
+        if (rootData['work_schedule'] is List<dynamic>) {
+          scheduleList = rootData['work_schedule'] as List<dynamic>;
+        } else if (rootData['schedule'] is List<dynamic>)
+          scheduleList = rootData['schedule'] as List<dynamic>;
+        else if (rootData['schedules'] is List<dynamic>)
+          scheduleList = rootData['schedules'] as List<dynamic>;
+        else if (rootData['work_schedule'] is Map<String, dynamic>) {
+          final ws = rootData['work_schedule'] as Map<String, dynamic>;
+          if (ws['data'] is List<dynamic>)
+            scheduleList = ws['data'] as List<dynamic>;
+        }
       }
     }
-  }
 
     return WorkerData(
       user: User.fromJson(userMap),
       workCenter: WorkCenter.fromJson(workCenterMap),
-      schedule: scheduleList?.map((e) => ScheduleEntry.fromJson(e is Map<String, dynamic> ? e : <String, dynamic>{})).toList() ?? [],
-      holidays: holidaysList?.map((e) => Holiday.fromJson(e is Map<String, dynamic> ? e : <String, dynamic>{})).toList() ?? [],
+      allWorkCenters: allCenters,
+      schedule: scheduleList
+              ?.map((e) => ScheduleEntry.fromJson(
+                  e is Map<String, dynamic> ? e : <String, dynamic>{}))
+              .toList() ??
+          [],
+      holidays: holidaysList
+              ?.map((e) => Holiday.fromJson(
+                  e is Map<String, dynamic> ? e : <String, dynamic>{}))
+              .toList() ??
+          [],
     );
   }
 
@@ -125,6 +163,7 @@ class WorkerData {
     return {
       'user': user.toJson(),
       'work_center': workCenter.toJson(),
+      'work_centers': allWorkCenters.map((e) => e.toJson()).toList(),
       'schedule': schedule.map((e) => e.toJson()).toList(),
       'holidays': holidays.map((e) => e.toJson()).toList(),
     };

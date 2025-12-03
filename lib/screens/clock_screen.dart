@@ -16,6 +16,8 @@ import 'profile_screen.dart';
 import 'history_screen.dart';
 import 'schedule_screen.dart';
 import '../utils/constants.dart';
+import 'team_selection_modal.dart';
+import 'dart:convert';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
@@ -703,6 +705,56 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
     }
   }
 
+  Future<void> _showTeamSelection() async {
+    try {
+      // Cargar datos del trabajador (incluyendo todos los centros de trabajo)
+      final workerData = await SetupService.getSavedWorkerData();
+      
+      if (workerData == null || workerData.allWorkCenters.isEmpty) {
+        if (mounted) _showError('No hay datos de equipos disponibles');
+        return;
+      }
+
+      final availableWorkCenters = workerData.allWorkCenters;
+
+      if (availableWorkCenters.isEmpty) {
+        if (mounted) _showError('No hay otros equipos disponibles');
+        return;
+      }
+
+      if (!mounted) return;
+
+      final selectedWorkCenter = await showModalBottomSheet<WorkCenter>(
+        context: context,
+        backgroundColor: Colors.transparent,
+        builder: (context) => TeamSelectionModal(
+          availableWorkCenters: availableWorkCenters,
+          currentWorkCenter: widget.workCenter,
+        ),
+      );
+
+      if (selectedWorkCenter != null &&
+          selectedWorkCenter.code != widget.workCenter.code) {
+        // Guardar el nuevo centro de trabajo seleccionado
+        await StorageService.saveWorkCenter(selectedWorkCenter);
+
+        // Recargar la pantalla completa para reflejar el cambio
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => ClockScreen(
+                workCenter: selectedWorkCenter,
+                user: widget.user,
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) _showError('Error al cargar equipos: $e');
+    }
+  }
+
   // --- WIDGETS ---
 
   @override
@@ -769,56 +821,73 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
                 children: [
                   // Línea 261 (Inicio de la lista de children)
                   // Work Center Info
-                  Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppConstants.cardBorderRadius),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppConstants.spacing),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(AppConstants.primaryColorValue)
-                                  .withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
+                  // Work Center Info
+                  InkWell(
+                    onTap: _showTeamSelection,
+                    child: Card(
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                            AppConstants.cardBorderRadius),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppConstants.spacing),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                        AppConstants.primaryColorValue)
+                                    .withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.business,
+                                color: Color(AppConstants.primaryColorValue),
+                                size: 24,
+                              ),
                             ),
-                            child: const Icon(
-                              Icons.business,
-                              color: Color(AppConstants.primaryColorValue),
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  clockStatus?.workCenterName?.isNotEmpty ==
-                                          true
-                                      ? clockStatus!.workCenterName!
-                                      : widget.workCenter.name,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    clockStatus?.workCenterName?.isNotEmpty ==
+                                            true
+                                        ? clockStatus!.workCenterName!
+                                        : widget.workCenter.name,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                ),
-                                Text(
-                                  clockStatus?.workCenterCode ??
-                                      widget.workCenter.code,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[600],
+                                  if (widget.workCenter.teamName != null)
+                                    Text(
+                                      widget.workCenter.teamName!,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: const Color(
+                                            AppConstants.primaryColorValue),
+                                      ),
+                                    ),
+                                  Text(
+                                    clockStatus?.workCenterCode ??
+                                        widget.workCenter.code,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[600],
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                            const Icon(Icons.arrow_forward_ios,
+                                size: 16, color: Colors.grey),
+                          ],
+                        ),
                       ),
                     ),
                   ),
