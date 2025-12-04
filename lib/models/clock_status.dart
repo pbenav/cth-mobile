@@ -83,9 +83,38 @@ class ClockStatus {
     );
   }
   
-  // Helper getters for compatibility
-  String? get workCenterName => null;
-  String? get workCenterCode => null;
+  // Helper getters for compatibility - extract work center info from user field
+  String? get workCenterName {
+    if (user == null) return null;
+    
+    // Try different possible field names for work center
+    final workCenter = user!['work_center'] ?? user!['workCenter'];
+    if (workCenter is Map<String, dynamic>) {
+      return workCenter['name'] as String? ?? 
+             workCenter['work_center_name'] as String? ?? 
+             workCenter['nombre_centro'] as String?;
+    }
+    
+    // Fallback: check for direct fields in user
+    return user!['work_center_name'] as String? ?? 
+           user!['nombre_centro'] as String?;
+  }
+  
+  String? get workCenterCode {
+    if (user == null) return null;
+    
+    // Try different possible field names for work center
+    final workCenter = user!['work_center'] ?? user!['workCenter'];
+    if (workCenter is Map<String, dynamic>) {
+      return workCenter['code'] as String? ?? 
+             workCenter['work_center_code'] as String? ?? 
+             workCenter['codigo_centro'] as String?;
+    }
+    
+    // Fallback: check for direct fields in user
+    return user!['work_center_code'] as String? ?? 
+           user!['codigo_centro'] as String?;
+  }
 }
 
 // Modelo para los eventos del día

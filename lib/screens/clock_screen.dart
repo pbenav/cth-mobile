@@ -667,14 +667,24 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
         observations = 'Evento creado sin comprobación/autorización NFC.';
       }
 
-      // Para inicio de jornada (clock_in) nunca se debe enviar 'action'
+      // Para inicio de jornada normal (clock_in) nunca se debe enviar 'action'
+      // Pero para exceptional_clock_in sí debemos enviarlo
       if (action == 'clock_in') {
         await ClockService.performClock(
           workCenterCode: workCenterCode,
           userCode: userCode,
           observations: observations,
         );
+      } else if (action == 'exceptional_clock_in') {
+        // Fichaje excepcional: enviar action explícitamente
+        await ClockService.performClock(
+          workCenterCode: workCenterCode,
+          userCode: userCode,
+          action: action,
+          observations: observations,
+        );
       } else {
+        // Otras acciones (clock_out, pause, resume_workday, etc.)
         await ClockService.performClock(
           workCenterCode: workCenterCode,
           userCode: userCode,
