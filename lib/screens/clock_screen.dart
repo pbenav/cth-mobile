@@ -205,35 +205,34 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
     }
   }
 
-  void _checkTeamMismatch() {
+  Future<void> _checkTeamMismatch() async {
     if (clockStatus == null) {
-      _showTeamMismatchWarning = false;
-      _mismatchWarningMessage = null;
+      setState(() {
+        _showTeamMismatchWarning = false;
+        _mismatchWarningMessage = null;
+      });
       return;
     }
 
-    // Get locally saved work center
-    final savedWorkCenter = widget.user.workCenter;
-    final serverTeamId = clockStatus!.currentTeamId;
+    // Get locally saved work center code
+    final savedWorkCenterCode = await _getEffectiveWorkCenterCode();
+    final serverWorkCenterCode = clockStatus!.currentWorkCenterCode;
     final serverTeamName = clockStatus!.currentTeamName;
     
     // Check if there's a mismatch
-    if (savedWorkCenter != null && serverTeamId != null) {
-      // For now, we compare by work center code since we don't have team_id in WorkCenter model
-      // The mismatch will be caught when trying to clock in
-      final serverWorkCenterCode = clockStatus!.currentWorkCenterCode;
-      
-      if (serverWorkCenterCode != null && savedWorkCenter.code != serverWorkCenterCode) {
+    if (savedWorkCenterCode.isNotEmpty && 
+        serverWorkCenterCode != null && 
+        savedWorkCenterCode != serverWorkCenterCode) {
+      setState(() {
         _showTeamMismatchWarning = true;
         _mismatchWarningMessage = 
-            'El equipo seleccionado (${savedWorkCenter.name}) no coincide con tu equipo actual en el servidor ($serverTeamName)';
-      } else {
+            'El centro de trabajo seleccionado no coincide con tu equipo actual en el servidor ($serverTeamName)';
+      });
+    } else {
+      setState(() {
         _showTeamMismatchWarning = false;
         _mismatchWarningMessage = null;
-      }
-    } else {
-      _showTeamMismatchWarning = false;
-      _mismatchWarningMessage = null;
+      });
     }
   }
 
