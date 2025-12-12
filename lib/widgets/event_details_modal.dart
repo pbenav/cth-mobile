@@ -87,6 +87,22 @@ class EventDetailsModal extends StatelessWidget {
                       icon: Icons.numbers,
                     ),
                     
+                    if (event.teamName != null)
+                      _buildDetailRow(
+                        context,
+                        I18n.of('history.details.team'),
+                        event.teamName!,
+                        icon: Icons.group,
+                      ),
+                    
+                    if (event.workCenterName != null || event.workCenterCode != null)
+                      _buildDetailRow(
+                        context,
+                        I18n.of('history.details.work_center'),
+                        event.workCenterName ?? event.workCenterCode ?? 'N/A',
+                        icon: Icons.business,
+                      ),
+                    
                     _buildDetailRow(
                       context,
                       I18n.of('history.details.status'),

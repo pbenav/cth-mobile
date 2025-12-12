@@ -2,6 +2,11 @@ class HistoryEvent {
   final int id;
   final String type;
   final int eventTypeId;
+  final int? teamId;
+  final String? teamName;
+  final int? workCenterId;
+  final String? workCenterCode;
+  final String? workCenterName;
   final DateTime? start;
   final DateTime? end;
   final int? durationSeconds;
@@ -17,6 +22,11 @@ class HistoryEvent {
     required this.id,
     required this.type,
     required this.eventTypeId,
+    this.teamId,
+    this.teamName,
+    this.workCenterId,
+    this.workCenterCode,
+    this.workCenterName,
     this.start,
     this.end,
     this.durationSeconds,
@@ -41,6 +51,11 @@ class HistoryEvent {
       id: json['id'] as int,
       type: json['type'] as String,
       eventTypeId: json['event_type_id'] as int,
+      teamId: json['team_id'] as int?,
+      teamName: json['team_name'] as String?,
+      workCenterId: json['work_center_id'] as int?,
+      workCenterCode: json['work_center_code'] as String?,
+      workCenterName: json['work_center_name'] as String?,
       start: json['start'] != null ? DateTime.parse(json['start']) : null,
       end: json['end'] != null ? DateTime.parse(json['end']) : null,
       durationSeconds: json['duration_seconds'] as int?,
@@ -61,6 +76,11 @@ class HistoryEvent {
       'id': id,
       'type': type,
       'event_type_id': eventTypeId,
+      'team_id': teamId,
+      'team_name': teamName,
+      'work_center_id': workCenterId,
+      'work_center_code': workCenterCode,
+      'work_center_name': workCenterName,
       'start': start?.toIso8601String(),
       'end': end?.toIso8601String(),
       'duration_seconds': durationSeconds,

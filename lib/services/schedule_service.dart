@@ -26,7 +26,7 @@ class ScheduleService {
       }
 
       final response = await http.post(
-        Uri.parse('$baseUrl/api/v1/mobile/schedule'),
+        Uri.parse('$baseUrl/api/v1/schedule'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -62,7 +62,7 @@ class ScheduleService {
       }
 
       final response = await http.post(
-        Uri.parse('$baseUrl/api/v1/mobile/schedule/update'),
+        Uri.parse('$baseUrl/api/v1/schedule/update'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',

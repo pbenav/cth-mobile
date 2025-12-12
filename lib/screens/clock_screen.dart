@@ -495,10 +495,7 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
     if (upper == 'INICIAR REGISTRO EXCEPCIONAL' ||
         upper.contains('EXCEPCIONAL') ||
         upper.contains('FUERA DE HORARIO')) {
-      // Si localmente estamos en horario, mostramos verde (éxito) en lugar de naranja
-      if (_isLocallyWithinSchedule) {
-        return const Color(AppConstants.successColorValue);
-      }
+      // Siempre mostrar naranja para fichajes excepcionales
       return const Color(AppConstants.warningColorValue);
     }
     return Colors.grey;

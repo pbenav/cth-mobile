@@ -36,6 +36,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   List<Holiday> _holidays = [];
   bool _isLoading = true;
   bool _isSaving = false;
+  bool _isSwitchingTeam = false;
   DateTime? _lastUpdate;
   bool _isRefreshing = false;
 
@@ -461,19 +462,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ))
                       .toList(),
-                  onChanged: (val) {
-                    setState(() {
-                      _currentWorkCenter = val;
-                      if (val != null) {
-                        _workCenterCodeController.text = val.code;
-                        _workCenterNameController.text = val.name;
-                      }
-                    });
-                    // Sync immediately
-                    if (val != null) {
-                      StorageService.saveWorkCenter(val);
-                    }
-                  },
+                  onChanged: _isSwitchingTeam
+                      ? null
+                      : (WorkCenter? newWorkCenter) async {
+                          if (newWorkCenter == null ||
+                              newWorkCenter.code == _currentWorkCenter?.code) {
+                            return;
+                          }
+
+                          setState(() => _isSwitchingTeam = true);
+
+                          try {
+                            // Call API to switch team
+                            await ProfileService.switchTeam(
+                              userCode: _currentUser!.code,
+                              workCenterCode: newWorkCenter.code,
+                            );
+
+                            // Update local state
+                            setState(() {
+                              _currentWorkCenter = newWorkCenter;
+                              _workCenterCodeController.text = newWorkCenter.code;
+                              _workCenterNameController.text = newWorkCenter.name;
+                            });
+
+                            // Save to local storage
+                            await StorageService.saveWorkCenter(newWorkCenter);
+
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Equipo cambiado correctamente'),
+                                  backgroundColor:
+                                      Color(AppConstants.successColorValue),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error al cambiar equipo: $e'),
+                                  backgroundColor:
+                                      Color(AppConstants.errorColorValue),
+                                  duration: const Duration(seconds: 3),
+                                ),
+                              );
+                            }
+                          } finally {
+                            if (mounted) {
+                              setState(() => _isSwitchingTeam = false);
+                            }
+                          }
+                        },
                   decoration:
                       const InputDecoration(border: OutlineInputBorder()),
                 ),

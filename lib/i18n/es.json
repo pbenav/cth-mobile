@@ -63,6 +63,8 @@
   "history.details.id": "ID",
   "history.details.type": "Tipo",
   "history.details.event_type_id": "ID Tipo de Evento",
+  "history.details.team": "Equipo",
+  "history.details.work_center": "Centro de Trabajo",
   "history.details.status": "Estado",
   "history.details.start": "Inicio",
   "history.details.end": "Fin",

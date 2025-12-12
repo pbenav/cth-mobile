@@ -84,7 +84,7 @@ class SetupService {
       _log('📝 Server URL: $serverUrl', onLog: onLog);
 
       final normalizedUrl = _normalizeUrl(serverUrl);
-      final url = Uri.parse('$normalizedUrl/api/v1/mobile/worker/$workerCode');
+      final url = Uri.parse('$normalizedUrl/api/v1/worker/$workerCode');
       _log('🌐 URL completa: $url', onLog: onLog);
 
       final response = await http.get(url).timeout(const Duration(seconds: 30));

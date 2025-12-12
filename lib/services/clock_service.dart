@@ -24,13 +24,15 @@ class ClockService {
   }
 
   // Normalizar la URL para evitar duplicados
+  // Normalizar la URL para evitar duplicados
   static String _normalizeUrl(String baseUrl) {
-    if (baseUrl.endsWith('/api/v1/mobile')) {
+    if (baseUrl.endsWith('/api/v1')) {
       return baseUrl;
-    } else if (baseUrl.endsWith('/api/v1')) {
-      return '$baseUrl/mobile';
+    } else if (baseUrl.endsWith('/api/v1/mobile')) {
+      // Legacy URL support
+      return baseUrl.replaceAll('/mobile', '');
     } else {
-      return '$baseUrl/api/v1/mobile';
+      return '$baseUrl/api/v1';
     }
   }
 
@@ -251,7 +253,7 @@ class ClockService {
       final baseUrl = await _getBaseUrl();
       final response = await http
           .post(
-            Uri.parse('$baseUrl/confirm-team-switch'),
+            Uri.parse('$baseUrl/team/switch'),
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json',

@@ -25,7 +25,7 @@ class HistoryService {
     if (url.endsWith('/')) {
       url = url.substring(0, url.length - 1);
     }
-    return '$url/api/v1/mobile';
+    return '$url/api/v1';
   }
 
   /// Get user's event history
