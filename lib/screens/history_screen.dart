@@ -6,6 +6,7 @@ import '../services/history_service.dart';
 import '../utils/constants.dart';
 import '../i18n/i18n_service.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import '../widgets/event_details_modal.dart';
 
 enum HistoryFilter { today, week, month, custom }
 
@@ -346,134 +347,160 @@ class _HistoryScreenState extends State<HistoryScreen> {
         ? DateFormat('HH:mm').format(event.end!.toLocal())
         : '--:--';
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Event type and status
-            Row(
-              children: [
-                Icon(
-                  _getEventIcon(event),
-                  color: _getEventColor(event),
-                  size: 24,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    event.type,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+    return InkWell(
+      onTap: () => _showEventDetailsModal(event),
+      borderRadius: BorderRadius.circular(12),
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Event type and status
+              Row(
+                children: [
+                  Icon(
+                    _getEventIcon(event),
+                    color: _getEventColor(event),
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          event.type,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'ID: ${event.id}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                if (event.isOpen)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.green[100],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      I18n.of('history.status.open'),
-                      style: TextStyle(
-                        color: Colors.green[700],
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
+                  if (event.isOpen)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
                       ),
-                    ),
-                  ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            // Time range
-            Row(
-              children: [
-                Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
-                const SizedBox(width: 8),
-                Text(
-                  '$startTime - $endTime',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[700],
-                  ),
-                ),
-                if (event.durationFormatted != null) ...[
-                  const SizedBox(width: 16),
-                  Icon(Icons.timer, size: 16, color: Colors.grey[600]),
-                  const SizedBox(width: 8),
-                  Text(
-                    event.durationFormatted!,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[700],
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-
-            // Observations
-            if (event.observations != null && event.observations!.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.notes, size: 16, color: Colors.grey[600]),
-                    const SizedBox(width: 8),
-                    Expanded(
+                      decoration: BoxDecoration(
+                        color: Colors.green[100],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       child: Text(
-                        event.observations!,
+                        I18n.of('history.status.open'),
                         style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey[700],
+                          color: Colors.green[700],
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ],
-
-            // Status badges
-            if (event.isAuthorized || event.isExceptional) ...[
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                children: [
-                  if (event.isAuthorized)
-                    _buildStatusBadge(
-                      I18n.of('history.status.authorized'),
-                      Colors.blue,
-                    ),
-                  if (event.isExceptional)
-                    _buildStatusBadge(
-                      I18n.of('history.status.exceptional'),
-                      Colors.orange,
-                    ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.chevron_right,
+                    color: Colors.grey[400],
+                    size: 20,
+                  ),
                 ],
               ),
+
+              const SizedBox(height: 12),
+
+              // Time range
+              Row(
+                children: [
+                  Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
+                  const SizedBox(width: 8),
+                  Text(
+                    '$startTime - $endTime',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                  if (event.durationFormatted != null) ...[
+                    const SizedBox(width: 16),
+                    Icon(Icons.timer, size: 16, color: Colors.grey[600]),
+                    const SizedBox(width: 8),
+                    Text(
+                      event.durationFormatted!,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[700],
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+
+              // Observations
+              if (event.observations != null && event.observations!.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.notes, size: 16, color: Colors.grey[600]),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          event.observations!,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[700],
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              // Status badges
+              if (event.isAuthorized || event.isExceptional) ...[
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    if (event.isAuthorized)
+                      _buildStatusBadge(
+                        I18n.of('history.status.authorized'),
+                        Colors.blue,
+                      ),
+                    if (event.isExceptional)
+                      _buildStatusBadge(
+                        I18n.of('history.status.exceptional'),
+                        Colors.orange,
+                      ),
+                  ],
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -515,5 +542,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
       return Colors.orange;
     }
     return const Color(AppConstants.primaryColorValue);
+  }
+
+  void _showEventDetailsModal(HistoryEvent event) {
+    showDialog(
+      context: context,
+      builder: (context) => EventDetailsModal(event: event),
+    );
   }
 }
