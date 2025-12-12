@@ -114,6 +114,58 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
     }
   }
 
+  Future<bool> _showTeamMismatchDialog(TeamMismatchException e) async {
+    return await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Cambio de Equipo Requerido'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Tu equipo actual en el servidor no coincide con el equipo seleccionado en la app.',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Text('Equipo actual en servidor:'),
+            Text(
+              '${e.currentTeamName ?? "Desconocido"}',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text('Equipo seleccionado en la app:'),
+            Text(
+              '${e.selectedTeamName ?? "Desconocido"}',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.orange,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              '¿Deseas cambiar al equipo seleccionado y continuar con el fichaje?',
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Cambiar y Fichar'),
+          ),
+        ],
+      ),
+    ) ?? false;
+  }
+
   ClockStatus? clockStatus;
   bool isLoading = false;
   bool isPerformingClock = false;
@@ -122,6 +174,8 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
   bool _isLocallyWithinSchedule = false;
   Timer? _hoursUpdateTimer;
   String? _calculatedWorkedHours;
+  bool _showTeamMismatchWarning = false;
+  String? _mismatchWarningMessage;
 
   Future<void> _loadStatus() async {
     setState(() => isLoading = true);
@@ -134,6 +188,9 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
         clockStatus = response.data;
         _isLocallyWithinSchedule = isWithin;
         _updateCalculatedHours();
+        
+        // Check for team mismatch
+        _checkTeamMismatch();
       });
       
       _startHoursUpdateTimer();
@@ -145,6 +202,38 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
       _showError(I18n.of('clock.loading_error', {'error': errorMessage}));
     } finally {
       setState(() => isLoading = false);
+    }
+  }
+
+  void _checkTeamMismatch() {
+    if (clockStatus == null) {
+      _showTeamMismatchWarning = false;
+      _mismatchWarningMessage = null;
+      return;
+    }
+
+    // Get locally saved work center
+    final savedWorkCenter = widget.user.workCenter;
+    final serverTeamId = clockStatus!.currentTeamId;
+    final serverTeamName = clockStatus!.currentTeamName;
+    
+    // Check if there's a mismatch
+    if (savedWorkCenter != null && serverTeamId != null) {
+      // For now, we compare by work center code since we don't have team_id in WorkCenter model
+      // The mismatch will be caught when trying to clock in
+      final serverWorkCenterCode = clockStatus!.currentWorkCenterCode;
+      
+      if (serverWorkCenterCode != null && savedWorkCenter.code != serverWorkCenterCode) {
+        _showTeamMismatchWarning = true;
+        _mismatchWarningMessage = 
+            'El equipo seleccionado (${savedWorkCenter.name}) no coincide con tu equipo actual en el servidor ($serverTeamName)';
+      } else {
+        _showTeamMismatchWarning = false;
+        _mismatchWarningMessage = null;
+      }
+    } else {
+      _showTeamMismatchWarning = false;
+      _mismatchWarningMessage = null;
     }
   }
 
@@ -582,6 +671,34 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
         await _loadStatus();
         // Si se reanuda jornada, puedes agregar aquí un log si lo necesitas
       }
+    } on TeamMismatchException catch (e) {
+      if (mounted) {
+        // Show confirmation dialog
+        final confirmed = await _showTeamMismatchDialog(e);
+        
+        if (confirmed) {
+          try {
+            // User confirmed team switch
+            final userCode = await _getEffectiveUserCode();
+            final workCenterCode = e.selectedWorkCenterCode ?? await _getEffectiveWorkCenterCode();
+            
+            // Call confirmTeamSwitch endpoint
+            await ClockService.confirmTeamSwitch(
+              userCode: userCode,
+              workCenterCode: workCenterCode,
+            );
+            
+            // Reload status after team switch
+            await _loadStatus();
+            
+            // Show success message
+            _showSuccess('Equipo cambiado correctamente. Ahora puedes fichar.');
+            
+          } catch (switchError) {
+            _showError('Error al cambiar de equipo: ${switchError.toString()}');
+          }
+        }
+      }
     } catch (e) {
       if (mounted) {
         String errorMessage = e.toString();
@@ -829,6 +946,32 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
             child: SingleChildScrollView(
               child: Column(
                 children: [
+                  // Team Mismatch Warning Banner
+                  if (_showTeamMismatchWarning && _mismatchWarningMessage != null)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade100,
+                        border: Border.all(color: Colors.orange.shade700, width: 2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.warning, color: Colors.orange.shade700),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              _mismatchWarningMessage!,
+                              style: TextStyle(
+                                color: Colors.orange.shade900,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   // Línea 261 (Inicio de la lista de children)
                   // Work Center Info
                   // Work Center Info
