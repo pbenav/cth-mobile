@@ -11,6 +11,10 @@ class ClockStatus {
   final List<ClockEvent> todayRecords;
   final String? statusCode; // Added status code for i18n
   final Map<String, dynamic>? user; // Added user info
+  // Team information for validation
+  final int? currentTeamId;
+  final String? currentTeamName;
+  final String? currentWorkCenterCode;
 
   const ClockStatus({
     required this.action,
@@ -25,6 +29,9 @@ class ClockStatus {
     this.pauseEventId,
     this.todayRecords = const [],
     this.user,
+    this.currentTeamId,
+    this.currentTeamName,
+    this.currentWorkCenterCode,
   });
 
   Map<String, dynamic> toJson() => {
@@ -80,6 +87,9 @@ class ClockStatus {
       pauseEventId: pauseEventId,
       todayRecords: todayRecords,
       user: json['user'] as Map<String, dynamic>?,
+      currentTeamId: json['current_team_id'] as int?,
+      currentTeamName: json['current_team_name'] as String?,
+      currentWorkCenterCode: json['current_work_center_code'] as String?,
     );
   }
   

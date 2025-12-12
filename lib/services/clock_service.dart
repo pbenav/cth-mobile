@@ -83,6 +83,23 @@ class ClockService {
           jsonData,
           (data) => ClockStatus.fromJson(data),
         );
+      } else if (response.statusCode == 409) {
+        // Team mismatch - require confirmation
+        final msg = jsonData['message'];
+        final apiStatusCode = jsonData['status_code'];
+        final data = jsonData['data'];
+        
+        throw TeamMismatchException(
+          msg is String ? msg : (msg?.toString() ?? 'Team mismatch'),
+          statusCode: response.statusCode,
+          apiStatusCode: apiStatusCode is String ? apiStatusCode : null,
+          selectedTeamId: data?['selected_team_id'] as int?,
+          selectedTeamName: data?['selected_team_name'] as String?,
+          selectedWorkCenterCode: data?['selected_work_center_code'] as String?,
+          currentTeamId: data?['current_team_id'] as int?,
+          currentTeamName: data?['current_team_name'] as String?,
+          currentWorkCenterCode: data?['current_work_center_code'] as String?,
+        );
       } else {
         // Asegura que el mensaje sea siempre String
         final msg = jsonData['message'];
@@ -95,6 +112,7 @@ class ClockService {
       }
     } catch (e) {
       if (e is ClockException) rethrow;
+      if (e is TeamMismatchException) rethrow;
       throw NetworkException('Error de conexión: $e');
     }
   }
@@ -221,6 +239,49 @@ class ClockService {
       return null;
     } catch (e) {
       return null;
+    }
+  }
+
+  // Confirm team switch after user confirmation
+  static Future<ApiResponse<ClockStatus>> confirmTeamSwitch({
+    required String userCode,
+    required String workCenterCode,
+  }) async {
+    try {
+      final baseUrl = await _getBaseUrl();
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/confirm-team-switch'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode({
+              'user_code': userCode,
+              'work_center_code': workCenterCode,
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
+
+      final jsonData = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return ApiResponse<ClockStatus>.fromJson(
+          jsonData,
+          (data) => ClockStatus.fromJson(data),
+        );
+      } else {
+        final msg = jsonData['message'];
+        final apiStatusCode = jsonData['status_code'];
+        throw ClockException(
+          msg is String ? msg : (msg?.toString() ?? 'Team switch error'),
+          statusCode: response.statusCode,
+          apiStatusCode: apiStatusCode is String ? apiStatusCode : null,
+        );
+      }
+    } catch (e) {
+      if (e is ClockException) rethrow;
+      throw NetworkException('Error de conexión: $e');
     }
   }
 }

@@ -36,6 +36,27 @@ class ClockException extends ApiException {
   const ClockException(super.message, {super.statusCode, super.apiStatusCode});
 }
 
+class TeamMismatchException extends ApiException {
+  final int? selectedTeamId;
+  final String? selectedTeamName;
+  final String? selectedWorkCenterCode;
+  final int? currentTeamId;
+  final String? currentTeamName;
+  final String? currentWorkCenterCode;
+  
+  const TeamMismatchException(
+    super.message, {
+    super.statusCode,
+    super.apiStatusCode,
+    this.selectedTeamId,
+    this.selectedTeamName,
+    this.selectedWorkCenterCode,
+    this.currentTeamId,
+    this.currentTeamName,
+    this.currentWorkCenterCode,
+  });
+}
+
 class AuthException extends ApiException {
   const AuthException(super.message, {super.statusCode, super.apiStatusCode});
 }
