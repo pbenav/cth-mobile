@@ -16,6 +16,8 @@ class HistoryEvent {
   final bool isExceptional;
   final String? observations;
   final String? description;
+  final Map<String, dynamic>? locationStart;
+  final Map<String, dynamic>? locationEnd;
   final DateTime? createdAt;
 
   HistoryEvent({
@@ -36,6 +38,8 @@ class HistoryEvent {
     required this.isExceptional,
     this.observations,
     this.description,
+    this.locationStart,
+    this.locationEnd,
     this.createdAt,
   });
 
@@ -65,6 +69,8 @@ class HistoryEvent {
       isExceptional: parseBool(json['is_exceptional']),
       observations: json['observations'] as String?,
       description: json['description'] as String?,
+      locationStart: json['location_start'] as Map<String, dynamic>?,
+      locationEnd: json['location_end'] as Map<String, dynamic>?,
       createdAt: json['created_at'] != null 
           ? DateTime.parse(json['created_at']) 
           : null,
@@ -90,6 +96,8 @@ class HistoryEvent {
       'is_exceptional': isExceptional,
       'observations': observations,
       'description': description,
+      'location_start': locationStart,
+      'location_end': locationEnd,
       'created_at': createdAt?.toIso8601String(),
     };
   }

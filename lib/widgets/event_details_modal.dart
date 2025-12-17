@@ -215,6 +215,42 @@ class EventDetailsModal extends StatelessWidget {
                         ),
                       ),
                     ],
+                    
+                    // GPS Location
+                    if (event.locationStart != null || event.locationEnd != null) ...[
+                      const SizedBox(height: 16),
+                      _buildSectionTitle(context, 'Geolocalización'),
+                      const SizedBox(height: 8),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.green[50],
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.green[200]!),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.location_on, color: Colors.green[700], size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                event.locationStart != null && event.locationEnd != null
+                                    ? 'Entrada y salida con GPS'
+                                    : event.locationStart != null
+                                        ? 'Entrada con GPS'
+                                        : 'Salida con GPS',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.green[900],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

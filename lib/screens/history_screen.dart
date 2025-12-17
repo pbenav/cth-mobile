@@ -369,6 +369,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     size: 24,
                   ),
                   const SizedBox(width: 12),
+                  // GPS indicator
+                  if (event.locationStart != null || event.locationEnd != null) ...[
+                    Icon(
+                      Icons.location_on,
+                      color: Colors.green[600],
+                      size: 16,
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
