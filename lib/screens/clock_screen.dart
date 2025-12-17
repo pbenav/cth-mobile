@@ -1420,6 +1420,9 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
                                                 : Theme.of(context)
                                                     .primaryColor,
                                             foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
                                           ),
                                           child: isPerformingClock
                                               ? const SizedBox(
