@@ -239,6 +239,7 @@ class _SetupWorkerScreenState extends State<SetupWorkerScreen> {
                                 key: _formKey,
                                 child: TextFormField(
                                   controller: _workerCodeController,
+                                  obscureText: true,
                                   decoration: InputDecoration(
                                     labelText: 'Código del trabajador',
                                     hintText: 'Ej: EMP001',
