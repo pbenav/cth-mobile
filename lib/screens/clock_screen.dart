@@ -560,8 +560,11 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
     }
 
     final upper = status.toUpperCase();
-    if (upper == 'INICIAR JORNADA' || upper == 'TRABAJANDO') {
+    if (upper == 'INICIAR JORNADA') {
       return const Color(AppConstants.successColorValue);
+    }
+    if (upper == 'TRABAJANDO') {
+      return const Color(AppConstants.errorColorValue); // Red for clock out
     }
     if (upper == 'INICIAR REGISTRO EXCEPCIONAL' ||
         upper.contains('EXCEPCIONAL') ||
