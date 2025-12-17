@@ -8,6 +8,7 @@ class ClockStatus {
   final TodayStats todayStats;
   final DateTime currentTime;
   final int? pauseEventId;
+  final int? pauseEventTypeId; // ID of pause event type if available
   final List<ClockEvent> todayRecords;
   final String? statusCode; // Added status code for i18n
   final Map<String, dynamic>? user; // Added user info
@@ -27,6 +28,7 @@ class ClockStatus {
     required this.todayStats,
     required this.currentTime,
     this.pauseEventId,
+    this.pauseEventTypeId,
     this.todayRecords = const [],
     this.user,
     this.currentTeamId,
@@ -45,6 +47,7 @@ class ClockStatus {
         'today_stats': todayStats.toJson(),
         'current_time': currentTime.toIso8601String(),
         'pause_event_id': pauseEventId,
+        'pause_event_type_id': pauseEventTypeId,
         'today_records': todayRecords.map((e) => e.toJson()).toList(),
         'user': user,
       };
@@ -85,6 +88,11 @@ class ClockStatus {
           : TodayStats(totalEntries: 0, totalExits: 0),
       currentTime: DateTime.now(),
       pauseEventId: pauseEventId,
+      pauseEventTypeId: json['pause_event_type_id'] is int
+          ? json['pause_event_type_id'] as int
+          : (json['pause_event_type_id'] is String
+              ? int.tryParse(json['pause_event_type_id'])
+              : null),
       todayRecords: todayRecords,
       user: json['user'] as Map<String, dynamic>?,
       currentTeamId: json['current_team_id'] as int?,
@@ -92,6 +100,9 @@ class ClockStatus {
       currentWorkCenterCode: json['current_work_center_code'] as String?,
     );
   }
+  
+  // Helper getter to check if pause events are available
+  bool get hasPauseEventType => pauseEventTypeId != null;
   
   // Helper getters for compatibility - extract work center info from user field
   String? get workCenterName {

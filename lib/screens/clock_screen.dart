@@ -1455,123 +1455,185 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
                                         ),
                                       );
                                     } else if (status == 'TRABAJANDO') {
-                                      return Row(
-                                        children: [
-                                          Expanded(
-                                            child: ElevatedButton(
-                                              onPressed: isPerformingClock
-                                                  ? null
-                                                  : () =>
-                                                      _performClockWithAction(
-                                                          'pause'),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(
-                                                    AppConstants
-                                                        .warningColorValue),
-                                                foregroundColor: Colors.white,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
+                                      // Check if pause event type is available
+                                      final hasPause = clockStatus!.hasPauseEventType;
+                                      
+                                      if (hasPause) {
+                                        // Show both pause and clock out buttons
+                                        return Row(
+                                          children: [
+                                            Expanded(
+                                              child: ElevatedButton(
+                                                onPressed: isPerformingClock
+                                                    ? null
+                                                    : () =>
+                                                        _performClockWithAction(
+                                                            'pause'),
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: const Color(
+                                                      AppConstants
+                                                          .warningColorValue),
+                                                  foregroundColor: Colors.white,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(12),
+                                                  ),
+                                                  elevation: 6,
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                          vertical: 16),
                                                 ),
-                                                elevation: 6,
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        vertical: 16),
-                                              ),
-                                              child: isPerformingClock
-                                                  ? const SizedBox(
-                                                      width: 20,
-                                                      height: 20,
-                                                      child:
-                                                          CircularProgressIndicator(
-                                                        color: Colors.white,
-                                                        strokeWidth: 2,
-                                                      ),
-                                                    )
-                                                  : Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        const Icon(Icons.pause,
-                                                            size: 20),
-                                                        const SizedBox(
-                                                            height: 4),
-                                                        Text(
-                                                          I18n.of(
-                                                              'clock.pause'),
-                                                          style:
-                                                              const TextStyle(
-                                                            fontSize: 12,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                          ),
+                                                child: isPerformingClock
+                                                    ? const SizedBox(
+                                                        width: 20,
+                                                        height: 20,
+                                                        child:
+                                                            CircularProgressIndicator(
+                                                          color: Colors.white,
+                                                          strokeWidth: 2,
                                                         ),
-                                                      ],
-                                                    ),
+                                                      )
+                                                    : Column(
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        children: [
+                                                          const Icon(Icons.pause,
+                                                              size: 20),
+                                                          const SizedBox(
+                                                              height: 4),
+                                                          Text(
+                                                            I18n.of(
+                                                                'clock.pause'),
+                                                            style:
+                                                                const TextStyle(
+                                                              fontSize: 12,
+                                                              fontWeight:
+                                                                  FontWeight.bold,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: ElevatedButton(
-                                              onPressed: isPerformingClock
-                                                  ? null
-                                                  : () {
-                                                      if (_nfcEnabled) {
-                                                        _performClockWithNFC(
-                                                            action:
-                                                                'clock_out');
-                                                      } else {
-                                                        _showClockOutDialog();
-                                                      }
-                                                    },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(
-                                                    AppConstants
-                                                        .errorColorValue),
-                                                foregroundColor: Colors.white,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: ElevatedButton(
+                                                onPressed: isPerformingClock
+                                                    ? null
+                                                    : () {
+                                                        if (_nfcEnabled) {
+                                                          _performClockWithNFC(
+                                                              action:
+                                                                  'clock_out');
+                                                        } else {
+                                                          _showClockOutDialog();
+                                                        }
+                                                      },
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: const Color(
+                                                      AppConstants
+                                                          .errorColorValue),
+                                                  foregroundColor: Colors.white,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(12),
+                                                  ),
+                                                  elevation: 6,
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                          vertical: 16),
                                                 ),
-                                                elevation: 6,
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        vertical: 16),
-                                              ),
-                                              child: isPerformingClock
-                                                  ? const SizedBox(
-                                                      width: 20,
-                                                      height: 20,
-                                                      child:
-                                                          CircularProgressIndicator(
-                                                        color: Colors.white,
-                                                        strokeWidth: 2,
-                                                      ),
-                                                    )
-                                                  : Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        const Icon(Icons.logout,
-                                                            size: 20),
-                                                        const SizedBox(
-                                                            height: 4),
-                                                        Text(
-                                                          I18n.of(
-                                                              'clock.clock_out'),
-                                                          style:
-                                                              const TextStyle(
-                                                            fontSize: 12,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                          ),
+                                                child: isPerformingClock
+                                                    ? const SizedBox(
+                                                        width: 20,
+                                                        height: 20,
+                                                        child:
+                                                            CircularProgressIndicator(
+                                                          color: Colors.white,
+                                                          strokeWidth: 2,
                                                         ),
-                                                      ],
-                                                    ),
+                                                      )
+                                                    : Column(
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        children: [
+                                                          const Icon(Icons.logout,
+                                                              size: 20),
+                                                          const SizedBox(
+                                                              height: 4),
+                                                          Text(
+                                                            I18n.of(
+                                                                'clock.clock_out'),
+                                                            style:
+                                                                const TextStyle(
+                                                              fontSize: 12,
+                                                              fontWeight:
+                                                                  FontWeight.bold,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                              ),
                                             ),
+                                          ],
+                                        );
+                                      } else {
+                                        // Show only clock out button (full width)
+                                        return SizedBox(
+                                          width: double.infinity,
+                                          height: AppConstants.buttonHeight * 1.2,
+                                          child: ElevatedButton(
+                                            onPressed: isPerformingClock
+                                                ? null
+                                                : () {
+                                                    if (_nfcEnabled) {
+                                                      _performClockWithNFC(
+                                                          action: 'clock_out');
+                                                    } else {
+                                                      _showClockOutDialog();
+                                                    }
+                                                  },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color(
+                                                  AppConstants.errorColorValue),
+                                              foregroundColor: Colors.white,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                              elevation: 6,
+                                            ),
+                                            child: isPerformingClock
+                                                ? const SizedBox(
+                                                    width: 24,
+                                                    height: 24,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                      color: Colors.white,
+                                                      strokeWidth: 2,
+                                                    ),
+                                                  )
+                                                : Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.center,
+                                                    children: [
+                                                      const Icon(Icons.logout,
+                                                          size: 24),
+                                                      const SizedBox(width: 8),
+                                                      Text(
+                                                        I18n.of(
+                                                            'clock.clock_out'),
+                                                        style: const TextStyle(
+                                                          fontSize: 18,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
                                           ),
-                                        ],
-                                      );
+                                        );
+                                      }
                                     } else if (status == 'EN PAUSA') {
                                       return SizedBox(
                                         width: double.infinity,
