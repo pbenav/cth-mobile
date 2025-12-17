@@ -1417,8 +1417,7 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: isExceptional
                                                 ? Colors.orange
-                                                : Theme.of(context)
-                                                    .primaryColor,
+                                                : const Color(AppConstants.successColorValue),
                                             foregroundColor: Colors.white,
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(12),
