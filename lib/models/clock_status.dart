@@ -9,6 +9,7 @@ class ClockStatus {
   final DateTime currentTime;
   final int? pauseEventId;
   final int? pauseEventTypeId; // ID of pause event type if available
+  final String? specialEventColor; // Hex color for exceptional events
   final List<ClockEvent> todayRecords;
   final String? statusCode; // Added status code for i18n
   final Map<String, dynamic>? user; // Added user info
@@ -29,6 +30,7 @@ class ClockStatus {
     required this.currentTime,
     this.pauseEventId,
     this.pauseEventTypeId,
+    this.specialEventColor,
     this.todayRecords = const [],
     this.user,
     this.currentTeamId,
@@ -48,6 +50,7 @@ class ClockStatus {
         'current_time': currentTime.toIso8601String(),
         'pause_event_id': pauseEventId,
         'pause_event_type_id': pauseEventTypeId,
+        'special_event_color': specialEventColor,
         'today_records': todayRecords.map((e) => e.toJson()).toList(),
         'user': user,
       };
@@ -93,6 +96,7 @@ class ClockStatus {
           : (json['pause_event_type_id'] is String
               ? int.tryParse(json['pause_event_type_id'])
               : null),
+      specialEventColor: json['special_event_color'] as String?,
       todayRecords: todayRecords,
       user: json['user'] as Map<String, dynamic>?,
       currentTeamId: json['current_team_id'] as int?,

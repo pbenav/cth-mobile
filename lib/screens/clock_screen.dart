@@ -571,6 +571,30 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
     }
     return Colors.grey;
   }
+  
+  /// Parse hex color string to Color object
+  /// Supports formats: #RRGGBB or #AARRGGBB
+  Color? _parseColor(String? hexColor) {
+    if (hexColor == null || hexColor.isEmpty) return null;
+    
+    try {
+      String colorString = hexColor.replaceAll('#', '');
+      
+      // If 6 characters, add FF for full opacity
+      if (colorString.length == 6) {
+        colorString = 'FF$colorString';
+      }
+      
+      if (colorString.length == 8) {
+        return Color(int.parse(colorString, radix: 16));
+      }
+    } catch (e) {
+      // If parsing fails, return null to use fallback color
+      return null;
+    }
+    
+    return null;
+  }
 
   // ...resto de la clase y métodos...
   @override
@@ -1416,7 +1440,7 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
                                                 },
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: isExceptional
-                                                ? Colors.orange
+                                                ? _parseColor(clockStatus!.specialEventColor) ?? Colors.orange
                                                 : const Color(AppConstants.successColorValue),
                                             foregroundColor: Colors.white,
                                             shape: RoundedRectangleBorder(
