@@ -18,6 +18,7 @@ class HistoryEvent {
   final String? description;
   final Map<String, dynamic>? locationStart;
   final Map<String, dynamic>? locationEnd;
+  final String? nfcTagId;
   final DateTime? createdAt;
 
   HistoryEvent({
@@ -40,6 +41,7 @@ class HistoryEvent {
     this.description,
     this.locationStart,
     this.locationEnd,
+    this.nfcTagId,
     this.createdAt,
   });
 
@@ -71,6 +73,7 @@ class HistoryEvent {
       description: json['description'] as String?,
       locationStart: json['location_start'] as Map<String, dynamic>?,
       locationEnd: json['location_end'] as Map<String, dynamic>?,
+      nfcTagId: json['nfc_tag_id'] as String?,
       createdAt: json['created_at'] != null 
           ? DateTime.parse(json['created_at']) 
           : null,
@@ -98,6 +101,7 @@ class HistoryEvent {
       'description': description,
       'location_start': locationStart,
       'location_end': locationEnd,
+      'nfc_tag_id': nfcTagId,
       'created_at': createdAt?.toIso8601String(),
     };
   }

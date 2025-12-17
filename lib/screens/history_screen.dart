@@ -376,6 +376,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       color: Colors.green[600],
                       size: 16,
                     ),
+                    const SizedBox(width: 4),
+                  ],
+                  // NFC indicator
+                  if (event.nfcTagId != null) ...[
+                    Icon(
+                      Icons.nfc,
+                      color: Colors.blue[600],
+                      size: 16,
+                    ),
                     const SizedBox(width: 8),
                   ],
                   Expanded(

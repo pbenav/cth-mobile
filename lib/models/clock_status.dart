@@ -153,6 +153,9 @@ class ClockEvent {
   final DateTime? start;
   final DateTime? end;
   final String? observations;
+  final Map<String, dynamic>? locationStart;
+  final Map<String, dynamic>? locationEnd;
+  final String? nfcTagId;
 
   ClockEvent({
     required this.id,
@@ -164,6 +167,9 @@ class ClockEvent {
     this.start,
     this.end,
     this.observations,
+    this.locationStart,
+    this.locationEnd,
+    this.nfcTagId,
   });
 
   factory ClockEvent.fromJson(Map<String, dynamic> json) {
@@ -188,6 +194,9 @@ class ClockEvent {
           ? DateTime.tryParse(json['end']?.toString() ?? '')
           : null,
       observations: json['observations']?.toString(),
+      locationStart: json['location_start'] as Map<String, dynamic>?,
+      locationEnd: json['location_end'] as Map<String, dynamic>?,
+      nfcTagId: json['nfc_tag_id'] as String?,
     );
   }
 
@@ -201,6 +210,9 @@ class ClockEvent {
         'start': start?.toIso8601String(),
         'end': end?.toIso8601String(),
         'observations': observations,
+        'location_start': locationStart,
+        'location_end': locationEnd,
+        'nfc_tag_id': nfcTagId,
       };
       
   // Helper for compatibility
