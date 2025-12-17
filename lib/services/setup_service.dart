@@ -237,7 +237,26 @@ class SetupService {
 
       // Guardar datos individuales para compatibilidad con el código existente
       await StorageService.saveUser(workerData.user);
-      await StorageService.saveWorkCenter(workerData.workCenter);
+      
+      // Preservar el centro de trabajo seleccionado si existe y sigue siendo válido
+      final currentSavedWC = await StorageService.getWorkCenter();
+      bool keepCurrent = false;
+      if (currentSavedWC != null) {
+        // Check if the currently saved WC is in the new list of available centers
+        // We compare by code
+        final stillExists = workerData.allWorkCenters.any((wc) => wc.code == currentSavedWC.code);
+        if (stillExists) {
+          keepCurrent = true;
+          // Optionally update the name if it changed, but keep the selection
+          // We can find the new object in the list and save that
+          final newWC = workerData.allWorkCenters.firstWhere((wc) => wc.code == currentSavedWC.code);
+          await StorageService.saveWorkCenter(newWC);
+        }
+      }
+      
+      if (!keepCurrent) {
+        await StorageService.saveWorkCenter(workerData.workCenter);
+      }
 
       // Guardar horario y festivos
       await _saveSchedule(workerData.schedule);

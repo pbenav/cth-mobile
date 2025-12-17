@@ -44,6 +44,7 @@ class ClockService {
     int? pauseEventId, // Nuevo parámetro opcional
     int? eventTypeId, // Nuevo parámetro para clock_in
     String? observations, // Nuevo parámetro para observaciones
+    Map<String, dynamic>? location, // Nuevo parámetro para geolocalización
   }) async {
     try {
       // Intentar refrescar datos del trabajador guardado antes de cualquier
@@ -66,17 +67,25 @@ class ClockService {
         if (pauseEventId != null) 'pause_event_id': pauseEventId,
         if (eventTypeId != null) 'event_type_id': eventTypeId,
         if (observations != null) 'observations': observations,
+        if (location != null) 'location': location,
       };
-      final response = await http
-          .post(
-            Uri.parse('$baseUrl/clock'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: jsonEncode(body),
-          )
-          .timeout(const Duration(seconds: 30));
+      final url = Uri.parse('$baseUrl/clock');
+      
+      print('🔵 ClockService: Performing clock action');
+      print('🌐 URL: $url');
+      print('📦 Body: ${jsonEncode(body)}');
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode(body),
+      ).timeout(const Duration(seconds: 30));
+
+      print('🔵 Status Code: ${response.statusCode}');
+      print('📄 Response Body: ${response.body}');
 
       final jsonData = jsonDecode(response.body);
 

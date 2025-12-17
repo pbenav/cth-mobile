@@ -35,6 +35,9 @@ dependencies:
   
   # UI helpers
   cupertino_icons: ^1.0.8
+  
+  # Geolocation
+  geolocator: ^13.0.2
 
 dev_dependencies:
   flutter_test:

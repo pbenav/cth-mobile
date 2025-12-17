@@ -15,12 +15,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isSaving = false;
   String? _error;
   bool _nfcEnabled = true;
+  bool _geolocationEnabled = false;
 
   @override
   void initState() {
     super.initState();
     _loadCurrentUrl();
     _loadNFCEnabled();
+    _loadGeolocationEnabled();
   }
 
   @override
@@ -33,6 +35,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final enabled = await StorageService.getBool('nfc_enabled');
     setState(() {
       _nfcEnabled = enabled ?? true;
+    });
+  }
+
+  Future<void> _loadGeolocationEnabled() async {
+    final enabled = await StorageService.getBool('geolocation_enabled');
+    setState(() {
+      _geolocationEnabled = enabled ?? false;
     });
   }
 
@@ -49,6 +58,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _error = null;
     });
     await StorageService.setBool('nfc_enabled', _nfcEnabled);
+    await StorageService.setBool('geolocation_enabled', _geolocationEnabled);
 
     try {
       final success = await ConfigService.configureServer(_urlController.text);
@@ -215,6 +225,60 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 _nfcEnabled = value;
                               });
                               await StorageService.setBool('nfc_enabled', value);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Geolocation Settings Card
+                  Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.cardBorderRadius),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppConstants.spacing),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(AppConstants.primaryColorValue).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.location_on,
+                                  color: Color(AppConstants.primaryColorValue),
+                                  size: 24,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'Geolocalización',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          SwitchListTile(
+                            title: const Text('Registrar ubicación'),
+                            subtitle: const Text('Guardar coordenadas GPS al fichar'),
+                            value: _geolocationEnabled,
+                            activeThumbColor: const Color(AppConstants.primaryColorValue),
+                            onChanged: (value) async {
+                              setState(() {
+                                _geolocationEnabled = value;
+                              });
+                              await StorageService.setBool('geolocation_enabled', value);
                             },
                           ),
                         ],

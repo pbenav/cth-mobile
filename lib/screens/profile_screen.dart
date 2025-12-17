@@ -7,6 +7,7 @@ import '../services/setup_service.dart';
 import '../services/profile_service.dart';
 import '../models/worker_data.dart';
 import '../services/refresh_service.dart';
+import '../services/clock_service.dart';
 import '../utils/constants.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -73,7 +74,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _availableWorkCenters = _currentWorkerData!.allWorkCenters;
         
         // set current work center
-        _currentWorkCenter = _currentWorkerData!.workCenter;
+        // Prefer the one explicitly saved in storage (user selection) over the default in workerData
+        final savedWC = await StorageService.getWorkCenter();
+        if (savedWC != null) {
+          _currentWorkCenter = savedWC;
+        } else {
+          _currentWorkCenter = _currentWorkerData!.workCenter;
+        }
       } else {
         _currentUser = await StorageService.getUser();
         _currentWorkCenter = await StorageService.getWorkCenter();
@@ -165,15 +172,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _forceRefresh() async {
     setState(() => _isRefreshing = true);
     try {
+      // 1. Force refresh of worker data (lists of teams, etc.)
       final success = await RefreshService.forceRefresh(
           timeout: const Duration(seconds: 5));
+      
+      // 2. Get current status to see where the server thinks we are
+      if (_currentUser != null) {
+        try {
+          final statusResponse = await ClockService.getStatus(userCode: _currentUser!.code);
+          final status = statusResponse.data;
+          
+          if (status?.currentWorkCenterCode != null || status?.currentTeamName != null) {
+             final workerData = await SetupService.getSavedWorkerData();
+             final allCenters = workerData?.allWorkCenters ?? _availableWorkCenters;
+             
+             WorkCenter? targetWC;
+             
+             // Try to find by exact WC code
+             if (status?.currentWorkCenterCode != null) {
+               try {
+                 targetWC = allCenters.firstWhere((wc) => wc.code == status!.currentWorkCenterCode);
+               } catch (_) {}
+             }
+             
+             // If not found, try to find by Team Name
+             if (targetWC == null && status?.currentTeamName != null) {
+               try {
+                 targetWC = allCenters.firstWhere((wc) => wc.teamName == status!.currentTeamName);
+               } catch (_) {}
+             }
+             
+             // If we found a target and it's different, switch
+             if (targetWC != null && targetWC.code != _currentWorkCenter?.code) {
+               await StorageService.saveWorkCenter(targetWC);
+               _currentWorkCenter = targetWC;
+               
+               if (mounted) {
+                 ScaffoldMessenger.of(context).showSnackBar(
+                   SnackBar(
+                     content: Text('Sincronizado con servidor: ${targetWC.teamName}'),
+                     backgroundColor: Colors.blue,
+                   ),
+                 );
+               }
+             }
+          }
+        } catch (e) {
+          print('Error getting status during refresh: $e');
+        }
+      }
+
       _lastUpdate = await StorageService.getWorkerLastUpdate();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(success
-                  ? 'Actualización completada'
+                  ? 'Sincronización completada'
                   : 'No se actualizaron los datos')),
         );
         // Reload the profile data to reflect any changes from the refresh
@@ -361,166 +416,141 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 16),
 
-              TextFormField(
-                controller: _workCenterCodeController,
-                decoration: const InputDecoration(
-                  labelText: 'Código del centro',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.business),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'El código del centro es obligatorio';
+              // Equipo Dropdown
+              DropdownButtonFormField<String>(
+                isExpanded: true,
+                value: _currentWorkCenter?.teamName,
+                items: _availableWorkCenters
+                    .map((wc) => wc.teamName)
+                    .where((name) => name != null)
+                    .toSet() // Unique
+                    .map((name) => DropdownMenuItem(
+                      value: name,
+                      child: Text(name!, overflow: TextOverflow.ellipsis),
+                    ))
+                    .toList(),
+                onChanged: _isSwitchingTeam ? null : (String? newTeamName) async {
+                   if (newTeamName == null || newTeamName == _currentWorkCenter?.teamName) return;
+                   
+                   // Find first WC for this team to switch to immediately
+                   final newWC = _availableWorkCenters.firstWhere(
+                     (wc) => wc.teamName == newTeamName,
+                     orElse: () => _availableWorkCenters.first
+                   );
+                   
+                   setState(() => _isSwitchingTeam = true);
+                  
+                   try {
+                    await ProfileService.switchTeam(
+                      userCode: _currentUser!.code,
+                      workCenterCode: newWC.code,
+                    );
+                    
+                    setState(() {
+                      _currentWorkCenter = newWC;
+                    });
+                    
+                    await StorageService.saveWorkCenter(newWC);
+                    
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Equipo cambiado correctamente'),
+                          backgroundColor: Color(AppConstants.successColorValue),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error al cambiar equipo: $e'),
+                          backgroundColor: const Color(AppConstants.errorColorValue),
+                        ),
+                      );
+                    }
+                  } finally {
+                    if (mounted) setState(() => _isSwitchingTeam = false);
                   }
-                  return null;
                 },
+                decoration: const InputDecoration(
+                  labelText: 'Equipo',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.group),
+                  filled: true,
+                  fillColor: Color(0xFFF5F5F5),
+                ),
               ),
               const SizedBox(height: 16),
 
-              TextFormField(
-                controller: _workCenterNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre del centro',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.business_center),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'El nombre del centro es obligatorio';
+              // Centro de Trabajo Dropdown
+              DropdownButtonFormField<WorkCenter>(
+                isExpanded: true,
+                value: _availableWorkCenters.any((wc) => wc.code == _currentWorkCenter?.code) 
+                    ? _availableWorkCenters.firstWhere((wc) => wc.code == _currentWorkCenter?.code) 
+                    : null,
+                items: _availableWorkCenters
+                    .where((wc) => wc.teamName == _currentWorkCenter?.teamName)
+                    .map((wc) {
+                      return DropdownMenuItem(
+                        value: wc,
+                        child: Text('${wc.name} (${wc.code})', overflow: TextOverflow.ellipsis),
+                      );
+                    }).toList(),
+                onChanged: _isSwitchingTeam ? null : (WorkCenter? newWorkCenter) async {
+                  if (newWorkCenter == null || newWorkCenter.code == _currentWorkCenter?.code) return;
+                  
+                  setState(() => _isSwitchingTeam = true);
+                  
+                  try {
+                    await ProfileService.switchTeam(
+                      userCode: _currentUser!.code,
+                      workCenterCode: newWorkCenter.code,
+                    );
+                    
+                    setState(() {
+                      _currentWorkCenter = newWorkCenter;
+                    });
+                    
+                    await StorageService.saveWorkCenter(newWorkCenter);
+                    
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Centro de trabajo cambiado correctamente'),
+                          backgroundColor: Color(AppConstants.successColorValue),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error al cambiar centro: $e'),
+                          backgroundColor: const Color(AppConstants.errorColorValue),
+                        ),
+                      );
+                    }
+                  } finally {
+                    if (mounted) setState(() => _isSwitchingTeam = false);
                   }
-                  return null;
                 },
+                decoration: const InputDecoration(
+                  labelText: 'Centro de Trabajo',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.business),
+                  filled: true,
+                  fillColor: Color(0xFFF5F5F5),
+                ),
               ),
 
               const SizedBox(height: 32),
 
-              // Selección de Equipo y Centro de Trabajo
-              if (_availableWorkCenters.isNotEmpty) ...[
-                const Text(
-                  'Equipo',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  isExpanded: true, // Fix overflow
-                  value: _currentWorkCenter?.teamName,
-                  items: _availableWorkCenters
-                      .map((wc) => wc.teamName)
-                      .where((name) => name != null)
-                      .toSet() // Unique team names
-                      .map((name) => DropdownMenuItem(
-                            value: name,
-                            child: Text(
-                              name!,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ))
-                      .toList(),
-                  onChanged: (selectedTeam) {
-                    if (selectedTeam == null) return;
-                    setState(() {
-                      // Find the first work center for this team
-                      final newWorkCenter = _availableWorkCenters.firstWhere(
-                        (wc) => wc.teamName == selectedTeam,
-                        orElse: () => _availableWorkCenters.first,
-                      );
-                      _currentWorkCenter = newWorkCenter;
-                      _workCenterCodeController.text = newWorkCenter.code;
-                      _workCenterNameController.text = newWorkCenter.name;
-                    });
-                    // Sync immediately
-                    StorageService.saveWorkCenter(_currentWorkCenter!);
-                  },
-                  decoration:
-                      const InputDecoration(border: OutlineInputBorder()),
-                ),
-                const SizedBox(height: 16),
-
-                const Text(
-                  'Centro de Trabajo',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<WorkCenter>(
-                  isExpanded: true, // Fix overflow
-                  value: _currentWorkCenter,
-                  // Filter work centers by the selected team
-                  items: _availableWorkCenters
-                      .where((wc) =>
-                          wc.teamName == _currentWorkCenter?.teamName)
-                      .map((wc) => DropdownMenuItem(
-                            value: wc,
-                            child: Text(
-                              '${wc.name} (${wc.code})',
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ))
-                      .toList(),
-                  onChanged: _isSwitchingTeam
-                      ? null
-                      : (WorkCenter? newWorkCenter) async {
-                          if (newWorkCenter == null ||
-                              newWorkCenter.code == _currentWorkCenter?.code) {
-                            return;
-                          }
-
-                          setState(() => _isSwitchingTeam = true);
-
-                          try {
-                            // Call API to switch team
-                            await ProfileService.switchTeam(
-                              userCode: _currentUser!.code,
-                              workCenterCode: newWorkCenter.code,
-                            );
-
-                            // Update local state
-                            setState(() {
-                              _currentWorkCenter = newWorkCenter;
-                              _workCenterCodeController.text = newWorkCenter.code;
-                              _workCenterNameController.text = newWorkCenter.name;
-                            });
-
-                            // Save to local storage
-                            await StorageService.saveWorkCenter(newWorkCenter);
-
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Equipo cambiado correctamente'),
-                                  backgroundColor:
-                                      Color(AppConstants.successColorValue),
-                                  duration: Duration(seconds: 2),
-                                ),
-                              );
-                            }
-                          } catch (e) {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Error al cambiar equipo: $e'),
-                                  backgroundColor:
-                                      Color(AppConstants.errorColorValue),
-                                  duration: const Duration(seconds: 3),
-                                ),
-                              );
-                            }
-                          } finally {
-                            if (mounted) {
-                              setState(() => _isSwitchingTeam = false);
-                            }
-                          }
-                        },
-                  decoration:
-                      const InputDecoration(border: OutlineInputBorder()),
-                ),
-                const SizedBox(height: 16),
-              ],
+              const SizedBox(height: 16),
+              
+              const SizedBox(height: 16),
 
               // Horarios (read-only)
               const Text(

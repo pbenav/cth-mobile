@@ -9,6 +9,8 @@ import '../services/storage_service.dart';
 import '../services/nfc_service.dart';
 import '../utils/clock_messages.dart';
 import '../utils/exceptions.dart';
+import '../services/geolocation_service.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../services/setup_service.dart';
 import 'settings_screen.dart';
@@ -78,6 +80,7 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
+              // Pass true to force location check if needed, or rely on _performClockWithAction
               await _performClockWithAction('exceptional_clock_in');
             },
             child: const Text('Confirmar'),
@@ -102,7 +105,7 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
             TextButton(
               onPressed: () async {
                 Navigator.pop(context);
-                await _performClockWithNFC(action: 'clock_out');
+                await _performClockWithAction('clock_out');
               },
               child: const Text('Confirmar'),
             ),
@@ -223,17 +226,79 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
     if (savedWorkCenterCode.isNotEmpty && 
         serverWorkCenterCode != null && 
         savedWorkCenterCode != serverWorkCenterCode) {
-      setState(() {
-        _showTeamMismatchWarning = true;
-        _mismatchWarningMessage = 
-            'El centro de trabajo seleccionado no coincide con tu equipo actual en el servidor ($serverTeamName)';
-      });
+      
+      // Attempt to auto-switch to the correct team
+      final switched = await _attemptAutoSwitchTeam(serverWorkCenterCode);
+      
+      if (!switched) {
+        // Only show warning if auto-switch failed (e.g. user doesn't have that work center anymore)
+        setState(() {
+          _showTeamMismatchWarning = true;
+          _mismatchWarningMessage = 
+              'El centro de trabajo seleccionado no coincide con tu equipo actual en el servidor ($serverTeamName)';
+        });
+      }
     } else {
       setState(() {
         _showTeamMismatchWarning = false;
         _mismatchWarningMessage = null;
       });
     }
+  }
+
+  Future<bool> _attemptAutoSwitchTeam(String targetCode) async {
+    try {
+      var workerData = await SetupService.getSavedWorkerData();
+      
+      // Helper function to find WC
+      WorkCenter? findWC() {
+        if (workerData == null) return null;
+        try {
+          return workerData!.allWorkCenters.firstWhere(
+            (wc) => wc.code == targetCode,
+          );
+        } catch (_) {
+          return null;
+        }
+      }
+
+      var targetWC = findWC();
+      
+      // If not found, try refreshing data from server
+      if (targetWC == null) {
+        await SetupService.refreshSavedWorkerData(blocking: true);
+        workerData = await SetupService.getSavedWorkerData();
+        targetWC = findWC();
+      }
+      
+      if (targetWC != null) {
+        // Found it! Switch locally and reload.
+        await StorageService.saveWorkCenter(targetWC);
+        
+        if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(
+               content: Text('Sincronizando equipo: ${targetWC.teamName ?? targetWC.name}'),
+               backgroundColor: Colors.blue,
+               duration: const Duration(seconds: 2),
+             ),
+           );
+           
+           Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => ClockScreen(
+                  workCenter: targetWC!,
+                  user: widget.user,
+                ),
+              ),
+            );
+        }
+        return true;
+      }
+    } catch (e) {
+      print('Auto-switch error: $e');
+    }
+    return false;
   }
 
   /// Normaliza un día a su número ISO (1=Monday, 7=Sunday)
@@ -488,6 +553,12 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
 
   Color _getStatusBackgroundColor(String? status) {
     if (status == null) return Colors.grey;
+    
+    // Prioritize server-side overtime flag
+    if (clockStatus?.overtime == true) {
+      return const Color(AppConstants.warningColorValue);
+    }
+
     final upper = status.toUpperCase();
     if (upper == 'INICIAR JORNADA' || upper == 'TRABAJANDO') {
       return const Color(AppConstants.successColorValue);
@@ -562,13 +633,56 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
         return;
       }
 
+      // Obtener ubicación si está habilitada
+      Map<String, dynamic>? locationData;
+      try {
+        if (await GeolocationService.isGeolocationEnabled()) {
+          // Mostrar indicador de "Obteniendo ubicación..." si es necesario
+          // O simplemente esperar (el usuario verá el spinner de isPerformingClock)
+          final position = await GeolocationService.getCurrentLocation();
+          if (position != null) {
+            locationData = {
+              'latitude': position.latitude,
+              'longitude': position.longitude,
+              'accuracy': position.accuracy,
+            };
+          }
+        }
+      } catch (e) {
+        // Error al obtener ubicación
+        if (mounted) {
+          final continueWithoutLocation = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Error de ubicación'),
+              content: Text('${e.toString()}\n¿Deseas continuar sin registrar la ubicación?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancelar'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Continuar'),
+                ),
+              ],
+            ),
+          );
+          
+          if (continueWithoutLocation != true) {
+            setState(() => isPerformingClock = false);
+            return;
+          }
+        }
+      }
+
       // Solo NFC si preferencia activada Y disponible
       // Validar también el caso de fichaje excepcional con NFC
       if ((action == 'clock_in' ||
           action == 'clock_out' ||
           action == 'exceptional_clock_in')) {
         if (_nfcEnabled && _nfcAvailable) {
-          await _performClockWithNFC(action: action);
+          await _performClockWithNFC(action: action, location: locationData);
           return;
         } else {
           // Si NFC está desactivado o no disponible, mostrar confirmación antes de fichar
@@ -634,26 +748,48 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
           userCode: userCode,
           action: action,
           pauseEventId: pauseEventId,
+          location: locationData,
         );
       } else {
-        // Si el dispositivo no soporta NFC, añade observación
-        String? observations;
-        if ((action == 'clock_in' || action == 'clock_out') && !_nfcAvailable) {
-          observations = 'Evento creado sin comprobación/autorización NFC.';
+        // Construir observaciones detalladas sobre el método de validación
+        List<String> validationMethods = [];
+        validationMethods.add('App Móvil');
+        
+        // 1. Estado NFC
+        if (_nfcEnabled && _nfcAvailable) {
+           // Si llegamos aquí es porque falló el NFC o se canceló, pero técnicamente
+           // este bloque 'else' se ejecuta cuando NO se usa _performClockWithNFC.
+           // Sin embargo, la lógica original (líneas 680-686) ya desvía a _performClockWithNFC
+           // si NFC está activo. Por tanto, aquí estamos en "Fichaje Manual".
+           validationMethods.add('Sin validación NFC');
+        } else {
+           validationMethods.add('Sin soporte NFC');
         }
+
+        // 2. Estado GPS
+        if (locationData != null) {
+          validationMethods.add('Ubicación GPS adjunta');
+        } else {
+          validationMethods.add('Sin ubicación GPS');
+        }
+
+        String observationText = 'Registro manual (${validationMethods.join(", ")}).';
+
         // Para inicio de jornada (clock_in) nunca se debe enviar 'action'
         if (action == 'clock_in') {
           await ClockService.performClock(
             workCenterCode: workCenterCode,
             userCode: userCode,
-            observations: observations,
+            observations: observationText,
+            location: locationData,
           );
         } else {
           await ClockService.performClock(
             workCenterCode: workCenterCode,
             userCode: userCode,
             action: (action == 'clock_in') ? null : action,
-            observations: observations,
+            observations: observationText,
+            location: locationData,
           );
         }
       }
@@ -719,7 +855,7 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
     return status == 'open' || status == 'true' || status == 'abierto';
   }
 
-  Future<void> _performClockWithNFC({String? action}) async {
+  Future<void> _performClockWithNFC({String? action, Map<String, dynamic>? location}) async {
     if (isPerformingClock) return;
     setState(() => isPerformingClock = true);
     try {
@@ -768,17 +904,23 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
       }
       await _ensureScheduleLoaded(userCode);
       
-      // Determinar observaciones según horario y NFC
-      String? observations;
+      // Construir observaciones detalladas sobre el método de validación
+      List<String> validationMethods = [];
+      validationMethods.add('App Móvil');
+
       if (_nfcEnabled) {
-        final isWithinSchedule = await _isWithinSchedule();
-        if (!isWithinSchedule) {
-          observations = 'Evento creado con comprobación/autorización NFC.';
-        }
-        // Si está dentro del horario, observations se mantiene null (sin excepcionalidad)
+          validationMethods.add('Validación NFC exitosa');
       } else {
-        observations = 'Evento creado sin comprobación/autorización NFC.';
+          validationMethods.add('Sin validación NFC');
       }
+
+      if (location != null) {
+          validationMethods.add('Ubicación GPS adjunta');
+      } else {
+          validationMethods.add('Sin ubicación GPS');
+      }
+
+      String observations = 'Registro validado (${validationMethods.join(", ")}).';
 
       // Para inicio de jornada normal (clock_in) nunca se debe enviar 'action'
       // Pero para exceptional_clock_in sí debemos enviarlo
@@ -787,6 +929,7 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
           workCenterCode: workCenterCode,
           userCode: userCode,
           observations: observations,
+          location: location,
         );
       } else if (action == 'exceptional_clock_in') {
         // Fichaje excepcional: enviar action explícitamente
@@ -795,6 +938,7 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
           userCode: userCode,
           action: action,
           observations: observations,
+          location: location,
         );
       } else {
         // Otras acciones (clock_out, pause, resume_workday, etc.)
@@ -803,6 +947,7 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
           userCode: userCode,
           action: action,
           observations: observations,
+          location: location,
         );
       }
       if (mounted) {
@@ -858,19 +1003,53 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
 
       if (selectedWorkCenter != null &&
           selectedWorkCenter.code != widget.workCenter.code) {
-        // Guardar el nuevo centro de trabajo seleccionado
-        await StorageService.saveWorkCenter(selectedWorkCenter);
-
-        // Recargar la pantalla completa para reflejar el cambio
+        
+        // Show loading indicator
         if (mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => ClockScreen(
-                workCenter: selectedWorkCenter,
-                user: widget.user,
-              ),
-            ),
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => const Center(child: CircularProgressIndicator()),
           );
+        }
+
+        try {
+          // 1. Call API to switch team on server
+          await ClockService.confirmTeamSwitch(
+            userCode: widget.user.code,
+            workCenterCode: selectedWorkCenter.code,
+          );
+
+          // 2. If successful, save locally
+          await StorageService.saveWorkCenter(selectedWorkCenter);
+
+          // Hide loading
+          if (mounted) {
+            Navigator.of(context).pop(); // Pop loading dialog
+          }
+
+          // 3. Reload screen
+          if (mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => ClockScreen(
+                  workCenter: selectedWorkCenter,
+                  user: widget.user,
+                ),
+              ),
+            );
+          }
+        } catch (e) {
+          // Hide loading
+          if (mounted) {
+            Navigator.of(context).pop(); // Pop loading dialog
+            
+            String errorMessage = e.toString();
+            if (e is ClockException && e.apiStatusCode != null) {
+              errorMessage = ClockMessages.getMessage(e.apiStatusCode, fallbackMessage: e.message);
+            }
+            _showError('Error al cambiar de equipo: $errorMessage');
+          }
         }
       }
     } catch (e) {
@@ -1210,10 +1389,11 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
                                     if (status == 'INICIAR JORNADA' ||
                                         status ==
                                             'INICIAR REGISTRO EXCEPCIONAL') {
-                                      // Override exceptional status if we are locally within schedule
-                                      final isExceptional = status ==
-                                              'INICIAR REGISTRO EXCEPCIONAL' &&
-                                          !_isLocallyWithinSchedule;
+                                      // Override exceptional status if server says overtime OR we are locally outside schedule
+                                      final isExceptional = (clockStatus?.overtime == true) || 
+                                                            status == 'INICIAR REGISTRO EXCEPCIONAL' ||
+                                                            (status == 'INICIAR JORNADA' && !_isLocallyWithinSchedule);
+                                      
                                       return SizedBox(
                                         width: double.infinity,
                                         height: AppConstants.buttonHeight * 1.2,
