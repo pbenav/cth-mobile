@@ -20,6 +20,7 @@ import 'schedule_screen.dart';
 import '../utils/constants.dart';
 import 'team_selection_modal.dart';
 import 'dart:convert';
+// import 'about_screen.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
@@ -1172,6 +1173,16 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
               if (result == true) {
                 await _loadStatus();
               }
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const AboutScreen(),
+                ),
+              );
             },
           ),
           IconButton(
