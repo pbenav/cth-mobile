@@ -10,19 +10,19 @@ class AboutScreen extends StatelessWidget {
   Future<void> _launchUrl(BuildContext context, String url) async {
     final uri = Uri.parse(url);
     try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('No se puede abrir la URL: $url')),
-          );
-        }
-      }
+      // Direct launch without canLaunchUrl check which can fail on Android 11+
+      // if queries are not perfect or for some schemes.
+      await launchUrl(
+        uri, 
+        mode: LaunchMode.externalApplication,
+      );
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al abrir: $e')),
+          SnackBar(
+            content: Text('${I18n.of('status.ERROR')}: $e'),
+            backgroundColor: const Color(AppConstants.errorColorValue),
+          ),
         );
       }
     }
@@ -30,8 +30,8 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Determine the web URL from constants or a fixed one
-    const String webUrl = 'https://cth.pbenav.com';
+    // Determine the web URL from constants
+    final String webUrl = AppConstants.webBaseUrl;
 
     return Scaffold(
       appBar: AppBar(
@@ -76,7 +76,7 @@ class AboutScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 40),
-              // Description/Copyright
+              // Description/Copyright Card
               Card(
                 elevation: 4,
                 shadowColor: Colors.black26,
@@ -116,12 +116,11 @@ class AboutScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 40),
               // Support Section
               Text(
-                '¿Te gusta la aplicación?',
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                I18n.of('about.support_title'),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 16),
               ElevatedButton.icon(
@@ -138,7 +137,9 @@ class AboutScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              // Only show "Back to Web" if NOT running on web
+              // Always show "Back to Web" on mobile platforms to avoid confusion
+              // even if kIsWeb check was failing or being misinterpreted.
+              // But strictly kIsWeb is the correct way to hide it on web.
               if (!kIsWeb) ...[
                 const SizedBox(height: 16),
                 OutlinedButton.icon(
@@ -155,11 +156,11 @@ class AboutScreen extends StatelessWidget {
                   ),
                 ),
               ],
-              const SizedBox(height: 40),
+              const SizedBox(height: 60),
               // Build info
               Text(
                 'Build: ${AppConstants.buildDate}',
-                style: TextStyle(fontSize: 12, color: Colors.grey[400]),
+                style: TextStyle(fontSize: 11, color: Colors.grey[400]),
               ),
               const SizedBox(height: 20),
             ],
