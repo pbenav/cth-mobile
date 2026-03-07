@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../utils/constants.dart';
 import '../i18n/i18n_service.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -6,15 +7,32 @@ import 'package:url_launcher/url_launcher.dart';
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
 
-  Future<void> _launchUrl(String url) async {
+  Future<void> _launchUrl(BuildContext context, String url) async {
     final uri = Uri.parse(url);
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      throw Exception('Could not launch $url');
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('No se puede abrir la URL: $url')),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al abrir: $e')),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Determine the web URL from constants or a fixed one
+    const String webUrl = 'https://cth.pbenav.com';
+
     return Scaffold(
       appBar: AppBar(
         title: Text(I18n.of('about.title')),
@@ -22,6 +40,7 @@ class AboutScreen extends StatelessWidget {
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         child: Padding(
           padding: const EdgeInsets.all(AppConstants.spacing * 1.5),
           child: Column(
@@ -33,6 +52,11 @@ class AboutScreen extends StatelessWidget {
                 'assets/images/cth-logo.png',
                 height: 100,
                 width: 100,
+                errorBuilder: (context, error, stackTrace) => const Icon(
+                  Icons.watch_later_outlined,
+                  size: 100,
+                  color: Color(AppConstants.primaryColorValue),
+                ),
               ),
               const SizedBox(height: 20),
               // App Name & Version
@@ -54,17 +78,20 @@ class AboutScreen extends StatelessWidget {
               const SizedBox(height: 40),
               // Description/Copyright
               Card(
-                elevation: 2,
+                elevation: 4,
+                shadowColor: Colors.black26,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppConstants.cardBorderRadius),
+                  borderRadius:
+                      BorderRadius.circular(AppConstants.cardBorderRadius),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(AppConstants.spacing),
                   child: Column(
                     children: [
                       const Text(
-                        '🄯 2024 - 2025',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        '🄯 2024 - 2026',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -90,44 +117,51 @@ class AboutScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 30),
-              // Patreon Support
-              const Text(
+              // Support Section
+              Text(
                 '¿Te gusta la aplicación?',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               ElevatedButton.icon(
-                onPressed: () => _launchUrl('https://www.patreon.com/cw/CTH_ControlHorario'),
+                onPressed: () => _launchUrl(
+                    context, 'https://www.patreon.com/cw/CTH_ControlHorario'),
                 icon: const Icon(Icons.favorite, color: Colors.white),
                 label: Text(I18n.of('about.support_patreon')),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange[800],
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  minimumSize: const Size(220, 50),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-              // Back to Web Button
-              OutlinedButton.icon(
-                onPressed: () => _launchUrl('https://cth.pbenav.com'), // Assuming this is the web URL or use a constant
-                icon: const Icon(Icons.web),
-                label: const Text('Ir a la Web'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
+              // Only show "Back to Web" if NOT running on web
+              if (!kIsWeb) ...[
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: () => _launchUrl(context, webUrl),
+                  icon: const Icon(Icons.web),
+                  label: Text(I18n.of('about.back_to_web')),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(220, 50),
+                    side: const BorderSide(
+                        color: Color(AppConstants.primaryColorValue)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 50),
+              ],
+              const SizedBox(height: 40),
               // Build info
               Text(
-                'Build Date: ${AppConstants.buildDate}',
+                'Build: ${AppConstants.buildDate}',
                 style: TextStyle(fontSize: 12, color: Colors.grey[400]),
               ),
+              const SizedBox(height: 20),
             ],
           ),
         ),
