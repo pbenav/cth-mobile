@@ -12,8 +12,8 @@ class AppConstants {
 
   // Configuración de la app
   static const String appName = 'CTH Mobile';
-  static const String appVersion = '0.1.2';
-  static const String buildDate = '2026-03-07 13:30'; // Updated
+  static const String appVersion = '0.1.3';
+  static const String buildDate = '2026-03-19 16:30'; // Updated
   static const bool isProduction = bool.fromEnvironment('PRODUCTION');
 
   // Configuración NFC
