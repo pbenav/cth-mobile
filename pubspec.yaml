@@ -3,6 +3,7 @@ description: "CTH - Sistema de Control de Tiempo y Horarios"
 publish_to: 'none'
 
 version: 1.0.0+2
+license: AGPL-3.0-only
 
 environment:
   sdk: ^3.5.4
