@@ -17,6 +17,8 @@ class ClockStatus {
   final int? currentTeamId;
   final String? currentTeamName;
   final String? currentWorkCenterCode;
+  final bool forceClockInDelay;
+  final int clockInDelayMinutes;
 
   const ClockStatus({
     required this.action,
@@ -36,6 +38,8 @@ class ClockStatus {
     this.currentTeamId,
     this.currentTeamName,
     this.currentWorkCenterCode,
+    this.forceClockInDelay = false,
+    this.clockInDelayMinutes = 0,
   });
 
   Map<String, dynamic> toJson() => {
@@ -53,6 +57,8 @@ class ClockStatus {
         'special_event_color': specialEventColor,
         'today_records': todayRecords.map((e) => e.toJson()).toList(),
         'user': user,
+        'force_clock_in_delay': forceClockInDelay,
+        'clock_in_delay_minutes': clockInDelayMinutes,
       };
 
   static ClockStatus fromJson(Map<String, dynamic> json) {
@@ -102,6 +108,10 @@ class ClockStatus {
       currentTeamId: json['current_team_id'] as int?,
       currentTeamName: json['current_team_name'] as String?,
       currentWorkCenterCode: json['current_work_center_code'] as String?,
+      forceClockInDelay: json['force_clock_in_delay'] == true,
+      clockInDelayMinutes: json['clock_in_delay_minutes'] is int
+          ? json['clock_in_delay_minutes'] as int
+          : int.tryParse(json['clock_in_delay_minutes']?.toString() ?? '0') ?? 0,
     );
   }
   

@@ -171,6 +171,7 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
 
   ClockStatus? clockStatus;
   bool isLoading = false;
+  bool _isInitialLoading = false; // Guard for initial data load
   bool isPerformingClock = false;
   bool _nfcEnabled = true;
   bool _nfcAvailable = true;
@@ -181,30 +182,50 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
   String? _mismatchWarningMessage;
 
   Future<void> _loadStatus() async {
-    setState(() => isLoading = true);
+    if (_isInitialLoading) return;
+    setState(() {
+      isLoading = true;
+      _isInitialLoading = true;
+    });
     try {
       final response = await ClockService.getStatus(
         userCode: widget.user.code,
+      ).timeout(const Duration(seconds: 15));
+      
+      final updatedStatus = response.data;
+      final isWithin = await _isWithinSchedule(
+        forceDelay: updatedStatus?.forceClockInDelay,
+        delayMinutes: updatedStatus?.clockInDelayMinutes,
       );
-      final isWithin = await _isWithinSchedule();
-      setState(() {
-        clockStatus = response.data;
-        _isLocallyWithinSchedule = isWithin;
-        _updateCalculatedHours();
-        
-        // Check for team mismatch
-        _checkTeamMismatch();
-      });
+      
+      if (mounted) {
+        setState(() {
+          clockStatus = updatedStatus;
+          _isLocallyWithinSchedule = isWithin;
+          _updateCalculatedHours();
+          _refreshTimeSlotFuture();
+          
+          // Check for team mismatch
+          _checkTeamMismatch();
+        });
+      }
       
       _startHoursUpdateTimer();
     } catch (e) {
-      String errorMessage = e.toString();
-      if (e is ClockException && e.apiStatusCode != null) {
-        errorMessage = ClockMessages.getMessage(e.apiStatusCode, fallbackMessage: e.message);
+      if (mounted) {
+        String errorMessage = e.toString();
+        if (e is ClockException && e.apiStatusCode != null) {
+          errorMessage = ClockMessages.getMessage(e.apiStatusCode, fallbackMessage: e.message);
+        }
+        _showError(I18n.of('clock.loading_error', {'error': errorMessage}));
       }
-      _showError(I18n.of('clock.loading_error', {'error': errorMessage}));
     } finally {
-      setState(() => isLoading = false);
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+          _isInitialLoading = false;
+        });
+      }
     }
   }
 
@@ -339,8 +360,11 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
       final now = DateTime.now();
       final currentDayISO = now.weekday; // 1=Monday, 7=Sunday
       
-      // Obtener todo el schedule guardado
-      final allSchedule = await SetupService.getSavedSchedule();
+      // Obtener todo el workerData guardado (que contiene el schedule)
+      final workerData = await SetupService.getSavedWorkerData();
+      if (workerData == null) return 'Sin tramo horario';
+      
+      final allSchedule = workerData.schedule;
       
       // Buscar una entrada que contenga el día actual
       for (var entry in allSchedule) {
@@ -364,18 +388,22 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
     }
   }
 
-  Future<bool> _isWithinSchedule() async {
+  Future<bool> _isWithinSchedule({bool? forceDelay, int? delayMinutes}) async {
     try {
       final now = DateTime.now();
       final currentDayISO = now.weekday;
 
+      // Si se pasan parámetros (desde el servidor), los usamos. Si no, usamos los locales.
+      final workerData = await SetupService.getSavedWorkerData();
+      if (workerData == null) return false;
       
-      final allSchedule = await SetupService.getSavedSchedule();
+      final allSchedule = workerData.schedule;
+      final effectiveForceDelay = forceDelay ?? workerData.forceClockInDelay;
+      final effectiveDelayMinutes = delayMinutes ?? workerData.clockInDelayMinutes;
 
-      
+      // Si no hay demora forzada, usamos la lógica estándar de horario
+      // (siempre permitimos fichar si estamos en el tramo)
       for (var entry in allSchedule) {
-
-        
         if (!entry.isActive) continue;
         
         final daysParts = entry.dayOfWeek.split(',').map((d) => d.trim()).toList();
@@ -390,22 +418,20 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
         }
         
         if (isToday) {
-          final workerData = await SetupService.getSavedWorkerData();
-          final delayMinutes = workerData?.clockInDelayMinutes ?? 0;
-          
-          final inSlot = _isTimeInSlot(now, entry.startTime, entry.endTime, delayMinutes: delayMinutes);
+          // Si hay demora forzada, usamos el margen. Si no, usamos margen 0 para ser estrictos con el tramo o normal.
+          // En realidad, si forceDelay es false, el usuario quiere poder fichar en cualquier momento del tramo.
+          // Usamos delayMinutes de todas formas para dar flexibilidad.
+          final inSlot = _isTimeInSlot(now, entry.startTime, entry.endTime, 
+              delayMinutes: effectiveDelayMinutes);
 
           if (inSlot) {
             return true;
           }
-        } else {
-
         }
       }
 
       return false;
     } catch (e) {
-
       return false;
     }
   }
@@ -569,15 +595,18 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
     }
 
     final upper = status.toUpperCase();
-    if (upper == 'INICIAR JORNADA') {
+    if (upper.contains('INICIAR JORNADA') || 
+        upper.contains('ENTRADA') || 
+        upper.contains('CLOCK IN') || 
+        upper.contains('START')) {
       return const Color(AppConstants.successColorValue);
     }
-    if (upper == 'TRABAJANDO') {
+    if (upper == 'TRABAJANDO' || upper.contains('WORKING')) {
       return const Color(AppConstants.errorColorValue); // Red for clock out
     }
-    if (upper == 'INICIAR REGISTRO EXCEPCIONAL' ||
-        upper.contains('EXCEPCIONAL') ||
-        upper.contains('FUERA DE HORARIO')) {
+    if (upper.contains('EXCEPCIONAL') ||
+        upper.contains('FUERA DE HORARIO') ||
+        upper.contains('OUTSIDE')) {
       // Siempre mostrar naranja para fichajes excepcionales
       return const Color(AppConstants.warningColorValue);
     }
@@ -609,9 +638,16 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
   }
 
   // ...resto de la clase y métodos...
+  late Future<String> _currentTimeSlotFuture;
+
+  void _refreshTimeSlotFuture() {
+    _currentTimeSlotFuture = _getCurrentTimeSlot();
+  }
+
   @override
   void initState() {
     super.initState();
+    _refreshTimeSlotFuture();
     _loadStatus();
     _checkNFCAvailability();
     _loadNFCEnabled();
@@ -1296,7 +1332,7 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
                                   ),
                                 ),
                                 FutureBuilder<String>(
-                                  future: _getCurrentTimeSlot(),
+                                  future: _currentTimeSlotFuture,
                                   builder: (context, snapshot) {
                                     final timeSlot = snapshot.data ?? 'Cargando...';
                                     return Text(
@@ -1421,14 +1457,15 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
                                 Builder(
                                   builder: (context) {
                                     final status =
-                                        clockStatus!.todayStats.currentStatus;
-                                    if (status == 'INICIAR JORNADA' ||
-                                        status ==
-                                            'INICIAR REGISTRO EXCEPCIONAL') {
+                                        clockStatus!.todayStats.currentStatus?.toUpperCase();
+                                    if (status != null && (status.contains('INICIAR JORNADA') ||
+                                        status.contains('REGISTRO EXCEPCIONAL') ||
+                                        status.contains('ENTRADA') ||
+                                        status.contains('START'))) {
                                       // Override exceptional status if server says overtime OR we are locally outside schedule
                                       final isExceptional = (clockStatus?.overtime == true) || 
-                                                            status == 'INICIAR REGISTRO EXCEPCIONAL' ||
-                                                            (status == 'INICIAR JORNADA' && !_isLocallyWithinSchedule);
+                                                            status.contains('EXCEPCIONAL') ||
+                                                            (status.contains('JORNADA') && !_isLocallyWithinSchedule);
                                       
                                       return SizedBox(
                                         width: double.infinity,
