@@ -7,6 +7,8 @@ class WorkerData {
   final List<WorkCenter> allWorkCenters;
   final List<ScheduleEntry> schedule;
   final List<Holiday> holidays;
+  final bool forceClockInDelay;
+  final int clockInDelayMinutes;
 
   const WorkerData({
     required this.user,
@@ -14,6 +16,8 @@ class WorkerData {
     required this.allWorkCenters,
     required this.schedule,
     required this.holidays,
+    this.forceClockInDelay = false,
+    this.clockInDelayMinutes = 0,
   });
 
   factory WorkerData.fromJson(Map<String, dynamic> json) {
@@ -156,6 +160,10 @@ class WorkerData {
                   e is Map<String, dynamic> ? e : <String, dynamic>{}))
               .toList() ??
           [],
+      forceClockInDelay: json['force_clock_in_delay'] == true,
+      clockInDelayMinutes: json['clock_in_delay_minutes'] is int
+          ? json['clock_in_delay_minutes'] as int
+          : int.tryParse(json['clock_in_delay_minutes']?.toString() ?? '0') ?? 0,
     );
   }
 
@@ -166,6 +174,8 @@ class WorkerData {
       'work_centers': allWorkCenters.map((e) => e.toJson()).toList(),
       'schedule': schedule.map((e) => e.toJson()).toList(),
       'holidays': holidays.map((e) => e.toJson()).toList(),
+      'force_clock_in_delay': forceClockInDelay,
+      'clock_in_delay_minutes': clockInDelayMinutes,
     };
   }
 }

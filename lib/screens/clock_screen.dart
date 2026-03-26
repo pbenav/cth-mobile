@@ -390,7 +390,10 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
         }
         
         if (isToday) {
-          final inSlot = _isTimeInSlot(now, entry.startTime, entry.endTime);
+          final workerData = await SetupService.getSavedWorkerData();
+          final delayMinutes = workerData?.clockInDelayMinutes ?? 0;
+          
+          final inSlot = _isTimeInSlot(now, entry.startTime, entry.endTime, delayMinutes: delayMinutes);
 
           if (inSlot) {
             return true;
@@ -407,7 +410,7 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
     }
   }
 
-  bool _isTimeInSlot(DateTime now, String startStr, String endStr) {
+  bool _isTimeInSlot(DateTime now, String startStr, String endStr, {int delayMinutes = 0}) {
     try {
       if (startStr.isEmpty || endStr.isEmpty) return false;
 
@@ -429,15 +432,21 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
         return h * 60 + m;
       }
 
-      final startMinutes = parseTime(startStr);
-      final endMinutes = parseTime(endStr);
+      int startMinutes = parseTime(startStr);
+      int endMinutes = parseTime(endStr);
+      
+      // Aplicar margen de cortesía (delay)
+      int startWithGrace = startMinutes - delayMinutes;
+      int endWithGrace = endMinutes + delayMinutes;
       
       if (endMinutes < startMinutes) {
         // Crosses midnight (e.g. 22:00 to 06:00 -> 1320 to 360)
-        return nowMinutes >= startMinutes || nowMinutes <= endMinutes;
+        // Note: For midnight crossing, grace must be handled carefully
+        // But for standard comparison:
+        return nowMinutes >= startWithGrace || nowMinutes <= endWithGrace;
       } else {
         // Normal (e.g. 08:00 to 15:00 -> 480 to 900)
-        return nowMinutes >= startMinutes && nowMinutes <= endMinutes;
+        return nowMinutes >= startWithGrace && nowMinutes <= endWithGrace;
       }
     } catch (e) {
 
