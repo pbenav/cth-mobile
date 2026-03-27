@@ -461,19 +461,21 @@ class _ClockScreenState extends State<ClockScreen> with RouteAware {
       int startMinutes = parseTime(startStr);
       int endMinutes = parseTime(endStr);
       
-      // Aplicar margen de cortesía (delay)
-      int startWithGrace = startMinutes - delayMinutes;
-      int endWithGrace = endMinutes + delayMinutes;
-      
-      if (endMinutes < startMinutes) {
-        // Crosses midnight (e.g. 22:00 to 06:00 -> 1320 to 360)
-        // Note: For midnight crossing, grace must be handled carefully
-        // But for standard comparison:
-        return nowMinutes >= startWithGrace || nowMinutes <= endWithGrace;
-      } else {
-        // Normal (e.g. 08:00 to 15:00 -> 480 to 900)
-        return nowMinutes >= startWithGrace && nowMinutes <= endWithGrace;
+      // Definir ventanas separadas: Inicio +/- Margen y Fin +/- Margen
+      bool inWindow(int target, int now, int delay) {
+        int start = target - delay;
+        int end = target + delay;
+        if (start < 0) {
+          return now >= (start + 1440) || now <= end;
+        } else if (end >= 1440) {
+          return now >= start || now <= (end - 1440);
+        } else {
+          return now >= start && now <= end;
+        }
       }
+
+      return inWindow(startMinutes, nowMinutes, delayMinutes) ||
+             inWindow(endMinutes, nowMinutes, delayMinutes);
     } catch (e) {
 
       return false;
