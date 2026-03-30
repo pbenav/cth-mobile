@@ -125,7 +125,7 @@ class AboutScreen extends StatelessWidget {
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 onPressed: () => _launchUrl(
-                    context, 'https://www.patreon.com/cw/CTH_ControlHorario'),
+                    context, 'https://www.patreon.com/cw/sientia'),
                 icon: const Icon(Icons.favorite, color: Colors.white),
                 label: Text(I18n.of('about.support_patreon')),
                 style: ElevatedButton.styleFrom(
