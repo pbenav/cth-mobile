@@ -15,8 +15,13 @@ class AuthService {
   }
 
   static Future<String> _getBaseUrl() async {
+    // Durante setup inicial, buscar URL temporal
+    final tempUrl = await SetupService.getTempServerUrl();
+    if (tempUrl != null) return _normalizeUrl(tempUrl);
+    // Después del setup, buscar URL guardada
     final setupUrl = await SetupService.getConfiguredServerUrl();
     if (setupUrl != null) return _normalizeUrl(setupUrl);
+    // Fallback a ConfigService
     final configuredUrl = await ConfigService.getCurrentServerUrl();
     return _normalizeUrl(configuredUrl ?? '');
   }
