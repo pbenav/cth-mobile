@@ -19,12 +19,28 @@ class _SetupWorkerScreenState extends State<SetupWorkerScreen> {
   bool _isLoading = false;
   String? _errorMessage;
   WorkerData? _workerData;
+  final List<String> _debugLogs = [];
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _addLog(String message) {
+    setState(() {
+      final timestamp = DateTime.now().toString().split('.')[0];
+      _debugLogs.add('[$timestamp] $message');
+      // Scroll al final
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (_scrollController.hasClients) {
+          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        }
+      });
+    });
   }
 
   Future<void> _loginAndLoadWorkerData() async {
@@ -34,11 +50,17 @@ class _SetupWorkerScreenState extends State<SetupWorkerScreen> {
       _isLoading = true;
       _errorMessage = null;
       _workerData = null;
+      _debugLogs.clear();
     });
+
+    _addLog('🔄 Iniciando sesión...');
 
     try {
       final email = _emailController.text.trim();
       final password = _passwordController.text;
+
+      _addLog('📧 Email: $email');
+      _addLog('⏳ Autenticando en el servidor...');
 
       // 1) Login y guardar token/usuario
       final user = await AuthService.login(
@@ -47,22 +69,29 @@ class _SetupWorkerScreenState extends State<SetupWorkerScreen> {
         deviceName: 'cth_mobile',
       );
 
+      _addLog('✅ Autenticación exitosa');
+      _addLog('👤 Usuario: ${user.code} - ${user.name}');
+      _addLog('⏳ Cargando datos del trabajador...');
+
       // 2) Cargar worker data autenticado (mismo código del usuario)
       final workerData = await SetupService.loadWorkerData(user.code);
 
       if (!mounted) return;
 
       if (workerData != null) {
+        _addLog('✅ Datos del trabajador cargados');
         setState(() {
           _workerData = workerData;
         });
       } else {
+        _addLog('❌ No se encontraron datos del trabajador');
         setState(() {
           _errorMessage = 'No se encontraron datos del trabajador para tu cuenta.';
         });
       }
     } catch (e) {
       if (!mounted) return;
+      _addLog('❌ Error: ${e.toString()}');
       setState(() {
         _errorMessage = 'Error al cargar datos: ${e.toString()}';
       });
@@ -330,6 +359,33 @@ class _SetupWorkerScreenState extends State<SetupWorkerScreen> {
                                           ),
                                   ),
                                 ),
+                                // Logs de depuración
+                                if (_debugLogs.isNotEmpty) ...[
+                                  const SizedBox(height: AppConstants.spacing),
+                                  Container(
+                                    height: 150,
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[900],
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: Colors.grey[700]!),
+                                    ),
+                                    child: ListView.builder(
+                                      controller: _scrollController,
+                                      itemCount: _debugLogs.length,
+                                      itemBuilder: (context, index) {
+                                        return Text(
+                                          _debugLogs[index],
+                                          style: const TextStyle(
+                                            color: Colors.lightGreenAccent,
+                                            fontSize: 11,
+                                            fontFamily: 'monospace',
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
                               ] else ...[
                                 // Mostrar datos del trabajador
                                 Container(
