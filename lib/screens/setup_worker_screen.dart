@@ -67,6 +67,7 @@ class _SetupWorkerScreenState extends State<SetupWorkerScreen> {
         email: email,
         password: password,
         deviceName: 'cth_mobile',
+        onLog: _addLog,
       );
 
       _addLog('✅ Autenticación exitosa');

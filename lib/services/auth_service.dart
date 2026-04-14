@@ -30,15 +30,21 @@ class AuthService {
     required String email,
     required String password,
     String deviceName = 'cth_mobile',
+    Function(String)? onLog,
   }) async {
+    void _log(String msg) => onLog?.call(msg);
+
     final baseUrl = await _getBaseUrl();
     if (baseUrl.isEmpty) {
       throw const AuthException('Servidor no configurado');
     }
 
     final url = Uri.parse('$baseUrl/api/v1/login');
+    _log('🌐 URL de login: $url');
+    
     http.Response response;
     try {
+      _log('📡 Enviando credenciales...');
       response = await http
           .post(
             url,
@@ -53,21 +59,28 @@ class AuthService {
             }),
           )
           .timeout(const Duration(seconds: 30));
+      _log('📥 Respuesta recibida: ${response.statusCode}');
     } catch (e) {
+      _log('❌ Error de conexión: $e');
       throw AuthException('Error de conexión: $e');
     }
+
+    _log('📄 Body: ${response.body.substring(0, (response.body.length > 200) ? 200 : response.body.length)}');
 
     Map<String, dynamic> json;
     try {
       json = jsonDecode(response.body) as Map<String, dynamic>;
     } catch (_) {
+      _log('❌ No se pudo parsear JSON');
       throw AuthException('Respuesta inválida del servidor', statusCode: response.statusCode);
     }
 
     if (response.statusCode == 200) {
+      _log('✅ Autenticación exitosa');
       final data = (json['data'] is Map<String, dynamic>) ? (json['data'] as Map<String, dynamic>) : <String, dynamic>{};
       final token = (data['token'] ?? '').toString();
       if (token.isEmpty) {
+        _log('❌ Token vacío en respuesta');
         throw const AuthException('Login incompleto: token ausente');
       }
 
@@ -82,6 +95,7 @@ class AuthService {
     }
 
     final msg = (json['message'] ?? 'Error de autenticación').toString();
+    _log('❌ Error ${response.statusCode}: $msg');
     throw AuthException(msg, statusCode: response.statusCode);
   }
 
