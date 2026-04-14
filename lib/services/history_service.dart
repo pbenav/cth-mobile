@@ -1,8 +1,8 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../models/history_event.dart';
 import '../services/setup_service.dart';
 import '../services/config_service.dart';
+import '../services/api_client.dart';
 import '../utils/constants.dart';
 
 class HistoryService {
@@ -49,16 +49,11 @@ class HistoryService {
 
 
 
-      final response = await http
-          .post(
-            Uri.parse('$baseUrl/history'),
-            headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: jsonEncode(body),
-          )
-          .timeout(const Duration(seconds: 15));
+      final response = await ApiClient.postJson(
+        Uri.parse('$baseUrl/history'),
+        body: body,
+        timeout: const Duration(seconds: 15),
+      );
 
       final jsonData = jsonDecode(response.body);
 

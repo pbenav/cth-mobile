@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../services/setup_service.dart';
+import '../services/auth_service.dart';
 import '../models/worker_data.dart';
 import 'clock_screen.dart';
 
@@ -13,18 +14,20 @@ class SetupWorkerScreen extends StatefulWidget {
 
 class _SetupWorkerScreenState extends State<SetupWorkerScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _workerCodeController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
   WorkerData? _workerData;
 
   @override
   void dispose() {
-    _workerCodeController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadWorkerData() async {
+  Future<void> _loginAndLoadWorkerData() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -34,8 +37,18 @@ class _SetupWorkerScreenState extends State<SetupWorkerScreen> {
     });
 
     try {
-      final workerCode = _workerCodeController.text.trim();
-      final workerData = await SetupService.loadWorkerData(workerCode);
+      final email = _emailController.text.trim();
+      final password = _passwordController.text;
+
+      // 1) Login y guardar token/usuario
+      final user = await AuthService.login(
+        email: email,
+        password: password,
+        deviceName: 'cth_mobile',
+      );
+
+      // 2) Cargar worker data autenticado (mismo código del usuario)
+      final workerData = await SetupService.loadWorkerData(user.code);
 
       if (!mounted) return;
 
@@ -45,7 +58,7 @@ class _SetupWorkerScreenState extends State<SetupWorkerScreen> {
         });
       } else {
         setState(() {
-          _errorMessage = 'No se encontraron datos para el código proporcionado.';
+          _errorMessage = 'No se encontraron datos del trabajador para tu cuenta.';
         });
       }
     } catch (e) {
@@ -94,15 +107,23 @@ class _SetupWorkerScreenState extends State<SetupWorkerScreen> {
     }
   }
 
-  String? _validateWorkerCode(String? value) {
+  String? _validateEmail(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'El código del trabajador es obligatorio';
+      return 'El email es obligatorio';
     }
-
-    if (value.trim().length < 3) {
-      return 'El código debe tener al menos 3 caracteres';
+    if (!value.contains('@')) {
+      return 'Email inválido';
     }
+    return null;
+  }
 
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'La contraseña es obligatoria';
+    }
+    if (value.length < 6) {
+      return 'La contraseña debe tener al menos 6 caracteres';
+    }
     return null;
   }
 
@@ -185,7 +206,7 @@ class _SetupWorkerScreenState extends State<SetupWorkerScreen> {
                     const SizedBox(height: 8),
 
                     Text(
-                      'Paso 2 de 2: Configurar trabajador',
+                      'Paso 2 de 2: Iniciar sesión',
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.white.withOpacity(0.9),
@@ -215,7 +236,7 @@ class _SetupWorkerScreenState extends State<SetupWorkerScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'Código del Trabajador',
+                                'Acceso',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -226,7 +247,7 @@ class _SetupWorkerScreenState extends State<SetupWorkerScreen> {
                               const SizedBox(height: 8),
 
                               Text(
-                                'Introduce tu código secreto de trabajador para cargar tus datos.',
+                                'Introduce tus credenciales para autenticarte y cargar tus datos.',
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey[600],
@@ -237,22 +258,42 @@ class _SetupWorkerScreenState extends State<SetupWorkerScreen> {
 
                               Form(
                                 key: _formKey,
-                                child: TextFormField(
-                                  controller: _workerCodeController,
-                                  obscureText: true,
-                                  decoration: InputDecoration(
-                                    labelText: 'Código del trabajador',
-                                    hintText: 'Ej: EMP001',
-                                    prefixIcon: const Icon(Icons.person),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
+                                child: Column(
+                                  children: [
+                                    TextFormField(
+                                      controller: _emailController,
+                                      decoration: InputDecoration(
+                                        labelText: 'Email',
+                                        hintText: 'tu@email.com',
+                                        prefixIcon: const Icon(Icons.email),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        filled: true,
+                                        fillColor: Colors.grey[50],
+                                      ),
+                                      validator: _validateEmail,
+                                      keyboardType: TextInputType.emailAddress,
+                                      textInputAction: TextInputAction.next,
                                     ),
-                                    filled: true,
-                                    fillColor: Colors.grey[50],
-                                  ),
-                                  validator: _validateWorkerCode,
-                                  textInputAction: TextInputAction.done,
-                                  onFieldSubmitted: (_) => _loadWorkerData(),
+                                    const SizedBox(height: AppConstants.spacing),
+                                    TextFormField(
+                                      controller: _passwordController,
+                                      obscureText: true,
+                                      decoration: InputDecoration(
+                                        labelText: 'Contraseña',
+                                        prefixIcon: const Icon(Icons.lock),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        filled: true,
+                                        fillColor: Colors.grey[50],
+                                      ),
+                                      validator: _validatePassword,
+                                      textInputAction: TextInputAction.done,
+                                      onFieldSubmitted: (_) => _loginAndLoadWorkerData(),
+                                    ),
+                                  ],
                                 ),
                               ),
 
@@ -263,7 +304,7 @@ class _SetupWorkerScreenState extends State<SetupWorkerScreen> {
                                   width: double.infinity,
                                   height: AppConstants.buttonHeight,
                                   child: ElevatedButton(
-                                    onPressed: _isLoading ? null : _loadWorkerData,
+                                    onPressed: _isLoading ? null : _loginAndLoadWorkerData,
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(AppConstants.primaryColorValue),
                                       foregroundColor: Colors.white,
@@ -281,7 +322,7 @@ class _SetupWorkerScreenState extends State<SetupWorkerScreen> {
                                             ),
                                           )
                                         : const Text(
-                                            'Cargar Datos',
+                                            'Iniciar sesión',
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w600,

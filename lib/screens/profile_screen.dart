@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
 import '../models/user.dart';
 import '../models/work_center.dart';
 import '../services/storage_service.dart';
@@ -9,6 +8,7 @@ import '../models/worker_data.dart';
 import '../services/refresh_service.dart';
 import '../services/clock_service.dart';
 import '../utils/constants.dart';
+import '../utils/exceptions.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -98,6 +98,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _workCenterNameController.text = _currentWorkCenter!.name;
       }
     } catch (e) {
+      if (e is AuthException) {
+        await StorageService.clearSession();
+        if (mounted) {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppConstants.routeLogin,
+            (route) => false,
+          );
+        }
+        return;
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error cargando perfil: $e')),
@@ -148,6 +159,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
       }
     } catch (e) {
+      if (e is AuthException) {
+        await StorageService.clearSession();
+        if (mounted) {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppConstants.routeLogin,
+            (route) => false,
+          );
+        }
+        return;
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -228,7 +250,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(success
-                  ? 'Sincronización completada'
+                  ? 'Sincronizaci?n completada'
                   : 'No se actualizaron los datos')),
         );
         // Reload the profile data to reflect any changes from the refresh
@@ -237,7 +259,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al forzar actualización: $e')),
+          SnackBar(content: Text('Error al forzar actualizaci?n: $e')),
         );
       }
     } finally {
@@ -305,9 +327,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Información Personal
+              // Informaci?n Personal
               const Text(
-                'Información Personal',
+                'Informaci?n Personal',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -356,7 +378,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   controller: _userCodeController,
                   obscureText: _obscureUserCode,
                   decoration: InputDecoration(
-                    labelText: 'Código de usuario',
+                    labelText: 'C?digo de usuario',
                     border: const OutlineInputBorder(),
                     prefixIcon: const Icon(Icons.badge),
                     suffixIcon: IconButton(
@@ -368,7 +390,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'El código de usuario es obligatorio';
+                      return 'El c?digo de usuario es obligatorio';
                     }
                     return null;
                   },
@@ -376,14 +398,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               const SizedBox(height: 32),
 
-              // Última actualización y forzar refresh
+              // ÿÿltima actualizaci?n y forzar refresh
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Última actualización',
+                      const Text('ÿÿltima actualizaci?n',
                           style: TextStyle(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 4),
                       Text(_formatDateTime(_lastUpdate)),
@@ -709,7 +731,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'La edición del perfil estará disponible próximamente',
+                        'La edici?n del perfil estar? disponible pr?ximamente',
                         style: TextStyle(
                           color: Colors.blue[900],
                           fontSize: 14,

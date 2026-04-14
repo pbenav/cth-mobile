@@ -9,6 +9,7 @@ import '../utils/exceptions.dart';
 
 class StorageService {
   static const _secureStorage = FlutterSecureStorage();
+  static const String _apiTokenKey = 'api_token';
 
   // Guardar cookie de sesión
   static Future<void> saveLaravelSessionCookie(String value) async {
@@ -18,6 +19,18 @@ class StorageService {
   // Obtener cookie de sesión
   static Future<String?> getLaravelSessionCookie() async {
     return await _secureStorage.read(key: 'laravel_session');
+  }
+
+  static Future<void> saveApiToken(String token) async {
+    await _secureStorage.write(key: _apiTokenKey, value: token);
+  }
+
+  static Future<String?> getApiToken() async {
+    return await _secureStorage.read(key: _apiTokenKey);
+  }
+
+  static Future<void> clearApiToken() async {
+    await _secureStorage.delete(key: _apiTokenKey);
   }
 
   static SharedPreferences? _prefs;
@@ -271,6 +284,7 @@ class StorageService {
       clearWorkCenter(),
       clearUser(),
       clearOfflineEvents(),
+      clearApiToken(),
     ]);
   }
 

@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../models/worker_data.dart';
 import '../services/storage_service.dart';
+import '../services/api_client.dart';
 import '../utils/exceptions.dart';
 
 class SetupService {
@@ -33,7 +33,8 @@ class SetupService {
       final url = Uri.parse('$normalizedUrl/api/v1/config/ping');
       _log('🌐 Intentando conectar a: $url', onLog: onLog);
 
-      final response = await http.get(url).timeout(const Duration(seconds: 10));
+      final response =
+          await ApiClient.get(url, timeout: const Duration(seconds: 10));
 
       _log('📡 Server response - Code: ${response.statusCode}', onLog: onLog);
 
@@ -87,7 +88,8 @@ class SetupService {
       final url = Uri.parse('$normalizedUrl/api/v1/worker/$workerCode');
       _log('🌐 URL completa: $url', onLog: onLog);
 
-      final response = await http.get(url).timeout(const Duration(seconds: 30));
+      final response =
+          await ApiClient.get(url, timeout: const Duration(seconds: 30));
 
       _log('📡 Server response - Code: ${response.statusCode}', onLog: onLog);
 

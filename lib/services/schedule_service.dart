@@ -1,9 +1,9 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../models/work_schedule.dart';
 import 'config_service.dart';
 import 'setup_service.dart';
 import 'storage_service.dart';
+import 'api_client.dart';
 
 class ScheduleService {
   static Future<String> _getBaseUrl() async {
@@ -25,15 +25,11 @@ class ScheduleService {
         throw Exception('User not found');
       }
 
-      final response = await http.post(
+      final response = await ApiClient.postJson(
         Uri.parse('$baseUrl/api/v1/schedule'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode({
+        body: {
           'user_code': user.code,
-        }),
+        },
       );
 
       if (response.statusCode == 200) {
@@ -61,16 +57,12 @@ class ScheduleService {
         throw Exception('User not found');
       }
 
-      final response = await http.post(
+      final response = await ApiClient.postJson(
         Uri.parse('$baseUrl/api/v1/schedule/update'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode({
+        body: {
           'user_code': user.code,
           'schedule': schedule.schedule,
-        }),
+        },
       );
 
       if (response.statusCode == 200) {

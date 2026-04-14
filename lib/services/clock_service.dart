@@ -1,9 +1,9 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../models/api_response.dart';
 import '../models/clock_status.dart';
 import '../services/setup_service.dart';
 import '../services/config_service.dart';
+import '../services/api_client.dart';
 import '../utils/constants.dart';
 import '../utils/exceptions.dart';
 
@@ -75,14 +75,11 @@ class ClockService {
       print('🌐 URL: $url');
       print('📦 Body: ${jsonEncode(body)}');
 
-      final response = await http.post(
+      final response = await ApiClient.postJson(
         url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode(body),
-      ).timeout(const Duration(seconds: 30));
+        body: body,
+        timeout: const Duration(seconds: 30),
+      );
 
       print('🔵 Status Code: ${response.statusCode}');
       print('📄 Response Body: ${response.body}');
@@ -139,19 +136,11 @@ class ClockService {
             blocking: true, timeout: const Duration(seconds: 3));
       } catch (_) {}
       final baseUrl = await _getBaseUrl();
-      final bodyJson = jsonEncode({
-        'user_code': userCode,
-      });
-      final response = await http
-          .post(
-            Uri.parse('$baseUrl/status'),
-            headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: bodyJson,
-          )
-          .timeout(const Duration(seconds: 15));
+      final response = await ApiClient.postJson(
+        Uri.parse('$baseUrl/status'),
+        body: {'user_code': userCode},
+        timeout: const Duration(seconds: 15),
+      );
 
       final jsonData = jsonDecode(response.body);
       
@@ -195,20 +184,15 @@ class ClockService {
             blocking: true, timeout: const Duration(seconds: 3));
       } catch (_) {}
       final baseUrl = await _getBaseUrl();
-      final response = await http
-          .post(
-            Uri.parse('$baseUrl/sync'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: jsonEncode({
-              'work_center_code': workCenterCode,
-              'user_code': userCode,
-              'offline_events': events.map((e) => e.toJson()).toList(),
-            }),
-          )
-          .timeout(const Duration(seconds: 30));
+      final response = await ApiClient.postJson(
+        Uri.parse('$baseUrl/sync'),
+        body: {
+          'work_center_code': workCenterCode,
+          'user_code': userCode,
+          'offline_events': events.map((e) => e.toJson()).toList(),
+        },
+        timeout: const Duration(seconds: 30),
+      );
 
       final jsonData = jsonDecode(response.body);
 
@@ -239,10 +223,10 @@ class ClockService {
     try {
       final configuredUrl = await ConfigService.getCurrentServerUrl();
       final baseUrl = configuredUrl ?? AppConstants.apiBaseUrl;
-      final response = await http.get(
+      final response = await ApiClient.get(
         Uri.parse('$baseUrl/api/v1/config/server'),
-        headers: {'Accept': 'application/json'},
-      ).timeout(const Duration(seconds: 10));
+        timeout: const Duration(seconds: 10),
+      );
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
@@ -260,19 +244,14 @@ class ClockService {
   }) async {
     try {
       final baseUrl = await _getBaseUrl();
-      final response = await http
-          .post(
-            Uri.parse('$baseUrl/team/switch'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: jsonEncode({
-              'user_code': userCode,
-              'work_center_code': workCenterCode,
-            }),
-          )
-          .timeout(const Duration(seconds: 30));
+      final response = await ApiClient.postJson(
+        Uri.parse('$baseUrl/team/switch'),
+        body: {
+          'user_code': userCode,
+          'work_center_code': workCenterCode,
+        },
+        timeout: const Duration(seconds: 30),
+      );
 
       final jsonData = jsonDecode(response.body);
 

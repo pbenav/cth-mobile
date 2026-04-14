@@ -1,8 +1,8 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'config_service.dart';
 import 'storage_service.dart';
 import '../models/user.dart';
+import 'api_client.dart';
 
 class ProfileService {
   /// Update user profile on the server
@@ -20,18 +20,14 @@ class ProfileService {
 
       final url = Uri.parse('$baseUrl/api/v1/profile/update');
       
-      final response = await http.post(
+      final response = await ApiClient.postJson(
         url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: json.encode({
+        body: {
           'user_code': userCode,
           'name': name,
           'family_name1': familyName1,
           'family_name2': familyName2,
-        }),
+        },
       );
 
       if (response.statusCode == 200) {
@@ -73,16 +69,12 @@ class ProfileService {
 
       final url = Uri.parse('$baseUrl/api/v1/team/switch');
       
-      final response = await http.post(
+      final response = await ApiClient.postJson(
         url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: json.encode({
+        body: {
           'user_code': userCode,
           'work_center_code': workCenterCode,
-        }),
+        },
       );
 
       if (response.statusCode == 200) {

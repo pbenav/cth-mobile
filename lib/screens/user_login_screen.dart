@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/work_center.dart';
-import '../models/user.dart';
 import '../services/storage_service.dart';
 import '../utils/constants.dart';
-import 'clock_screen.dart';
 
 class UserLoginScreen extends StatefulWidget {
   final WorkCenter workCenter;
@@ -79,38 +77,20 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
     setState(() => isLoading = true);
 
     try {
-      final userCode = _codeController.text.trim();
-      final userName = _nameController.text.trim().isNotEmpty
-          ? _nameController.text.trim()
-          : userCode;
-
-      final user = User(
-        id: 0, // ID temporal, se asignará desde el servidor
-        code: userCode,
-        name: userName,
-      );
-
-      // Guardar datos en almacenamiento local
-      await StorageService.saveWorkCenter(widget.workCenter);
-      await StorageService.saveUser(user);
-
-      // Eliminar variables locales no utilizadas
-      await StorageService.getWorkCenter();
-      await StorageService.getUser();
-      await StorageService.hasValidSession();
-
       if (!mounted) return;
 
-      // Navegar a pantalla principal
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ClockScreen(
-            workCenter: widget.workCenter,
-            user: user,
-            autoClockOnNFC: widget.autoClockAfterLogin,
-          ),
+      // Este flujo legacy (código/nombre) ya no es válido: ahora se requiere token.
+      await StorageService.clearSession();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Se requiere iniciar sesión con credenciales.'),
+          backgroundColor: Color(AppConstants.warningColorValue),
         ),
+      );
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppConstants.routeLogin,
+        (route) => false,
       );
     } catch (e) {
       if (!mounted) return;

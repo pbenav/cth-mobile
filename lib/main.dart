@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'services/storage_service.dart';
-import 'screens/clock_screen.dart';
-import 'screens/profile_screen.dart';
-import 'screens/settings_screen.dart';
-import 'screens/setup_server_screen.dart';
-import 'screens/setup_worker_screen.dart';
-import 'services/setup_service.dart';
-import 'services/refresh_service.dart';
-import 'models/work_center.dart';
-import 'models/user.dart';
-import 'utils/constants.dart';
-import 'i18n/i18n_service.dart';
+import 'package:cth_mobile/services/storage_service.dart';
+import 'package:cth_mobile/screens/clock_screen.dart';
+import 'package:cth_mobile/screens/profile_screen.dart';
+import 'package:cth_mobile/screens/settings_screen.dart';
+import 'package:cth_mobile/screens/setup_server_screen.dart';
+import 'package:cth_mobile/screens/setup_worker_screen.dart';
+import 'package:cth_mobile/services/setup_service.dart';
+import 'package:cth_mobile/services/refresh_service.dart';
+import 'package:cth_mobile/models/work_center.dart';
+import 'package:cth_mobile/models/user.dart';
+import 'package:cth_mobile/utils/constants.dart';
+import 'package:cth_mobile/i18n/i18n_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

@@ -3,10 +3,12 @@ import 'package:intl/intl.dart';
 import '../models/history_event.dart';
 import '../models/user.dart';
 import '../services/history_service.dart';
+import '../services/storage_service.dart';
 import '../utils/constants.dart';
 import '../i18n/i18n_service.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import '../widgets/event_details_modal.dart';
+import '../utils/exceptions.dart';
 
 enum HistoryFilter { today, week, month, custom }
 
@@ -87,6 +89,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
         });
       }
     } catch (e) {
+      if (e is AuthException) {
+        await StorageService.clearSession();
+        if (mounted) {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppConstants.routeLogin,
+            (route) => false,
+          );
+        }
+        return;
+      }
       if (mounted) {
         setState(() {
           _errorMessage = e.toString();

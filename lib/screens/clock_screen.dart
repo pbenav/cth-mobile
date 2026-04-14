@@ -14,7 +14,7 @@ import 'package:geolocator/geolocator.dart';
 
 import '../services/setup_service.dart';
 import 'settings_screen.dart';
-import 'profile_screen.dart';
+import 'package:cth_mobile/screens/profile_screen.dart';
 import 'history_screen.dart';
 import 'schedule_screen.dart';
 import '../utils/constants.dart';

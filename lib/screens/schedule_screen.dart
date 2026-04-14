@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../models/work_schedule.dart';
 import '../services/schedule_service.dart';
+import '../services/storage_service.dart';
 import '../i18n/i18n_service.dart';
 import '../utils/constants.dart';
+import '../utils/exceptions.dart';
 
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
@@ -51,6 +52,17 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         _isLoading = false;
       });
     } catch (e) {
+      if (e is AuthException) {
+        await StorageService.clearSession();
+        if (mounted) {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppConstants.routeLogin,
+            (route) => false,
+          );
+        }
+        return;
+      }
       setState(() {
         _errorMessage = e.toString();
         _isLoading = false;
@@ -85,6 +97,17 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         SnackBar(content: Text(I18n.of('schedule.save_success'))),
       );
     } catch (e) {
+      if (e is AuthException) {
+        await StorageService.clearSession();
+        if (mounted) {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppConstants.routeLogin,
+            (route) => false,
+          );
+        }
+        return;
+      }
       if (!mounted) return;
       setState(() {
         _isSaving = false;
