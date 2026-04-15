@@ -82,9 +82,10 @@ class ClockService {
       );
 
       print('🔵 Status Code: ${response.statusCode}');
-      print('📄 Response Body: ${response.body}');
+      final responseBody = utf8.decode(response.bodyBytes);
+      print('📄 Response Body: $responseBody');
 
-      final jsonData = jsonDecode(response.body);
+      final jsonData = jsonDecode(responseBody);
 
       if (response.statusCode == 200) {
         return ApiResponse<ClockStatus>.fromJson(
@@ -142,7 +143,7 @@ class ClockService {
         timeout: const Duration(seconds: 15),
       );
 
-      final jsonData = jsonDecode(response.body);
+      final jsonData = jsonDecode(utf8.decode(response.bodyBytes));
       
 
 
@@ -194,7 +195,7 @@ class ClockService {
         timeout: const Duration(seconds: 30),
       );
 
-      final jsonData = jsonDecode(response.body);
+      final jsonData = jsonDecode(utf8.decode(response.bodyBytes));
 
       if (response.statusCode == 200) {
         return ApiResponse<SyncResponse>.fromJson(
@@ -229,7 +230,7 @@ class ClockService {
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
+        return jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
       }
       return null;
     } catch (e) {
@@ -253,7 +254,7 @@ class ClockService {
         timeout: const Duration(seconds: 30),
       );
 
-      final jsonData = jsonDecode(response.body);
+      final jsonData = jsonDecode(utf8.decode(response.bodyBytes));
 
       if (response.statusCode == 200) {
         return ApiResponse<ClockStatus>.fromJson(

@@ -33,7 +33,7 @@ class ScheduleService {
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
         if (data['success'] == true) {
           return WorkSchedule.fromJson(data['data']);
         } else {
@@ -66,7 +66,7 @@ class ScheduleService {
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
         if (data['success'] != true) {
           throw Exception(data['message'] ?? 'Error updating schedule');
         }

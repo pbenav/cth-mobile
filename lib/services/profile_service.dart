@@ -31,7 +31,7 @@ class ProfileService {
       );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = json.decode(utf8.decode(response.bodyBytes));
         if (data['success'] == true) {
           // Update local storage with new data
           final currentUser = await StorageService.getUser();
@@ -49,7 +49,7 @@ class ProfileService {
         }
       }
       
-      throw Exception('Failed to update profile: ${response.body}');
+      throw Exception('Failed to update profile: ${utf8.decode(response.bodyBytes)}');
     } catch (e) {
       throw Exception('Error updating profile: $e');
     }
@@ -78,14 +78,14 @@ class ProfileService {
       );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = json.decode(utf8.decode(response.bodyBytes));
         if (data['success'] == true) {
           return data['data'] ?? {};
         }
       }
       
       // Handle error responses
-      final errorData = json.decode(response.body);
+      final errorData = json.decode(utf8.decode(response.bodyBytes));
       throw Exception(errorData['message'] ?? 'Failed to switch team');
     } catch (e) {
       throw Exception('Error switching team: $e');

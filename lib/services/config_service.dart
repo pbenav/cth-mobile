@@ -36,7 +36,7 @@ class ConfigService {
 
       if (response.statusCode == 200) {
         log('✅ Respuesta exitosa, procesando configuración...');
-        final configData = json.decode(response.body);
+        final configData = json.decode(utf8.decode(response.bodyBytes));
         final serverConfig = ServerConfig.fromJson(configData['data']);
 
         // Validar que los endpoints requeridos estén disponibles
@@ -103,13 +103,14 @@ class ConfigService {
 
       if (response.statusCode == 200) {
         // Validar que la respuesta tenga contenido
-        if (response.body.trim().isEmpty) {
+        final responseBody = utf8.decode(response.bodyBytes);
+        if (responseBody.trim().isEmpty) {
           throw const APIException('Respuesta vacía del servidor');
         }
 
         dynamic decodedData;
         try {
-          decodedData = json.decode(response.body);
+          decodedData = json.decode(responseBody);
         } catch (e) {
           throw APIException('Respuesta JSON inválida del servidor: $e');
         }
@@ -156,8 +157,9 @@ class ConfigService {
         // Manejar errores HTTP
         String errorMessage = 'Error del servidor (${response.statusCode})';
         try {
-          if (response.body.isNotEmpty) {
-            final errorData = json.decode(response.body);
+          final errBody = utf8.decode(response.bodyBytes);
+          if (errBody.isNotEmpty) {
+            final errorData = json.decode(errBody);
             if (errorData is Map<String, dynamic> &&
                 errorData.containsKey('message')) {
               errorMessage = errorData['message'] as String;

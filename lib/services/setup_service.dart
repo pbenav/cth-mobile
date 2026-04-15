@@ -94,7 +94,7 @@ class SetupService {
       _log('📡 Server response - Code: ${response.statusCode}', onLog: onLog);
 
       if (response.statusCode == 200) {
-        final decoded = json.decode(response.body);
+        final decoded = json.decode(utf8.decode(response.bodyBytes));
         final payload =
             decoded is Map<String, dynamic> && decoded.containsKey('data')
                 ? decoded['data']
@@ -111,7 +111,7 @@ class SetupService {
         _log('❌ Trabajador no encontrado (404)', onLog: onLog);
         return null;
       } else {
-        _log('❌ Server error: ${response.statusCode} - ${response.body}',
+        _log('❌ Server error: ${response.statusCode} - ${utf8.decode(response.bodyBytes)}',
             onLog: onLog);
         throw APIException(
           'Server error: ${response.statusCode}',

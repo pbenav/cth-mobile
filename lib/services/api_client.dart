@@ -4,7 +4,15 @@ import '../services/storage_service.dart';
 import '../utils/exceptions.dart';
 
 class ApiClient {
+  /// Decodifica el body de una respuesta HTTP como UTF-8.
+  /// El paquete http de Dart usa latin1 por defecto si el servidor
+  /// no envía charset=utf-8 en Content-Type, lo que corrompe las tildes.
+  static String decodeBody(http.Response response) {
+    return utf8.decode(response.bodyBytes);
+  }
+
   static Future<Map<String, String>> _headers({Map<String, String>? extra}) async {
+
     final headers = <String, String>{
       'Accept': 'application/json',
     };

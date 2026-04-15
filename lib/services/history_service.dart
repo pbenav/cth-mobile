@@ -55,7 +55,7 @@ class HistoryService {
         timeout: const Duration(seconds: 15),
       );
 
-      final jsonData = jsonDecode(response.body);
+      final jsonData = jsonDecode(utf8.decode(response.bodyBytes));
 
       if (response.statusCode == 200) {
 

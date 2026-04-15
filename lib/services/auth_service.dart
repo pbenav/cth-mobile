@@ -65,11 +65,12 @@ class AuthService {
       throw AuthException('Error de conexión: $e');
     }
 
-    _log('📄 Body: ${response.body.substring(0, (response.body.length > 200) ? 200 : response.body.length)}');
+    final responseBody = utf8.decode(response.bodyBytes);
+    _log('📄 Body: ${responseBody.substring(0, (responseBody.length > 200) ? 200 : responseBody.length)}');
 
     Map<String, dynamic> json;
     try {
-      json = jsonDecode(response.body) as Map<String, dynamic>;
+      json = jsonDecode(responseBody) as Map<String, dynamic>;
     } catch (_) {
       _log('❌ No se pudo parsear JSON');
       throw AuthException('Respuesta inválida del servidor', statusCode: response.statusCode);
